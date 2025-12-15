@@ -18,6 +18,7 @@ class ApiConstants {
   static const String changePassword = "auth/change-password";
 
   // Registration Management
+  static const String allUsers = "${baseUrl}admin/users/all";
   static const String pendingRegistrations = "${baseUrl}admin/users/pending";
   static const String approveRegistration = "admin/approve-registration";
   static const String rejectRegistration = "admin/reject-registration";
