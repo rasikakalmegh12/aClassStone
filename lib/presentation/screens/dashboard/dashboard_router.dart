@@ -1,4 +1,4 @@
-import 'package:apclassstone/presentation/screens/dashboard/super_admin_dashboard.dart';
+import 'package:apclassstone/presentation/screens/super_admin/screens/super_admin_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

@@ -1,5 +1,6 @@
 import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
+import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
 import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -85,9 +86,8 @@ class AppRouter {
               final user = state.extra as String?;
               return MultiBlocProvider(
                 providers: [
-                  BlocProvider<PendingBloc>(
-                    create: (context) => PendingBloc(),
-                  ),
+                  BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+                  BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
                 ],
                 child: SuperAdminDashboardScreen(user: user!),
               );

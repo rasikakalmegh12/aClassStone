@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
@@ -288,6 +289,71 @@ class ApiIntegration {
         print('❌ $errorMsg');
       }
       return PendingRegistrationResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  static Future<AllUsersResponseBody> getAllUsers() async {
+    try {
+      final url = Uri.parse(ApiConstants.allUsers);
+
+      if (kDebugMode) {
+        print('📤 Sending All User request to: $url');
+        print('📤 Sending All User header: ${ApiConstants.headerWithToken}');
+      }
+
+
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
+        },
+
+      ).timeout(_timeout);
+
+      if (kDebugMode) {
+        print('📥 Response all user status: ${response.statusCode}');
+        print('Response all user body: ${response.body}');
+      }
+
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = AllUsersResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ all  User successful: ${result.message}');
+        }
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ All User failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = AllUsersResponseBody.fromJson(jsonResponse);
+        return AllUsersResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return AllUsersResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return AllUsersResponseBody(
         status: false,
         message: errorMsg,
       );

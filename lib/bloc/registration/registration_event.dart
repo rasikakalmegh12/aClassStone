@@ -23,9 +23,6 @@ class ResetRegistrationEvent extends RegistrationEvent {}
 
 
 abstract class PendingEvent {}
-
 /// Event to register a new user
-class GetPendingEvent extends PendingEvent {
+class GetPendingEvent extends PendingEvent {}
 
-
-}

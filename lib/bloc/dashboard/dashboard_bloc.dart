@@ -74,3 +74,41 @@
 //     });
 //   }
 // }
+
+
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../api/integration/api_integration.dart';
+
+import 'dashboard_event.dart';
+import 'dashboard_state.dart';
+
+class AllUsersBloc extends Bloc<AllUsersEvent, AllUsersState> {
+  AllUsersBloc() : super(AllUsersInitial()) {
+    // Handle user registration
+    on<GetAllUsers>((event, emit) async {
+      emit(AllUsersLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.getAllUsers();
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(AllUsersLoaded(response));
+        } else {
+          emit(AllUsersError(
+            message: response.message ?? 'Registration failed',
+          ));
+        }
+      } catch (e) {
+        emit(AllUsersError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}

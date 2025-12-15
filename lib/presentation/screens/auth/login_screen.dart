@@ -159,7 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 24),
                               Text(
-                                'AP CLASS STONES',
+                                AppConstants.appName.toUpperCase(),
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,

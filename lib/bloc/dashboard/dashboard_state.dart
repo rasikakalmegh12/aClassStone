@@ -48,3 +48,18 @@
 //
 //   DashboardError(this.error);
 // }
+
+
+import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
+
+abstract class AllUsersState {}
+class AllUsersInitial extends AllUsersState {}
+class AllUsersLoading extends AllUsersState {}
+class AllUsersLoaded extends AllUsersState {
+  final AllUsersResponseBody response;
+  AllUsersLoaded(this.response);
+}
+class AllUsersError extends AllUsersState {
+  final String? message;
+  AllUsersError({required this.message});
+}
