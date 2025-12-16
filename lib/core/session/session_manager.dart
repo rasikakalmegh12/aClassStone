@@ -63,11 +63,11 @@ class SessionManager {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyHeaderKey, headerKey);
   }
-
-  static Future<String?> getLoginHeaderkey() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyHeaderKey);
-  }
+  //
+  // static Future<String?> getLoginHeaderkey() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyHeaderKey);
+  // }
 
   // User ID
   static Future<void> setUserId(String userId) async {
@@ -75,10 +75,10 @@ class SessionManager {
     await prefs.setString(_keyUserId, userId);
   }
 
-  static Future<String?> getUserId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserId);
-  }
+  // static Future<String?> getUserId() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyUserId);
+  // }
 
   // User Name
   static Future<void> setUserName(String userName) async {
@@ -86,10 +86,10 @@ class SessionManager {
     await prefs.setString(_keyUserName, userName);
   }
 
-  static Future<String?> getUserName() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserName);
-  }
+  // static Future<String?> getUserName() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyUserName);
+  // }
 
   // User Email
   static Future<void> setUserEmail(String userEmail) async {
@@ -97,21 +97,21 @@ class SessionManager {
     await prefs.setString(_keyUserEmail, userEmail);
   }
 
-  static Future<String?> getUserEmail() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserEmail);
-  }
+  // static Future<String?> getUserEmail() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyUserEmail);
+  // }
 
   // User Phone
   static Future<void> setUserPhone(String userPhone) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyUserPhone, userPhone);
   }
-
-  static Future<String?> getUserPhone() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyUserPhone);
-  }
+  //
+  // static Future<String?> getUserPhone() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyUserPhone);
+  // }
 
   // Access Token
   static Future<void> setAccessToken(String accessToken) async {
@@ -121,10 +121,10 @@ class SessionManager {
     SessionManager.prefs = prefs;
   }
 
-  static Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAccessToken);
-  }
+  // static Future<String?> getAccessToken() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyAccessToken);
+  // }
 
   // Refresh Token
   static Future<void> setRefreshToken(String refreshToken) async {
@@ -134,10 +134,10 @@ class SessionManager {
     SessionManager.prefs = prefs;
   }
 
-  static Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyRefreshToken);
-  }
+  // static Future<String?> getRefreshToken() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   return prefs.getString(_keyRefreshToken);
+  // }
 
   // Clear all session data
   static Future<void> clearSession() async {
@@ -152,6 +152,7 @@ class SessionManager {
     String? userPhone,
     String? accessToken,
     String? refreshToken,
+    String? userRole,
   }) async {
     await setLoginStatus(true);
     print("access token in session manager: $accessToken");
@@ -160,5 +161,6 @@ class SessionManager {
     if (userPhone != null) await setUserPhone(userPhone);
     if (accessToken != null) await setAccessToken(accessToken);
     if (refreshToken != null) await setRefreshToken(refreshToken);
+    if (userRole != null) await setUserId(userRole);
   }
 }

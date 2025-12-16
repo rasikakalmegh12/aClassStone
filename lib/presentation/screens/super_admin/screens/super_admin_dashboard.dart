@@ -11,6 +11,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../api/models/response/PendingRegistrationResponseBody.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../auth/login_screen.dart';
 
@@ -43,19 +44,11 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      // backgroundColor: const Color(0xFFF8FAFC),
       body: Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF8FAFC),
-              Color(0xFFE2E8F0),
-              Color(0xFFF1F5F9),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
+          gradient: AppColors.backgroundGradient2,
+
         ),
         child: SafeArea(
           child: Column(
@@ -68,7 +61,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildStatsGrid(),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
                       _buildPendingRegistrations(),
 
                       const SizedBox(height: 40), // Extra padding at bottom
@@ -85,7 +78,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -98,7 +91,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withOpacity( 0.1),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -116,7 +109,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withOpacity( 0.3),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -147,7 +140,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   'System Management Dashboard',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Colors.white.withOpacity(  0.8),
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -158,10 +151,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
+              color: Colors.white.withOpacity(  0.15),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity( 0.2),
                 width: 1,
               ),
             ),
@@ -178,138 +171,269 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       ),
     ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.5, end: 0);
   }
-
   Widget _buildStatsGrid() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white,
-          width: 2,
+    return Row(
+      children: [
+        Expanded(
+          child: BlocBuilder<AllUsersBloc, AllUsersState>(
+            builder: (context, allUsersState) {
+              int totalUsers = 0;
+              bool isLoading = false;
+              if (allUsersState is AllUsersLoaded) {
+                totalUsers = allUsersState.response.data?.length ?? 0;
+              } else if (allUsersState is AllUsersLoading) {
+                isLoading = true;
+              }
+              return _statCard(
+                color1: const Color(0xFF6366F1),
+                color2: const Color(0xFF8B5CF6),
+                icon: Icons.people_alt_rounded,
+                label: 'Total Users',
+                value: totalUsers,
+                isLoading: isLoading,
+              );
+            },
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-            spreadRadius: -4,
+        const SizedBox(width: 18),
+        Expanded(
+          child: BlocBuilder<PendingBloc, PendingState>(
+            builder: (context, pendingState) {
+              int pending = 0;
+              bool isLoading = false;
+              if (pendingState is PendingLoaded) {
+                pending = pendingState.response.data?.length ?? 0;
+              } else if (pendingState is PendingLoading) {
+                isLoading = true;
+              }
+              return _statCard(
+                color1: const Color(0xFFF59E0B),
+                color2: const Color(0xFFEF4444),
+                icon: Icons.hourglass_top_rounded,
+                label: 'Pending Users',
+                value: pending,
+                isLoading: isLoading,
+              );
+            },
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF667EEA).withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  '📊 OVERVIEW',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-              const Spacer(),
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF10B981), Color(0xFF059669)],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Live Data',
-                style: GoogleFonts.inter(
-                  fontSize: 10,
-                  color: const Color(0xFF10B981),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Real-time system metrics',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: const Color(0xFF64748B),
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: BlocBuilder<AllUsersBloc, AllUsersState>(
-                  builder: (context, allUsersState) {
-                    int totalUsers = 0;
-                    if (allUsersState is AllUsersLoaded) {
-                      totalUsers = allUsersState.response.data?.length ?? 0;
-                    }
-
-                    return _buildStatCard(
-                      title: 'Total Users',
-                      value: totalUsers.toString(),
-                      icon: Icons.people_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                      ),
-                      isLoading: allUsersState is AllUsersLoading,
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: BlocBuilder<PendingBloc, PendingState>(
-                  builder: (context, pendingState) {
-                    int pendingApprovals = 0;
-                    if (pendingState is PendingLoaded) {
-                      pendingApprovals = pendingState.response.data?.length ?? 0;
-                    }
-
-                    return _buildStatCard(
-                      title: 'Pending Approvals',
-                      value: pendingApprovals.toString(),
-                      icon: Icons.schedule_rounded,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
-                      ),
-                      isLoading: pendingState is PendingLoading,
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.3, end: 0);
+        ),
+      ],
+    ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0);
   }
 
+  Widget _statCard({
+    required Color color1,
+    required Color color2,
+    required IconData icon,
+    required String label,
+    required int value,
+    bool isLoading = false,
+  }) {
+    return Container(
+      height: 65,
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [color1.withOpacity(0.92), color2.withOpacity(0.92)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: color1.withOpacity(0.10),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.13),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  isLoading
+                      ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                      : Text(
+                    '$value',
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      color: Colors.white.withOpacity(0.85),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  // Widget _buildStatsGrid() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(20),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       borderRadius: BorderRadius.circular(20),
+  //       border: Border.all(
+  //         color: Colors.white,
+  //         width: 2,
+  //       ),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity( 0.03),
+  //           blurRadius: 20,
+  //           offset: const Offset(0, 8),
+  //           spreadRadius: -4,
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+  //               decoration: BoxDecoration(
+  //                 gradient: const LinearGradient(
+  //                   colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+  //                 ),
+  //                 borderRadius: BorderRadius.circular(20),
+  //                 boxShadow: [
+  //                   BoxShadow(
+  //                     color: const Color(0xFF667EEA).withOpacity(  0.3),
+  //                     blurRadius: 8,
+  //                     offset: const Offset(0, 2),
+  //                   ),
+  //                 ],
+  //               ),
+  //               child: Text(
+  //                 '📊 OVERVIEW',
+  //                 style: GoogleFonts.inter(
+  //                   fontSize: 11,
+  //                   fontWeight: FontWeight.bold,
+  //                   color: Colors.white,
+  //                   letterSpacing: 0.5,
+  //                 ),
+  //               ),
+  //             ),
+  //             const Spacer(),
+  //             Container(
+  //               width: 8,
+  //               height: 8,
+  //               decoration: const BoxDecoration(
+  //                 gradient: LinearGradient(
+  //                   colors: [Color(0xFF10B981), Color(0xFF059669)],
+  //                 ),
+  //                 shape: BoxShape.circle,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 6),
+  //             Text(
+  //               'Live Data',
+  //               style: GoogleFonts.inter(
+  //                 fontSize: 10,
+  //                 color: const Color(0xFF10B981),
+  //                 fontWeight: FontWeight.w600,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 4),
+  //         Text(
+  //           'Real-time system metrics',
+  //           style: GoogleFonts.inter(
+  //             fontSize: 12,
+  //             color: const Color(0xFF64748B),
+  //             fontWeight: FontWeight.w400,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 20),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: BlocBuilder<AllUsersBloc, AllUsersState>(
+  //                 builder: (context, allUsersState) {
+  //                   int totalUsers = 0;
+  //                   if (allUsersState is AllUsersLoaded) {
+  //                     totalUsers = allUsersState.response.data?.length ?? 0;
+  //                   }
+  //
+  //                   return _buildStatCard(
+  //                     title: 'Total Users',
+  //                     value: totalUsers.toString(),
+  //                     icon: Icons.people_rounded,
+  //                     gradient: const LinearGradient(
+  //                       colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+  //                     ),
+  //                     isLoading: allUsersState is AllUsersLoading,
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //             const SizedBox(width: 16),
+  //             Expanded(
+  //               child: BlocBuilder<PendingBloc, PendingState>(
+  //                 builder: (context, pendingState) {
+  //                   int pendingApprovals = 0;
+  //                   if (pendingState is PendingLoaded) {
+  //                     pendingApprovals = pendingState.response.data?.length ?? 0;
+  //                   }
+  //
+  //                   return _buildStatCard(
+  //                     title: 'Pending Approvals',
+  //                     value: pendingApprovals.toString(),
+  //                     icon: Icons.schedule_rounded,
+  //                     gradient: const LinearGradient(
+  //                       colors: [Color(0xFFF59E0B), Color(0xFFEF4444)],
+  //                     ),
+  //                     isLoading: pendingState is PendingLoading,
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.3, end: 0);
+  // }
+  //
   Widget _buildStatCard({
     required String title,
     required String value,
@@ -335,13 +459,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(  0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
             spreadRadius: -2,
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
+            color: Colors.black.withOpacity( 0.03),
             blurRadius: 25,
             offset: const Offset(0, 10),
             spreadRadius: -5,
@@ -361,7 +485,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     end: Alignment.bottomLeft,
                     colors: [
                       Colors.transparent,
-                      (gradient.colors.first).withValues(alpha: 0.03),
+                      (gradient.colors.first).withOpacity( 0.03),
                     ],
                   ),
                 ),
@@ -384,7 +508,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: gradient.colors.first.withValues(alpha: 0.3),
+                              color: gradient.colors.first.withOpacity(  0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -415,7 +539,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                       width: 50,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: Colors.grey.withValues(alpha: 0.15),
+                        color: Colors.grey.withOpacity( 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
                     )
@@ -453,7 +577,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      gradient.colors.first.withValues(alpha: 0.1),
+                      gradient.colors.first.withOpacity(  0.1),
                       Colors.transparent,
                     ],
                   ),
@@ -488,13 +612,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: Colors.black.withOpacity(  0.04),
                 blurRadius: 25,
                 offset: const Offset(0, 10),
                 spreadRadius: -5,
               ),
               BoxShadow(
-                color: Colors.blue.withValues(alpha: 0.05),
+                color: Colors.blue.withOpacity(  0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
                 spreadRadius: -8,
@@ -532,7 +656,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                              color: const Color(0xFFF59E0B).withOpacity( 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -919,12 +1043,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
+            ? Colors.white.withOpacity(  0.05)
             : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
+              ? Colors.white.withOpacity( 0.1)
               : const Color(0xFFE2E8F0),
           width: 1,
         ),
@@ -935,10 +1059,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: isDark ? 0.2 : 0.1),
+              color: color.withOpacity(  isDark ? 0.2 : 0.1),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: color.withValues(alpha: 0.3),
+                color: color.withOpacity(  0.3),
                 width: 1,
               ),
             ),
@@ -967,7 +1091,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     color: isDark
-                        ? Colors.white.withValues(alpha: 0.7)
+                        ? Colors.white.withOpacity(  0.7)
                         : const Color(0xFF64748B),
                   ),
                 ),
@@ -978,12 +1102,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
+                  ? Colors.white.withOpacity(  0.1)
                   : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
+                    ? Colors.white.withOpacity(  0.1)
                     : const Color(0xFFE2E8F0),
                 width: 1,
               ),
@@ -993,7 +1117,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               style: GoogleFonts.inter(
                 fontSize: 10,
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.8)
+                    ? Colors.white.withOpacity(  0.8)
                     : const Color(0xFF64748B),
                 fontWeight: FontWeight.w500,
               ),
@@ -1048,7 +1172,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               ),
               child: TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(builder: (context) => const LoginScreen()),
                   );

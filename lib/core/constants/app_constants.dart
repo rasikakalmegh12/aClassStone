@@ -42,7 +42,7 @@ class AppConstants {
   static const Duration longAnimationDuration = Duration(milliseconds: 500);
 
   // UI Constants
-  static const double defaultPadding = 16.0;
+  static const double defaultPadding = 10.0;
   static const double smallPadding = 8.0;
   static const double largePadding = 24.0;
   static const double borderRadius = 12.0;

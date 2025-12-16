@@ -30,18 +30,27 @@ class Data {
   String? refreshToken;
   String? accessTokenExpiresAt;
   String? refreshTokenExpiresAt;
+  String? userId;
+  String? fullName;
+  String? role;
 
   Data(
       {this.accessToken,
         this.refreshToken,
         this.accessTokenExpiresAt,
-        this.refreshTokenExpiresAt});
+        this.refreshTokenExpiresAt,
+        this.userId,
+        this.fullName,
+        this.role});
 
   Data.fromJson(Map<String, dynamic> json) {
     accessToken = json['accessToken'];
     refreshToken = json['refreshToken'];
     accessTokenExpiresAt = json['accessTokenExpiresAt'];
     refreshTokenExpiresAt = json['refreshTokenExpiresAt'];
+    userId = json['userId'];
+    fullName = json['fullName'];
+    role = json['role'];
   }
 
   Map<String, dynamic> toJson() {
@@ -50,6 +59,9 @@ class Data {
     data['refreshToken'] = this.refreshToken;
     data['accessTokenExpiresAt'] = this.accessTokenExpiresAt;
     data['refreshTokenExpiresAt'] = this.refreshTokenExpiresAt;
+    data['userId'] = this.userId;
+    data['fullName'] = this.fullName;
+    data['role'] = this.role;
     return data;
   }
 }

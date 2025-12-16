@@ -56,8 +56,9 @@ class _SplashScreenState extends State<SplashScreen>
     if (mounted) {
       final isLoggedIn = await SessionManager.isLoggedIn();
       print("Checking login status...$isLoggedIn");
+      print("Checking login status...${SessionManager.getUserIdSync()}");
       if (isLoggedIn) {
-        context.go("/dashboard",extra: "superadmin");
+        context.go("/dashboard",extra: SessionManager.getUserIdSync().toString().toLowerCase());
       } else {
         context.go("/login");
       }

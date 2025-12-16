@@ -98,10 +98,13 @@ class _LoginScreenState extends State<LoginScreen> {
           if (state is LoginSuccess) {
             print("Access Token: ${state.response.data!.accessToken!}");
             await SessionManager.setAccessToken(state.response.data!.accessToken!);
-            await SessionManager.saveUserSession(accessToken: state.response.data!.accessToken!);
+            await SessionManager.saveUserSession(accessToken: state.response.data!.accessToken!,
+                refreshToken: state.response.data!.refreshToken!,
+                userName: state.response.data!.fullName,
+                userRole: state.response.data!.role?.toLowerCase().toString());
 
             if (mounted) {
-              context.go("/dashboard", extra: "superadmin");
+              context.go("/dashboard", extra: state.response.data!.role?.toLowerCase().toString());
             }
             // Navigator.of(context).pushReplacement(
             //   MaterialPageRoute(

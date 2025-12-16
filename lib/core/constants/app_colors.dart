@@ -76,6 +76,12 @@ class AppColors {
     colors: [grey50, white],
   );
 
+  static const LinearGradient backgroundGradient2 = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [AppColors.grey100,grey50,],
+  );
+
   // Card & Surface Colors
   static const Color cardBackground = white;
   static const Color surfaceBackground = grey50;
