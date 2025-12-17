@@ -93,7 +93,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
       ),
       title: Text(
         'My Meetings',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -107,7 +107,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             children: [
               Text(
                 'Filter',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -138,7 +138,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search client / contact / type',
-                hintStyle: GoogleFonts.lato(
+                hintStyle: TextStyle(
                   fontSize: 14,
                   color: AppColors.textLight,
                 ),
@@ -178,7 +178,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
                       ),
                       child: Text(
                         filter,
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isSelected ? AppColors.white : AppColors.textSecondary,
@@ -226,7 +226,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
         children: [
           Text(
             meeting['clientName'],
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -237,7 +237,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             children: [
               Text(
                 '${meeting['date']} · ${meeting['type']} · ${meeting['contactPerson']}',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
@@ -249,14 +249,14 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             children: [
               Text(
                 'Status: ',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
               ),
               Text(
                 meeting['leadStatus'],
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: meeting['hasLead'] ? AppColors.success : AppColors.warning,
@@ -280,7 +280,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
               ),
               child: Text(
                 'View Lead',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -301,7 +301,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
               ),
               child: Text(
                 'Convert to Lead',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -327,7 +327,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             children: [
               Text(
                 'Filter Meetings',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -337,7 +337,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
               ...filters.map((filter) => ListTile(
                 title: Text(
                   filter,
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,
                   ),

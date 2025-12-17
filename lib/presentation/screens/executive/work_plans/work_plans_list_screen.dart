@@ -97,7 +97,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
       ),
       title: Text(
         'Work Plans',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -114,7 +114,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
           icon: const Icon(Icons.add, color: AppColors.primaryTeal, size: 20),
           label: Text(
             'New',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: AppColors.primaryTeal,
@@ -158,7 +158,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   ),
                   child: Text(
                     filter,
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                       color: isSelected ? AppColors.white : AppColors.textSecondary,
@@ -209,7 +209,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   workPlan['type'] == 'range'
                       ? '${workPlan['dateRange']} · ${workPlan['city']}'
                       : '${workPlan['date']} · ${workPlan['city']}',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -222,7 +222,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
           if (workPlan['type'] == 'range')
             Text(
               'Clients: ${workPlan['clientCount']}',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -233,7 +233,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
               children: [
                 Text(
                   'Clients: ${workPlan['clients'].join(', ')}',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
@@ -242,7 +242,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '+${workPlan['additionalCount']} more',
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -255,7 +255,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
             children: [
               Text(
                 'Status: ',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
                 ),
@@ -268,7 +268,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                 ),
                 child: Text(
                   workPlan['status'],
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: workPlan['statusColor'],
@@ -295,7 +295,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                     children: [
                       Text(
                         'View Details',
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
@@ -331,7 +331,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   Expanded(
                     child: Text(
                       'Work Plan Details',
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textPrimary,
@@ -371,7 +371,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                         ),
                         child: Text(
                           'Edit Plan',
-                          style: GoogleFonts.lato(fontWeight: FontWeight.w500),
+                          style: TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
                     ),
@@ -393,7 +393,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                       ),
                       child: Text(
                         workPlan['status'] == 'Approved' ? 'Execute Plan' : 'View Status',
-                        style: GoogleFonts.lato(fontWeight: FontWeight.w600),
+                        style: TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -417,7 +417,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
             width: 80,
             child: Text(
               '$label:',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
@@ -427,7 +427,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textPrimary,
               ),

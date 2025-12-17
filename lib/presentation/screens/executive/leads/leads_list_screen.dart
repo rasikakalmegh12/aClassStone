@@ -97,7 +97,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
       ),
       title: Text(
         'My Leads',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -128,7 +128,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search leads by client, product, or lead number',
-                hintStyle: GoogleFonts.lato(
+                hintStyle: TextStyle(
                   fontSize: 14,
                   color: AppColors.textLight,
                 ),
@@ -168,7 +168,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       ),
                       child: Text(
                         filter,
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isSelected ? AppColors.white : AppColors.textSecondary,
@@ -228,7 +228,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                     children: [
                       Text(
                         lead['leadNumber'],
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryTeal,
@@ -237,7 +237,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       const SizedBox(height: 4),
                       Text(
                         lead['clientName'],
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -256,7 +256,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       ),
                       child: Text(
                         lead['priority'],
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: lead['priorityColor'],
@@ -272,7 +272,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       ),
                       child: Text(
                         lead['status'],
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: lead['statusColor'],
@@ -294,7 +294,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                 // Products
                 Text(
                   'Products:',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textSecondary,
@@ -313,7 +313,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       ),
                       child: Text(
                         product,
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary,
                         ),
@@ -358,7 +358,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Follow-up due: ${lead['followUpDate']}',
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.accentAmber,
@@ -388,7 +388,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Closed on: ${lead['closedDate']}',
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.success,
@@ -418,7 +418,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                           ),
                           child: Text(
                             'Update',
-                            style: GoogleFonts.lato(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -440,7 +440,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                           ),
                           child: Text(
                             'View Details',
-                            style: GoogleFonts.lato(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -461,7 +461,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                           ),
                           child: Text(
                             'View Details',
-                            style: GoogleFonts.lato(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -489,7 +489,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
             const SizedBox(width: 4),
             Text(
               label,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 11,
                 color: AppColors.textSecondary,
               ),
@@ -499,7 +499,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -524,7 +524,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
             children: [
               Text(
                 'Sort Leads',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -624,7 +624,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       Expanded(
                         child: Text(
                           'Lead Details',
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
@@ -676,7 +676,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
         children: [
           Text(
             label,
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -685,7 +685,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               color: AppColors.textPrimary,
             ),

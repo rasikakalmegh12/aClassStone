@@ -174,7 +174,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       ),
       title: Text(
         widget.existingClient != null ? 'Edit Client' : 'Add Client',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -189,7 +189,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -210,7 +210,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           children: [
             Text(
               'Client type',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -269,7 +269,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           children: [
             Text(
               'City',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -328,7 +328,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           children: [
             Text(
               'State',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -385,7 +385,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       children: [
         Text(
           'Location coordinates',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -406,7 +406,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               const SizedBox(width: 8),
               Text(
                 currentLocation,
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -426,7 +426,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           children: [
             Text(
               'Phone',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -479,7 +479,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       children: [
         Text(
           'Social handles (optional)',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -570,7 +570,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           children: [
             Text(
               label,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -637,7 +637,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           Expanded(
             child: Text(
               'App will check for duplicate client using firm name, GST, phone and email.',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 12,
                 color: AppColors.accentAmber,
               ),
@@ -677,7 +677,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
             ),
             child: Text(
               widget.existingClient != null ? 'Update Client' : 'Save Client',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -718,7 +718,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
         return AlertDialog(
           title: Text(
             'Potential Duplicate Found',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -728,7 +728,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
             children: [
               Text(
                 'Similar clients found:',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -744,15 +744,15 @@ class _AddClientScreenState extends State<AddClientScreen> {
                   children: [
                     Text(
                       'A Class Stone',
-                      style: GoogleFonts.lato(fontWeight: FontWeight.w500),
+                      style: TextStyle(fontWeight: FontWeight.w500),
                     ),
                     Text(
                       'Builder · Jaipur, Rajasthan',
-                      style: GoogleFonts.lato(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                     Text(
                       '+91-9876543210',
-                      style: GoogleFonts.lato(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -764,7 +764,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Continue Anyway',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -776,7 +776,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               },
               child: Text(
                 'Use Existing',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   color: AppColors.primaryTeal,
                   fontWeight: FontWeight.w600,
                 ),

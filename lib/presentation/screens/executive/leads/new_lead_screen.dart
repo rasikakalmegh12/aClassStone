@@ -131,7 +131,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
       ),
       title: Text(
         widget.existingLead != null ? 'Update Lead' : 'New Lead',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -159,7 +159,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
         children: [
           Text(
             'LEAD CONTEXT',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -184,7 +184,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
             width: 80,
             child: Text(
               label,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),
@@ -192,7 +192,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           ),
           Text(
             value,
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -224,7 +224,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
             children: [
               Text(
                 'PRODUCTS',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary,
@@ -238,7 +238,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           const SizedBox(height: 12),
           Text(
             'Select products',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -249,7 +249,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
             return CheckboxListTile(
               title: Text(
                 product['name'],
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textPrimary,
                 ),
@@ -276,7 +276,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
             icon: const Icon(Icons.add, size: 18),
             label: Text(
               'Select more from catalogue',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),
@@ -292,7 +292,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
               padding: const EdgeInsets.only(top: 8),
               child: Text(
                 'Please select at least one product',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.error,
                 ),
@@ -322,7 +322,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
         children: [
           Text(
             'QUANTITY',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -365,7 +365,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
         children: [
           Text(
             'DEADLINE & PROCESS',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -387,7 +387,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           const SizedBox(height: 16),
           Text(
             'Process type',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -447,7 +447,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
         children: [
           Text(
             'REMARKS',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -482,7 +482,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
         children: [
           Text(
             'SAMPLE IMAGES (OPTIONAL)',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -564,7 +564,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -624,7 +624,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
             ),
             child: Text(
               'Submit Lead',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),

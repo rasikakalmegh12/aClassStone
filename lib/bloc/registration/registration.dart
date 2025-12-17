@@ -75,3 +75,4 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   }
 }
 
+

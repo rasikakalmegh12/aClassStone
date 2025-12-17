@@ -129,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen>
                       // Company Name Animation
                       Text(
                         AppConstants.appName,
-                        style: GoogleFonts.playfairDisplay(
+                        style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
                           color: AppColors.white,
@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen>
                       // Tagline Animation
                       Text(
                         AppConstants.companyTagline,
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 16,
                           color: AppColors.white.withOpacity(0.9),
                           letterSpacing: 1,

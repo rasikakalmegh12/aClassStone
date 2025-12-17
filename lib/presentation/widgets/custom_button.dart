@@ -84,7 +84,7 @@ class CustomButton extends StatelessWidget {
                   ],
                   Text(
                     text,
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: textColor ?? AppColors.white,
@@ -133,7 +133,7 @@ class CustomButton extends StatelessWidget {
                 ],
                 Text(
                   text,
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: textColor ?? backgroundColor ?? AppColors.primaryGold,

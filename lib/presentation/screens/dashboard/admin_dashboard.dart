@@ -158,7 +158,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             backgroundColor: AppColors.white,
             child: Text(
               '${widget.user}',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.secondaryBlue,
@@ -172,7 +172,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 Text(
                   'Admin Panel',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.white,
@@ -180,7 +180,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 Text(
                   'Welcome back, ${widget.user}',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.white.withOpacity(0.9),
                   ),
@@ -208,7 +208,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       children: [
         Text(
           'Overview',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -270,7 +270,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         ),
                         child: Text(
                           stat['change'],
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
                             color: AppColors.success,
@@ -282,7 +282,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const SizedBox(height: 12),
                   Text(
                     stat['value'],
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -291,7 +291,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   const SizedBox(height: 4),
                   Text(
                     stat['title'],
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
                     ),
@@ -327,7 +327,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               children: [
                 Text(
                   'Recent Employees',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
@@ -338,7 +338,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                   onPressed: () {},
                   child: Text(
                     'View All',
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.primaryGold,
                       fontWeight: FontWeight.w600,
@@ -356,7 +356,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 backgroundColor: AppColors.primaryGold.withOpacity(0.1),
                 child: Text(
                   employee['name'].split(' ').map((n) => n[0]).join(),
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryGold,
@@ -365,7 +365,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
               title: Text(
                 employee['name'],
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
@@ -373,7 +373,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
               subtitle: Text(
                 '${employee['role']} • ${employee['joinDate']}',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppColors.textSecondary,
                 ),
@@ -388,7 +388,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 child: Text(
                   employee['status'],
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: employee['status'] == 'Active'
@@ -424,7 +424,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             padding: const EdgeInsets.all(16),
             child: Text(
               'Today\'s Meetings',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -458,7 +458,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       children: [
                         Text(
                           meeting['title'],
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
@@ -467,7 +467,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                         const SizedBox(height: 2),
                         Text(
                           '${meeting['time']} • ${meeting['organizer']}',
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 11,
                             color: AppColors.textSecondary,
                           ),
@@ -490,7 +490,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
       children: [
         Text(
           'Quick Actions',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -570,7 +570,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
@@ -589,18 +589,18 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return AlertDialog(
           title: Text(
             'Logout',
-            style: GoogleFonts.lato(fontWeight: FontWeight.bold),
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
           content: Text(
             'Are you sure you want to logout?',
-            style: GoogleFonts.lato(),
+            style: TextStyle(),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.lato(color: AppColors.textSecondary),
+                style: TextStyle(color: AppColors.textSecondary),
               ),
             ),
             TextButton(
@@ -613,7 +613,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               },
               child: Text(
                 'Logout',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   color: AppColors.error,
                   fontWeight: FontWeight.w600,
                 ),

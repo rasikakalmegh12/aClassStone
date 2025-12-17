@@ -5,7 +5,7 @@ import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -56,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 70,
             child: Text(
               role,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryGold,
@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Text(
                   '$email / $password',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 10,
                     color: AppColors.textPrimary,
                   ),
@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 24),
                               Text(
                                 AppConstants.appName.toUpperCase(),
-                                style: GoogleFonts.playfairDisplay(
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.primaryGold,
@@ -171,9 +171,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Text(
+                              const Text(
                                 'Welcome Back',
-                                style: GoogleFonts.lato(
+                                style: TextStyle(
                                   fontSize: 16,
                                   color: AppColors.textSecondary,
                                 ),
@@ -210,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             children: [
                               Text(
                                 'Sign In',
-                                style: GoogleFonts.lato(
+                                style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
@@ -276,7 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ),
                                       Text(
                                         'Remember me',
-                                        style: GoogleFonts.lato(
+                                        style: TextStyle(
                                           fontSize: 14,
                                           color: AppColors.textSecondary,
                                         ),
@@ -289,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     },
                                     child: Text(
                                       'Forgot Password?',
-                                      style: GoogleFonts.lato(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         color: AppColors.primaryGold,
                                         fontWeight: FontWeight.w600,
@@ -319,7 +319,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 children: [
                                   Text(
                                     "Don't have an account? ",
-                                    style: GoogleFonts.lato(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       color: AppColors.textSecondary,
                                     ),
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     },
                                     child: Text(
                                       'Register',
-                                      style: GoogleFonts.lato(
+                                      style: TextStyle(
                                         fontSize: 14,
                                         color: AppColors.primaryGold,
                                         fontWeight: FontWeight.w600,
@@ -364,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         const SizedBox(width: 8),
                                         Text(
                                           'Demo Credentials',
-                                          style: GoogleFonts.lato(
+                                          style: TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.primaryGold,

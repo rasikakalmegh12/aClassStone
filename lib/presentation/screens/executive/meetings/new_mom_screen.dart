@@ -136,7 +136,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       ),
       title: Text(
         'New Meeting / MOM',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -151,7 +151,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -172,7 +172,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
           children: [
             Text(
               'Client',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -229,7 +229,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           'Location',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -250,7 +250,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
               const SizedBox(width: 8),
               Text(
                 currentLocation,
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -270,7 +270,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
           children: [
             Text(
               'Contact person',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -350,7 +350,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
           children: [
             Text(
               label,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -401,7 +401,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
           children: [
             Text(
               'Meeting type',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -458,7 +458,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           'Checklist',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -500,7 +500,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               color: AppColors.textPrimary,
             ),
@@ -516,7 +516,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           'Notes',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -552,7 +552,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           'Photos (max 3)',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -620,7 +620,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           'Follow-up required',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -643,7 +643,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
                 ),
                 Text(
                   'No',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
@@ -665,7 +665,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
                 ),
                 Text(
                   'Yes',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
@@ -678,7 +678,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
           const SizedBox(height: 16),
           Text(
             'Reminder',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -730,7 +730,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
                 ),
                 child: Text(
                   'Save Offline',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -753,7 +753,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
                 ),
                 child: Text(
                   'Submit MOM',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),

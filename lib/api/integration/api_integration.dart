@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
@@ -72,7 +73,7 @@ class ApiIntegration {
         );
       }
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error: ${e.toString()}';
+      final errorMsg = 'Network error login: ${e.toString()}';
       print('❌ $errorMsg');
       return RegistrationResponseBody(
         status: false,
@@ -107,19 +108,21 @@ class ApiIntegration {
   /// }
   static Future<LoginResponseBody> login(String username, String password) async {
     try {
-      final url = Uri.parse(ApiConstants.loginWithPassword); // Assuming `loginUrl` is the correct property
+      final url = Uri.parse(ApiConstants.loginWithPassword);
 
       if (kDebugMode) {
-        print('📤 Sending registration request to: $url');
+        print('📤 Sending login request to: $url');
       }
 
-        final requestBody ={
-          "email": username,
-          "password": password,
-          "appCode": AppConstants.appCode
-        };
+      final requestBody = {
+        "email": username,
+        "password": password,
+        "appCode": AppConstants.appCode
+      };
 
-
+      if (kDebugMode) {
+        print('📥 Request body login : ${jsonEncode(requestBody)}');
+      }
 
       final response = await http.post(
         url,
@@ -128,10 +131,8 @@ class ApiIntegration {
       ).timeout(_timeout);
 
       if (kDebugMode) {
-        print('📥 Request body login : ${jsonEncode(requestBody)}');
         print('Response body login: ${response.body}');
       }
-
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
@@ -139,16 +140,36 @@ class ApiIntegration {
         print('✅ Login successful: ${result.message}');
         return result;
       } else {
-        final result = LoginResponseBody.fromJson(jsonDecode(response.body));
-        print('❌ Login failed with status ${result.statusCode}');
-        return LoginResponseBody(
-          status: false,
-          message: 'Login failed. Status: ${result.message}',
-          statusCode: response.statusCode,
-        );
+        try {
+          final jsonResponse = jsonDecode(response.body);
+          final result = LoginResponseBody.fromJson(jsonResponse);
+          print('❌ Login failed with status ${response.statusCode}');
+          return LoginResponseBody(
+            status: false,
+            message: result.message ?? 'Login failed with status ${response.statusCode}',
+            statusCode: response.statusCode,
+          );
+        } catch (parseError) {
+          print('❌ Failed to parse error response: $parseError');
+          return LoginResponseBody(
+            status: false,
+            message: 'Server error: ${response.statusCode} - ${response.body}',
+            statusCode: response.statusCode,
+          );
+        }
       }
+    } on TimeoutException catch (e) {
+      final errorMsg = 'Request timeout: The server took too long to respond. Please check your internet connection and try again.';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+        print('Timeout details: ${e.toString()}');
+      }
+      return LoginResponseBody(
+        status: false,
+        message: errorMsg,
+      );
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error: ${e.toString()}';
+      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e.toString()}';
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
@@ -157,7 +178,7 @@ class ApiIntegration {
         message: errorMsg,
       );
     } catch (e) {
-      final errorMsg = 'Error: ${e.toString()}';
+      final errorMsg = 'Unexpected error: ${e.toString()}';
       if (kDebugMode) {
         print('❌ $errorMsg');
       }

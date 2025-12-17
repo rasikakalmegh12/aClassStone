@@ -119,7 +119,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               Expanded(
                 child: Text(
                   'A-Class Executive',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     color: AppColors.white,
@@ -137,7 +137,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   children: [
                     Text(
                       'Hello, ${widget.user}',
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: AppColors.white,
@@ -146,7 +146,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                     const SizedBox(height: 4),
                     Text(
                       formattedDate,
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 14,
                         color: AppColors.white.withOpacity(0.9),
                       ),
@@ -180,7 +180,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
         children: [
           Text(
             'ATTENDANCE',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -203,7 +203,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               ],
               Text(
                 isPunchedIn ? 'PUNCHED IN' : 'PUNCHED OUT',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: isPunchedIn ? AppColors.success : AppColors.textSecondary,
@@ -215,7 +215,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             const SizedBox(height: 4),
             Text(
               'Tracking since ${_formatTime(punchInTime!)}',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textLight,
               ),
@@ -237,7 +237,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               ),
               child: Text(
                 isPunchedIn ? 'Punch Out' : 'Punch In',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -248,7 +248,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             const SizedBox(height: 8),
             Text(
               'Punch in to start tracking',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 12,
                 color: AppColors.textLight,
               ),
@@ -278,7 +278,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
         children: [
           Text(
             'TODAY SUMMARY',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -288,7 +288,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           const SizedBox(height: 12),
           Text(
             'City: $currentCity',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -319,7 +319,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               children: [
                 Text(
                   'View Work Plan',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -350,7 +350,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           const SizedBox(width: 8),
           Text(
             '$label: $count',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
@@ -379,7 +379,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
         children: [
           Text(
             'ACTION FEED',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -470,7 +470,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 children: [
                   Text(
                     title,
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -479,7 +479,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: GoogleFonts.lato(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.textLight,
                     ),
@@ -517,7 +517,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
         children: [
           Text(
             'QUICK ACTIONS',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: AppColors.textSecondary,
@@ -623,7 +623,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
@@ -696,7 +696,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
               color: isActive ? AppColors.primaryTeal : AppColors.grey400,

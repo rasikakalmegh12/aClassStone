@@ -72,13 +72,13 @@ class MyApp extends StatelessWidget {
         surface: AppColors.white,
         onSurface: AppColors.textPrimary,
       ),
-      textTheme: GoogleFonts.latoTextTheme(),
+      // textTheme: TextStyleTextTheme(),
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primaryGold,
         foregroundColor: AppColors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: GoogleFonts.lato(
+        titleTextStyle: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.white,
@@ -93,7 +93,7 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.borderRadius),
           ),
-          textStyle: GoogleFonts.lato(
+          textStyle: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -106,7 +106,7 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: GoogleFonts.lato(
+          textStyle: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -115,7 +115,7 @@ class MyApp extends StatelessWidget {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryGold,
-          textStyle: GoogleFonts.lato(
+          textStyle: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -202,7 +202,7 @@ class MyApp extends StatelessWidget {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.grey800,
-        contentTextStyle: GoogleFonts.lato(
+        contentTextStyle: TextStyle(
           color: AppColors.white,
           fontSize: 14,
         ),

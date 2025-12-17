@@ -107,30 +107,30 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
 
-  fonts:
-    - family: Lato
-      fonts:
-        - asset: assets/fonts/Lato-Bold.ttf
-
-    - family: Lato
-      fonts:
-        - asset: assets/fonts/Lato-Regular.ttf
-
-    - family: PlayfairDisplay
-      fonts:
-        - asset: assets/fonts/PlayfairDisplay-Bold.ttf
-
-
-    - family: Inter
-      fonts:
-       - asset: assets/fonts/inter/static/Inter_18pt-Regular.ttf
-       - asset: assets/fonts/inter/static/Inter_18pt-Bold.ttf
-         weight: 700
-       - asset: assets/fonts/inter/static/Inter_18pt-Italic.ttf
-         style: italic
-       - asset: assets/fonts/inter/static/Inter_18pt-BoldItalic.ttf
-         weight: 700
-         style: italic
+#  fonts:
+#    - family: Lato
+#      fonts:
+#        - asset: assets/fonts/Lato-Bold.ttf
+#
+#    - family: Lato
+#      fonts:
+#        - asset: assets/fonts/Lato-Regular.ttf
+#
+#    - family: PlayfairDisplay
+#      fonts:
+#        - asset: assets/fonts/PlayfairDisplay-Bold.ttf
+#
+#
+#    - family: Inter
+#      fonts:
+#       - asset: assets/fonts/inter/static/Inter_18pt-Regular.ttf
+#       - asset: assets/fonts/inter/static/Inter_18pt-Bold.ttf
+#         weight: 700
+#       - asset: assets/fonts/inter/static/Inter_18pt-Italic.ttf
+#         style: italic
+#       - asset: assets/fonts/inter/static/Inter_18pt-BoldItalic.ttf
+#         weight: 700
+#         style: italic
 
 
   #   - family: Trajan Pro

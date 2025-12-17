@@ -28,6 +28,10 @@ class SuperAdminDashboard extends StatefulWidget {
 }
 
 class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
+
+  bool _showPending = true;
+
+
   @override
   void initState() {
     super.initState();
@@ -80,13 +84,19 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient:
+
+        // AppColors.secondaryGradient,
+        const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF1A365D),
-            Color(0xFF2D3748),
-            Color(0xFF4A5568),
+            // Color(0xFF020617), // near black
+            Color(0xFF1E293B), // slate
+            Color(0xFF334155),
+
+            // AppColors.primaryTealDark,
+            // AppColors.primaryTealLight,
           ],
         ),
         boxShadow: [
@@ -128,7 +138,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               children: [
                 Text(
                   'Super Admin Portal',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -138,7 +148,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 const SizedBox(height: 2),
                 Text(
                   'System Management Dashboard',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 12,
                     color: Colors.white.withOpacity(  0.8),
                     fontWeight: FontWeight.w400,
@@ -171,6 +181,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       ),
     ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.5, end: 0);
   }
+
   Widget _buildStatsGrid() {
     return Row(
       children: [
@@ -184,13 +195,20 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               } else if (allUsersState is AllUsersLoading) {
                 isLoading = true;
               }
-              return _statCard(
-                color1: const Color(0xFF6366F1),
-                color2: const Color(0xFF8B5CF6),
-                icon: Icons.people_alt_rounded,
-                label: 'Total Users',
-                value: totalUsers,
-                isLoading: isLoading,
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showPending = false; // show ALL users
+                  });
+                },
+                child: _statCard(
+                  color1: const Color(0xFF6366F1),
+                  color2: const Color(0xFF8B5CF6),
+                  icon: Icons.people_alt_rounded,
+                  label: 'Total Users',
+                  value: totalUsers,
+                  isLoading: isLoading,
+                ),
               );
             },
           ),
@@ -206,13 +224,20 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               } else if (pendingState is PendingLoading) {
                 isLoading = true;
               }
-              return _statCard(
-                color1: const Color(0xFFF59E0B),
-                color2: const Color(0xFFEF4444),
-                icon: Icons.hourglass_top_rounded,
-                label: 'Pending Users',
-                value: pending,
-                isLoading: isLoading,
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _showPending = true; // show PENDING users
+                  });
+                },
+                child: _statCard(
+                  color1: const Color(0xFFF59E0B),
+                  color2: const Color(0xFFEF4444),
+                  icon: Icons.hourglass_top_rounded,
+                  label: 'Pending Users',
+                  value: pending,
+                  isLoading: isLoading,
+                ),
               );
             },
           ),
@@ -220,6 +245,134 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       ],
     ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0);
   }
+
+
+  Widget _buildAllUsersBody(AllUsersState state) {
+    if (state is AllUsersLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+        ),
+      );
+    } else if (state is AllUsersLoaded) {
+      final items = state.response.data ?? [];
+      if (items.isEmpty) {
+        return Center(
+          child: Text(
+            'No users found',
+            style: TextStyle(
+              fontSize: 12,
+              color: const Color(0xFF718096),
+            ),
+          ),
+        );
+      }
+
+      final showViewAll = items.length > 3;
+      final visibleItems = showViewAll ? items.take(3).toList() : items;
+
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: visibleItems.length,
+              itemBuilder: (context, index) {
+                final user = visibleItems[index];
+                // You can reuse same layout as registration item or create a simpler one
+                return ListTile(
+                  leading: CircleAvatar(
+                    child: Text(
+                      (user.fullName ?? '?').isNotEmpty
+                          ? user.fullName![0].toUpperCase()
+                          : '?',
+                    ),
+                  ),
+                  title: Text(
+                    user.fullName ?? '-',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1A365D),
+                    ),
+                  ),
+                  subtitle: Text(
+                    user.email ?? '',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: const Color(0xFF718096),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (showViewAll)
+            Align(
+              alignment: Alignment.bottomRight,
+              child: TextButton(
+                onPressed: () {
+
+                  // TODO: navigate to full all-users page / dialog
+                },
+                child: const Text('View all'),
+              ),
+            ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+
+  // Widget _buildStatsGrid() {
+  //   return Row(
+  //     children: [
+  //       Expanded(
+  //         child: BlocBuilder<AllUsersBloc, AllUsersState>(
+  //           builder: (context, allUsersState) {
+  //             int totalUsers = 0;
+  //             bool isLoading = false;
+  //             if (allUsersState is AllUsersLoaded) {
+  //               totalUsers = allUsersState.response.data?.length ?? 0;
+  //             } else if (allUsersState is AllUsersLoading) {
+  //               isLoading = true;
+  //             }
+  //             return _statCard(
+  //               color1: const Color(0xFF6366F1),
+  //               color2: const Color(0xFF8B5CF6),
+  //               icon: Icons.people_alt_rounded,
+  //               label: 'Total Users',
+  //               value: totalUsers,
+  //               isLoading: isLoading,
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //       const SizedBox(width: 18),
+  //       Expanded(
+  //         child: BlocBuilder<PendingBloc, PendingState>(
+  //           builder: (context, pendingState) {
+  //             int pending = 0;
+  //             bool isLoading = false;
+  //             if (pendingState is PendingLoaded) {
+  //               pending = pendingState.response.data?.length ?? 0;
+  //             } else if (pendingState is PendingLoading) {
+  //               isLoading = true;
+  //             }
+  //             return _statCard(
+  //               color1: const Color(0xFFF59E0B),
+  //               color2: const Color(0xFFEF4444),
+  //               icon: Icons.hourglass_top_rounded,
+  //               label: 'Pending Users',
+  //               value: pending,
+  //               isLoading: isLoading,
+  //             );
+  //           },
+  //         ),
+  //       ),
+  //     ],
+  //   ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0);
+  // }
 
   Widget _statCard({
     required Color color1,
@@ -277,7 +430,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   )
                       : Text(
                     '$value',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -287,7 +440,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   const SizedBox(height: 2),
                   Text(
                     label,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 11,
                       color: Colors.white.withOpacity(0.85),
                       fontWeight: FontWeight.w500,
@@ -344,7 +497,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   //               ),
   //               child: Text(
   //                 '📊 OVERVIEW',
-  //                 style: GoogleFonts.inter(
+  //                 style: TextStyle(
   //                   fontSize: 11,
   //                   fontWeight: FontWeight.bold,
   //                   color: Colors.white,
@@ -366,7 +519,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   //             const SizedBox(width: 6),
   //             Text(
   //               'Live Data',
-  //               style: GoogleFonts.inter(
+  //               style: TextStyle(
   //                 fontSize: 10,
   //                 color: const Color(0xFF10B981),
   //                 fontWeight: FontWeight.w600,
@@ -377,7 +530,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   //         const SizedBox(height: 4),
   //         Text(
   //           'Real-time system metrics',
-  //           style: GoogleFonts.inter(
+  //           style: TextStyle(
   //             fontSize: 12,
   //             color: const Color(0xFF64748B),
   //             fontWeight: FontWeight.w400,
@@ -546,7 +699,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   else
                     Text(
                       value,
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF1A365D),
@@ -557,7 +710,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   const SizedBox(height: 4),
                   Text(
                     title,
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 11,
                       color: const Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
@@ -591,7 +744,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0));
   }
 
-  Widget _buildPendingRegistrations() {
+  Widget _buildPendingRegistrations1() {
     return BlocBuilder<PendingBloc, PendingState>(
       builder: (context, state) {
         return Container(
@@ -677,7 +830,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                               children: [
                                 Text(
                                   'Pending Registrations',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF1E293B),
@@ -696,7 +849,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                     ),
                                     child: Text(
                                       '${state.response.data!.length}',
-                                      style: GoogleFonts.inter(
+                                      style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -707,7 +860,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                             ),
                             Text(
                               'Review and approve new registrations',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(
                                 fontSize: 10,
                                 color: const Color(0xFF64748B),
                               ),
@@ -787,7 +940,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                 const SizedBox(height: 12),
                                 Text(
                                   'All caught up!',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF1A365D),
@@ -796,7 +949,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                 const SizedBox(height: 4),
                                 Text(
                                   'No pending registrations to review',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(
                                     fontSize: 12,
                                     color: const Color(0xFF718096),
                                   ),
@@ -838,7 +991,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           const SizedBox(height: 12),
                           Text(
                             'Unable to load data',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFF1A365D),
@@ -847,7 +1000,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           const SizedBox(height: 4),
                           Text(
                             'Failed to load pending registrations',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(
                               fontSize: 12,
                               color: const Color(0xFF718096),
                             ),
@@ -893,7 +1046,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 child: Center(
                   child: Text(
                     '${registration.fullName?.substring(0, 1).toUpperCase()}',
-                    style: GoogleFonts.inter(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -908,7 +1061,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   children: [
                     Text(
                       '${registration.fullName}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF1A365D),
@@ -919,7 +1072,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     const SizedBox(height: 2),
                     Text(
                       '${registration.email}',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 12,
                         color: const Color(0xFF718096),
                       ),
@@ -943,7 +1096,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 ),
                 child: Text(
                   'Pending',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFFED8936),
@@ -982,7 +1135,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     ),
                     child: Text(
                       'Approve',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
@@ -1013,7 +1166,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     ),
                     child: Text(
                       'Reject',
-                      style: GoogleFonts.inter(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFFE53E3E),
@@ -1029,7 +1182,255 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     ).animate(delay: (index * 100).ms).fadeIn().slideX(begin: 0.3, end: 0);
   }
 
+  Widget _buildPendingRegistrations() {
+    // same outer container design as now – only body logic changed
+    return BlocBuilder<PendingBloc, PendingState>(
+      builder: (context, pendingState) {
+        return BlocBuilder<AllUsersBloc, AllUsersState>(
+          builder: (context, allUsersState) {
+            return Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.white,
+                    Colors.grey.shade50,
+                    Colors.white,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: Colors.white,
+                  width: 2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 25,
+                    offset: const Offset(0, 10),
+                    spreadRadius: -5,
+                  ),
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.05),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                    spreadRadius: -8,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // HEADER – keep almost same, only title dynamic
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white,
+                            Color(0xFFF8FAFC),
+                          ],
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 35,
+                            height: 35,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: _showPending
+                                    ? const [Color(0xFFF59E0B), Color(0xFFEF4444)]
+                                    : const [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.schedule_rounded,
+                              color: Colors.white,
+                              size: 18,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      _showPending
+                                          ? 'Pending Registrations'
+                                          : 'All Users',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: const Color(0xFF1E293B),
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  _showPending
+                                      ? 'Review and approve new registrations'
+                                      : 'View all registered users',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () {
+                              if (_showPending) {
+                                context.read<PendingBloc>().add(GetPendingEvent());
+                              } else {
+                                context.read<AllUsersBloc>().add(GetAllUsers());
+                              }
+                            },
+                            icon: const Icon(
+                              Icons.refresh_rounded,
+                              size: 16,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
+                    // separator line
+                    Container(
+                      height: 1,
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Color(0xFFE2E8F0),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // FIXED HEIGHT LIST AREA
+                    SizedBox(
+                      height: 250, // same height to keep layout stable
+                      child: _showPending
+                          ? _buildPendingBody(pendingState)
+                          : _buildAllUsersBody(allUsersState),
+                    ),
+                  ],
+                ),
+              ),
+            ) ;
+
+
+            },
+        );
+      },
+    );
+  }
+
+  Widget _buildPendingBody(PendingState state) {
+    if (state is PendingLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+        ),
+      );
+    } else if (state is PendingLoaded) {
+      final items = state.response.data ?? [];
+      if (items.isEmpty) {
+        // keep your existing “All caught up” UI
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // ... existing success icon / text
+                Text(
+                  'All caught up!',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1A365D),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'No pending registrations to review',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: const Color(0xFF718096),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+
+      final showViewAll = items.length > 5;
+      final visibleItems = showViewAll ? items.take(5).toList() : items;
+
+      return Column(
+        children: [
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              itemCount: visibleItems.length,
+              itemBuilder: (context, index) {
+                final registration = visibleItems[index];
+                return _buildRegistrationItem(registration, index);
+              },
+            ),
+          ),
+          if (showViewAll)
+            Align(
+              alignment: Alignment.bottomRight,
+              child: TextButton(
+                onPressed: () {
+                  // TODO: navigate to full pending list page / dialog
+                },
+                child: const Text('View all'),
+              ),
+            ),
+        ],
+      );
+    } else if (state is PendingError) {
+      // keep your existing error UI
+      return Center(
+        child: Text(
+          'Unable to load data',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF1A365D),
+          ),
+        ),
+      );
+    }
+    return const SizedBox.shrink();
+  }
 
   Widget _buildActivityItem({
     required IconData icon,
@@ -1079,7 +1480,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: isDark ? Colors.white : const Color(0xFF1E293B),
@@ -1088,7 +1489,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 const SizedBox(height: 2),
                 Text(
                   description,
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     fontSize: 11,
                     color: isDark
                         ? Colors.white.withOpacity(  0.7)
@@ -1114,7 +1515,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             ),
             child: Text(
               time,
-              style: GoogleFonts.inter(
+              style: TextStyle(
                 fontSize: 10,
                 color: isDark
                     ? Colors.white.withOpacity(  0.8)
@@ -1138,7 +1539,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ),
           title: Text(
             'Confirm Logout',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
               color: const Color(0xFF1A365D),
@@ -1146,7 +1547,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ),
           content: Text(
             'Are you sure you want to logout from the admin portal?',
-            style: GoogleFonts.inter(
+            style: TextStyle(
               fontSize: 14,
               color: const Color(0xFF718096),
             ),
@@ -1156,7 +1557,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Cancel',
-                style: GoogleFonts.inter(
+                style: TextStyle(
                   color: const Color(0xFF718096),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
@@ -1179,7 +1580,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 },
                 child: Text(
                   'Logout',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -1192,4 +1593,5 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       },
     );
   }
+
 }

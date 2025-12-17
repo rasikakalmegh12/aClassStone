@@ -44,7 +44,7 @@ class CustomTextField extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -60,14 +60,14 @@ class CustomTextField extends StatelessWidget {
           onTap: onTap,
           readOnly: readOnly,
           maxLines: maxLines,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 16,
             color: AppColors.textPrimary,
           ),
           decoration: InputDecoration(
             counterText: "",
             hintText: hintText,
-            hintStyle: GoogleFonts.lato(
+            hintStyle: TextStyle(
               fontSize: 16,
               color: AppColors.textLight,
             ),

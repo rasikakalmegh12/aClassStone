@@ -141,7 +141,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
       ),
       title: Text(
         widget.workPlan != null ? 'Edit Work Plan' : 'Create Work Plan',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -156,7 +156,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
       children: [
         Text(
           'Date type',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -179,7 +179,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                 ),
                 Text(
                   'Single day',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
@@ -201,7 +201,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                 ),
                 Text(
                   'Date range',
-                  style: GoogleFonts.lato(
+                  style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textPrimary,
                   ),
@@ -223,7 +223,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
             children: [
               Text(
                 'Date',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: AppColors.textPrimary,
@@ -262,7 +262,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
         ] else ...[
           Text(
             'Date Range',
-            style: GoogleFonts.lato(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.textPrimary,
@@ -277,7 +277,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                   children: [
                     Text(
                       'From',
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -318,7 +318,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                   children: [
                     Text(
                       'To',
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
                       ),
@@ -367,7 +367,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
           children: [
             Text(
               'City',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -426,7 +426,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
           children: [
             Text(
               'Clients',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -458,7 +458,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                   child: CheckboxListTile(
                     title: Text(
                       client['name'],
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 14,
                         color: AppColors.textPrimary,
                       ),
@@ -494,7 +494,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                     const SizedBox(width: 8),
                     Text(
                       'Add new client',
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 14,
                         color: AppColors.primaryTeal,
                         fontWeight: FontWeight.w500,
@@ -511,7 +511,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
             padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Please select at least one client',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 12,
                 color: AppColors.error,
               ),
@@ -527,7 +527,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
       children: [
         Text(
           'Notes',
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.textPrimary,
@@ -586,7 +586,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
             ),
             child: Text(
               widget.workPlan != null ? 'Update Plan' : 'Submit Plan',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),

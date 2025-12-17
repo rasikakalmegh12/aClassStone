@@ -128,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Create Account',
-                              style: GoogleFonts.playfairDisplay(
+                              style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
@@ -158,7 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             children: [
                               Text(
                                 'Register with ${AppConstants.appName}',
-                                style: GoogleFonts.lato(
+                                style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
@@ -264,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               //   children: [
                               //     Text(
                               //       'Role',
-                              //       style: GoogleFonts.lato(
+                              //       style: TextStyle(
                               //         fontSize: 14,
                               //         fontWeight: FontWeight.w600,
                               //         color: AppColors.textPrimary,
@@ -293,7 +293,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               //             Icons.keyboard_arrow_down,
                               //             color: AppColors.grey500,
                               //           ),
-                              //           style: GoogleFonts.lato(
+                              //           style: TextStyle(
                               //             fontSize: 16,
                               //             color: AppColors.textPrimary,
                               //           ),
@@ -402,7 +402,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     Expanded(
                                       child: Text(
                                         'Your registration will be reviewed and approved by a Super Admin.',
-                                        style: GoogleFonts.lato(
+                                        style: TextStyle(
                                           fontSize: 12,
                                           color: AppColors.info,
                                         ),

@@ -1,6 +1,9 @@
-// import 'package:flutter_bloc/flutter_bloc.dart';
-// import '../../api/integration/api_integration.dart';
-// import '../../api/models/api_models.dart';
+// ...existing commented code...
+
+// Export active dashboard bloc and events/states
+export 'dashboard_bloc.dart';
+export 'dashboard_event.dart';
+export 'dashboard_state.dart';
 //
 // // ==================== DASHBOARD EVENTS ====================
 // abstract class DashboardEvent {}

@@ -25,7 +25,7 @@ class TemporaryPlaceholderScreen extends StatelessWidget {
         ),
         title: Text(
           screenName,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -52,7 +52,7 @@ class TemporaryPlaceholderScreen extends StatelessWidget {
             const SizedBox(height: 24),
             Text(
               '$screenName Coming Soon',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
@@ -61,7 +61,7 @@ class TemporaryPlaceholderScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'This feature is under development and will be available soon.',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -81,7 +81,7 @@ class TemporaryPlaceholderScreen extends StatelessWidget {
               ),
               child: Text(
                 'Go Back',
-                style: GoogleFonts.lato(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),

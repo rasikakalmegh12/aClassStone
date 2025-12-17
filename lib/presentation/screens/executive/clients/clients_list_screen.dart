@@ -106,7 +106,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
       ),
       title: Text(
         'Clients',
-        style: GoogleFonts.lato(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -131,7 +131,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
             child: TextField(
               decoration: InputDecoration(
                 hintText: 'Search client',
-                hintStyle: GoogleFonts.lato(
+                hintStyle: TextStyle(
                   fontSize: 14,
                   color: AppColors.textLight,
                 ),
@@ -171,7 +171,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       ),
                       child: Text(
                         filter,
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                           color: isSelected ? AppColors.white : AppColors.textSecondary,
@@ -228,7 +228,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     Expanded(
                       child: Text(
                         client['name'],
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: AppColors.textPrimary,
@@ -243,7 +243,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       ),
                       child: Text(
                         client['type'],
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           color: _getTypeColor(client['type']),
@@ -259,7 +259,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     const SizedBox(width: 4),
                     Text(
                       client['location'],
-                      style: GoogleFonts.lato(
+                      style: TextStyle(
                         fontSize: 14,
                         color: AppColors.textSecondary,
                       ),
@@ -274,7 +274,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     Expanded(
                       child: Text(
                         '${client['ownerName']} · ${client['ownerPhone']}',
-                        style: GoogleFonts.lato(
+                        style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textSecondary,
                         ),
@@ -291,7 +291,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         const SizedBox(width: 4),
                         Text(
                           client['email'],
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textLight,
                           ),
@@ -306,7 +306,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         const SizedBox(width: 4),
                         Text(
                           client['gstNumber'],
-                          style: GoogleFonts.lato(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppColors.textLight,
                           ),
@@ -365,7 +365,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                           children: [
                             Text(
                               client['name'],
-                              style: GoogleFonts.lato(
+                              style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
@@ -380,7 +380,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                               ),
                               child: Text(
                                 client['type'],
-                                style: GoogleFonts.lato(
+                                style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: _getTypeColor(client['type']),
@@ -450,7 +450,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                           icon: const Icon(Icons.edit_outlined, size: 18),
                           label: Text(
                             'Edit Client',
-                            style: GoogleFonts.lato(
+                            style: TextStyle(
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -471,7 +471,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                           icon: const Icon(Icons.call, size: 18),
                           label: Text(
                             'Call',
-                            style: GoogleFonts.lato(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -500,7 +500,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.lato(
+          style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -523,7 +523,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
             width: 100,
             child: Text(
               '$label:',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -532,7 +532,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textPrimary,
               ),
@@ -554,7 +554,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
             width: 100,
             child: Text(
               '$label:',
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -563,7 +563,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
           Expanded(
             child: Text(
               value,
-              style: GoogleFonts.lato(
+              style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textPrimary,
               ),
