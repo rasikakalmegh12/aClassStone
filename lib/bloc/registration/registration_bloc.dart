@@ -79,3 +79,63 @@ class PendingBloc extends Bloc<PendingEvent, PendingState> {
 }
 
 
+class ApproveRegistrationBloc extends Bloc<ApproveRegistrationEvent, ApproveRegistrationState> {
+  ApproveRegistrationBloc() : super(ApproveRegistrationInitial()) {
+    // Handle user registration
+    on<FetchApproveRegistration>((event, emit) async {
+      emit(ApproveRegistrationLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.approvePendingUsers(event.body, event.id);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(ApproveRegistrationLoaded(response: response));
+        } else {
+          emit(ApproveRegistrationError(
+            message: response.message ?? 'Approval failed',
+          ));
+        }
+      } catch (e) {
+        emit(ApproveRegistrationError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}
+
+
+class RejectRegistrationBloc extends Bloc<RejectRegistrationEvent, RejectRegistrationState> {
+  RejectRegistrationBloc() : super(RejectRegistrationInitial()) {
+    // Handle user registration
+    on<FetchRejectRegistration>((event, emit) async {
+      emit(RejectRegistrationLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.rejectPendingUsers(event.id);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(RejectRegistrationLoaded(response: response));
+        } else {
+          emit(RejectRegistrationError(
+            message: response.message ?? 'Rejection failed',
+          ));
+        }
+      } catch (e) {
+        emit(RejectRegistrationError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}

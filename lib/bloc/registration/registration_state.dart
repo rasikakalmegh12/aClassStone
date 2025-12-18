@@ -1,3 +1,4 @@
+import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/PendingRegistrationResponseBody.dart';
 
 import '../../api/models/response/RegistrationResponseBody.dart';
@@ -47,4 +48,31 @@ class PendingError extends PendingState {
   final String message;
 
   PendingError({required this.message});
+}
+
+
+
+abstract class ApproveRegistrationState {}
+class ApproveRegistrationInitial extends ApproveRegistrationState {}
+class ApproveRegistrationLoading extends ApproveRegistrationState {}
+class ApproveRegistrationLoaded extends ApproveRegistrationState {
+  final ApproveResponseBody response;
+  ApproveRegistrationLoaded({required this.response});
+}
+class ApproveRegistrationError extends ApproveRegistrationState {
+  final String message;
+  ApproveRegistrationError({required this.message});
+}
+
+
+abstract class RejectRegistrationState {}
+class RejectRegistrationInitial extends RejectRegistrationState {}
+class RejectRegistrationLoading extends RejectRegistrationState {}
+class RejectRegistrationLoaded extends RejectRegistrationState {
+  final ApproveResponseBody response;
+  RejectRegistrationLoaded({required this.response});
+}
+class RejectRegistrationError extends RejectRegistrationState {
+  final String message;
+  RejectRegistrationError({required this.message});
 }

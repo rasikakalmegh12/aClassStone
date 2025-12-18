@@ -2,6 +2,7 @@ import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_event.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
 import 'package:apclassstone/core/session/session_manager.dart';
+import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -208,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Text(
+                              const Text(
                                 'Sign In',
                                 style: TextStyle(
                                   fontSize: 20,
@@ -287,7 +288,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     onPressed: () {
                                       // Handle forgot password
                                     },
-                                    child: Text(
+                                    child: const Text(
                                       'Forgot Password?',
                                       style: TextStyle(
                                         fontSize: 14,
@@ -317,7 +318,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
+                                  const Text(
                                     "Don't have an account? ",
                                     style: TextStyle(
                                       fontSize: 14,
@@ -326,9 +327,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                   GestureDetector(
                                     onTap: () {
-                                     context.push("/registrationScreen");
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen()));
+                                     // context.push("/registrationScreen");
                                     },
-                                    child: Text(
+                                    child: const Text(
                                       'Register',
                                       style: TextStyle(
                                         fontSize: 14,
@@ -354,14 +356,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
+                                    const Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.info_outline,
                                           color: AppColors.primaryGold,
                                           size: 18,
                                         ),
-                                        const SizedBox(width: 8),
+                                        SizedBox(width: 8),
                                         Text(
                                           'Demo Credentials',
                                           style: TextStyle(

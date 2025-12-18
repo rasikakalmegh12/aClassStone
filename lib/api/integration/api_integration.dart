@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:async';
 
+import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
+import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
@@ -381,7 +383,114 @@ class ApiIntegration {
     }
   }
 
+  static Future<ApproveResponseBody> approvePendingUsers(ApproveRequestBody requestBody,String id) async {
+    try {
+      final url = Uri.parse("${ApiConstants.approveRegistration}/$id");
 
+      print('📤 Sending approveRegistration request to: $url');
+      print('Request body: ${requestBody.toJson()}');
+
+      final response = await http.patch(
+        url,
+        headers: ApiConstants.headerWithToken,
+        body: jsonEncode(requestBody.toJson()),
+      ).timeout(_timeout);
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApproveResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ approveRegistration successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApproveResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ Registration failed with status ${response.statusCode}');
+        }
+        return ApproveResponseBody(
+          status: false,
+          message: 'Approved failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error login: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApproveResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApproveResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<ApproveResponseBody> rejectPendingUsers(String id) async {
+    try {
+      final url = Uri.parse("${ApiConstants.rejectRegistration}/$id");
+
+      print('📤 Sending rejectRegistration request to: $url');
+
+
+      final response = await http.delete(
+        url,
+        headers: ApiConstants.headerWithToken,
+
+      ).timeout(_timeout);
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApproveResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ rejectRegistration successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApproveResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ Rejection failed with status ${response.statusCode}');
+        }
+        return ApproveResponseBody(
+          status: false,
+          message: 'Registration failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error login: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApproveResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApproveResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
 //
 //   /// Logout user
 //   static Future<BaseResponse> logout() async {

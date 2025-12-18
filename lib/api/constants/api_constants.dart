@@ -20,8 +20,8 @@ class ApiConstants {
   // Registration Management
   static const String allUsers = "${baseUrl}admin/users/all";
   static const String pendingRegistrations = "${baseUrl}admin/users/pending";
-  static const String approveRegistration = "admin/approve-registration";
-  static const String rejectRegistration = "admin/reject-registration";
+  static const String approveRegistration = "${baseUrl}admin/users/approve";
+  static const String rejectRegistration = "${baseUrl}admin/users/reject";
 
   // Attendance
   static const String punchIn = "attendance/punch-in";

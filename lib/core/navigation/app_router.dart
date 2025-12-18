@@ -2,6 +2,8 @@ import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
 import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
+import 'package:apclassstone/presentation/screens/super_admin/screens/all_users_screen.dart';
+import 'package:apclassstone/presentation/screens/super_admin/screens/pending_users_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -23,7 +25,7 @@ import '../../presentation/screens/dashboard/dashboard_router.dart';
 import 'package:apclassstone/api/models/models.dart';
 
 class AppRouter {
-  static final GoRouter _router = GoRouter(
+  static final GoRouter router = GoRouter(
     initialLocation: '/splash',
     // redirect: _handleRedirect,
     routes: [
@@ -88,13 +90,48 @@ class AppRouter {
                 providers: [
                   BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
                   BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+                  BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+                  BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
                 ],
                 child: SuperAdminDashboardScreen(user: user!),
               );
             },
+            routes: [
+              GoRoute(
+                path: 'allUsersScreen',
+                name: 'allUsersScreen',
+                builder: (context, state) {
+                  return MultiBlocProvider(
+                    providers: [
+                      BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+                      BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+                      BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+                      BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+                    ],
+                    child: AllUsersScreen(),
+                  );
+                },
+              ),
+              GoRoute(
+                path: 'pendingUsersScreen',
+                name: 'pendingUsersScreen',
+                builder: (context, state) {
+                  return MultiBlocProvider(
+                    providers: [
+                      BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+                      BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+                      BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+                      BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+                    ],
+                    child: const PendingUsersScreen(),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
+
 
       // Profile Route
       GoRoute(
@@ -142,48 +179,48 @@ class AppRouter {
     ],
   );
 
-  static GoRouter get router => _router;
-
-  // Navigation Helper Methods
-  static void goToLogin(BuildContext context) {
-    context.goNamed('login');
-  }
-
-  static void goToDashboard(BuildContext context, String user) {
-    context.goNamed('dashboard', extra: user);
-  }
-
-  static void goToProfile(BuildContext context) {
-    context.goNamed('profile');
-  }
-
-  static void goToAttendance(BuildContext context) {
-    context.goNamed('attendance');
-  }
-
-  static void goToMeetings(BuildContext context) {
-    context.goNamed('meetings');
-  }
-
-  static void goToMeetingDetail(BuildContext context, String meetingId) {
-    context.goNamed('meeting-detail', pathParameters: {'meetingId': meetingId});
-  }
-
-  static void goToRegistrations(BuildContext context) {
-    context.goNamed('pendingRegistrations');
-  }
-
-  static void goToExecutiveDashboard(BuildContext context, String user) {
-    context.goNamed('executive-dashboard', extra: user);
-  }
-
-  static void goToAdminDashboard(BuildContext context, String user) {
-    context.goNamed('admin-dashboard', extra: user);
-  }
-
-  static void goToSuperAdminDashboard(BuildContext context, String user) {
-    context.goNamed('superadmin-dashboard', extra: user);
-  }
+  // static GoRouter get router => _router;
+  //
+  // // Navigation Helper Methods
+  // static void goToLogin(BuildContext context) {
+  //   context.goNamed('login');
+  // }
+  //
+  // static void goToDashboard(BuildContext context, String user) {
+  //   context.goNamed('dashboard', extra: user);
+  // }
+  //
+  // static void goToProfile(BuildContext context) {
+  //   context.goNamed('profile');
+  // }
+  //
+  // static void goToAttendance(BuildContext context) {
+  //   context.goNamed('attendance');
+  // }
+  //
+  // static void goToMeetings(BuildContext context) {
+  //   context.goNamed('meetings');
+  // }
+  //
+  // static void goToMeetingDetail(BuildContext context, String meetingId) {
+  //   context.goNamed('meeting-detail', pathParameters: {'meetingId': meetingId});
+  // }
+  //
+  // static void goToRegistrations(BuildContext context) {
+  //   context.goNamed('pendingRegistrations');
+  // }
+  //
+  // static void goToExecutiveDashboard(BuildContext context, String user) {
+  //   context.goNamed('executive-dashboard', extra: user);
+  // }
+  //
+  // static void goToAdminDashboard(BuildContext context, String user) {
+  //   context.goNamed('admin-dashboard', extra: user);
+  // }
+  //
+  // static void goToSuperAdminDashboard(BuildContext context, String user) {
+  //   context.goNamed('superadmin-dashboard', extra: user);
+  // }
 
   // Optional redirect logic (keep commented until wired)
   static String? _handleRedirect(BuildContext context, GoRouterState state) {
@@ -212,29 +249,31 @@ class AppRouter {
   }
 }
 
-// Extension for easier navigation
-extension AppRouterExtension on BuildContext {
-  void goToLogin() => AppRouter.goToLogin(this);
-
-  void goToDashboard(String user) => AppRouter.goToDashboard(this, user);
-
-  void goToProfile() => AppRouter.goToProfile(this);
-
-  void goToAttendance() => AppRouter.goToAttendance(this);
-
-  void goToMeetings() => AppRouter.goToMeetings(this);
-
-  void goToMeetingDetail(String meetingId) =>
-      AppRouter.goToMeetingDetail(this, meetingId);
-
-  void goToRegistrations() => AppRouter.goToRegistrations(this);
-
-  void goToExecutiveDashboard(String user) =>
-      AppRouter.goToExecutiveDashboard(this, user);
-
-  void goToAdminDashboard(String user) =>
-      AppRouter.goToAdminDashboard(this, user);
-
-  void goToSuperAdminDashboard(String user) =>
-      AppRouter.goToSuperAdminDashboard(this, user);
-}
+// // Extension for easier navigation
+// extension AppRouterExtension on BuildContext {
+//   void goToLogin() => AppRouter.goToLogin(this);
+//
+//   void goToDashboard(String user) => AppRouter.goToDashboard(this, user);
+//
+//   void goToProfile() => AppRouter.goToProfile(this);
+//
+//   void goToAttendance() => AppRouter.goToAttendance(this);
+//
+//   void goToMeetings() => AppRouter.goToMeetings(this);
+//
+//   void goToMeetingDetail(String meetingId) =>
+//       AppRouter.goToMeetingDetail(this, meetingId);
+//
+//   void goToRegistrations() => AppRouter.goToRegistrations(this);
+//   void goToAllUsersScreen() => AppRouter._router.pushNamed('allUsersScreen');
+//   void goToPendingUsersScreen() => AppRouter._router.pushNamed('pendingUsersScreen');
+//
+//   void goToExecutiveDashboard(String user) =>
+//       AppRouter.goToExecutiveDashboard(this, user);
+//
+//   void goToAdminDashboard(String user) =>
+//       AppRouter.goToAdminDashboard(this, user);
+//
+//   void goToSuperAdminDashboard(String user) =>
+//       AppRouter.goToSuperAdminDashboard(this, user);
+// }

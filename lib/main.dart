@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'bloc/dashboard/dashboard_bloc.dart';
+import 'bloc/registration/registration_bloc.dart';
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_constants.dart';
 import 'core/services/repository_provider.dart';
@@ -33,12 +35,10 @@ class MyApp extends StatelessWidget {
             BlocProvider(
               create: (context) => AppBlocProvider.registrationBloc,
             ),
-            // BlocProvider(
-            //   create: (context) => AppBlocProvider.dashboardBloc,
-            // ),
-            // BlocProvider(
-            //   create: (context) => AppBlocProvider.attendanceBloc,
-            // ),
+            BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+            BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+            BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+            BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
             // BlocProvider(
             //   create: (context) => AppBlocProvider.meetingBloc,
             // ),

@@ -4,16 +4,20 @@ import 'package:apclassstone/bloc/dashboard/dashboard_state.dart';
 import 'package:apclassstone/bloc/registration/registration_bloc.dart';
 import 'package:apclassstone/bloc/registration/registration_event.dart';
 import 'package:apclassstone/bloc/registration/registration_state.dart';
+import 'package:apclassstone/core/navigation/app_router.dart';
 import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../api/models/request/ApproveRequestBody.dart';
 import '../../../../api/models/response/PendingRegistrationResponseBody.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../auth/login_screen.dart';
+import 'all_users_screen.dart';
+import 'pending_users_screen.dart';
 
 class SuperAdminDashboard extends StatefulWidget {
   final String user;
@@ -30,7 +34,10 @@ class SuperAdminDashboard extends StatefulWidget {
 class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   bool _showPending = true;
-
+  final List<Map<String, String>> _roles = [
+    {'value': AppConstants.roleExecutive.toUpperCase(), 'label': 'EXECUTIVE'},
+    {'value': AppConstants.roleAdmin.toUpperCase(), 'label': 'ADMIN'},
+  ];
 
   @override
   void initState() {
@@ -47,33 +54,68 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // backgroundColor: const Color(0xFFF8FAFC),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient2,
-
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<ApproveRegistrationBloc, ApproveRegistrationState>(
+          listener: (context, state) {
+            if (state is ApproveRegistrationLoaded) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('User approved successfully!')),
+              );
+              // Optionally refresh pending list
+              context.read<PendingBloc>().add(GetPendingEvent());
+              context.read<AllUsersBloc>().add(GetAllUsers());
+            } else if (state is ApproveRegistrationError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message ?? 'Failed to approve user')),
+              );
+            }
+          },
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppConstants.defaultPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildStatsGrid(),
-                      const SizedBox(height: 10),
-                      _buildPendingRegistrations(),
+        BlocListener<RejectRegistrationBloc, RejectRegistrationState>(
+          listener: (context, state) {
+            if (state is RejectRegistrationLoaded) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('User rejected successfully!')),
+              );
+              // Optionally refresh pending list
+              context.read<PendingBloc>().add(GetPendingEvent());
+            } else if (state is RejectRegistrationError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(state.message ?? 'Failed to reject user')),
+              );
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        // backgroundColor: const Color(0xFFF8FAFC),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: AppColors.backgroundGradient2,
 
-                      const SizedBox(height: 40), // Extra padding at bottom
-                    ],
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AppConstants.defaultPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildStatsGrid(),
+                        const SizedBox(height: 10),
+                        _buildPendingRegistrations(),
+
+                        const SizedBox(height: 40), // Extra padding at bottom
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -101,7 +143,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity( 0.1),
+            color: Colors.black.withAlpha((0.1 * 255).toInt()),
             blurRadius: 10,
             offset: const Offset(0, 5),
           ),
@@ -119,7 +161,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity( 0.3),
+                  color: Colors.black.withAlpha((0.3 * 255).toInt()),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -136,7 +178,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Super Admin Portal',
                   style: TextStyle(
                     fontSize: 18,
@@ -150,7 +192,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   'System Management Dashboard',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white.withOpacity(  0.8),
+                    color: Colors.white.withAlpha((0.8 * 255).toInt()),
                     fontWeight: FontWeight.w400,
                   ),
                 ),
@@ -161,10 +203,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(  0.15),
+              color: Colors.white.withAlpha((0.15 * 255).toInt()),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(
-                color: Colors.white.withOpacity( 0.2),
+                color: Colors.white.withAlpha((0.2 * 255).toInt()),
                 width: 1,
               ),
             ),
@@ -257,12 +299,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     } else if (state is AllUsersLoaded) {
       final items = state.response.data ?? [];
       if (items.isEmpty) {
-        return Center(
+        return const Center(
           child: Text(
             'No users found',
             style: TextStyle(
               fontSize: 12,
-              color: const Color(0xFF718096),
+              color: Color(0xFF718096),
             ),
           ),
         );
@@ -290,17 +332,17 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   ),
                   title: Text(
                     user.fullName ?? '-',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF1A365D),
+                      color: Color(0xFF1A365D),
                     ),
                   ),
                   subtitle: Text(
                     user.email ?? '',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: const Color(0xFF718096),
+                      color: Color(0xFF718096),
                     ),
                   ),
                 );
@@ -312,8 +354,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               alignment: Alignment.bottomRight,
               child: TextButton(
                 onPressed: () {
-
-                  // TODO: navigate to full all-users page / dialog
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const AllUsersScreen()));
+                  // context.pushNamed('allUsersScreen',
+                  //   pathParameters: {},
+                  // );
                 },
                 child: const Text('View all'),
               ),
@@ -394,7 +438,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: color1.withOpacity(0.10),
+            color: color1.withAlpha((0.10 * 255).toInt()),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -612,13 +656,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(  0.05),
+            color: Colors.black.withAlpha((0.05 * 255).toInt()),
             blurRadius: 15,
             offset: const Offset(0, 5),
             spreadRadius: -2,
           ),
           BoxShadow(
-            color: Colors.black.withOpacity( 0.03),
+            color: Colors.black.withAlpha((0.03 * 255).toInt()),
             blurRadius: 25,
             offset: const Offset(0, 10),
             spreadRadius: -5,
@@ -661,7 +705,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           borderRadius: BorderRadius.circular(10),
                           boxShadow: [
                             BoxShadow(
-                              color: gradient.colors.first.withOpacity(  0.3),
+                              color: gradient.colors.first.withAlpha((0.3 * 255).toInt()),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -730,7 +774,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
                     colors: [
-                      gradient.colors.first.withOpacity(  0.1),
+                      gradient.colors.first.withAlpha((0.1 * 255).toInt()),
                       Colors.transparent,
                     ],
                   ),
@@ -765,13 +809,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(  0.04),
+                color: Colors.black.withAlpha((0.04 * 255).toInt()),
                 blurRadius: 25,
                 offset: const Offset(0, 10),
                 spreadRadius: -5,
               ),
               BoxShadow(
-                color: Colors.blue.withOpacity(  0.05),
+                color: Colors.blue.withAlpha((0.05 * 255).toInt()),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
                 spreadRadius: -8,
@@ -809,7 +853,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFF59E0B).withOpacity( 0.3),
+                              color: const Color(0xFFF59E0B).withAlpha((0.3 * 255).toInt()),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -1022,7 +1066,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   Widget _buildRegistrationItem(Data registration, int index) {
     return Container(
       margin: const EdgeInsets.only(bottom: 1),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: index % 2 == 0 ? Colors.white : const Color(0xFFF8FAFC),
         border: const Border(
@@ -1035,8 +1079,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 35,
+                height: 35,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
@@ -1046,7 +1090,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 child: Center(
                   child: Text(
                     '${registration.fullName?.substring(0, 1).toUpperCase()}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -1061,10 +1105,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   children: [
                     Text(
                       '${registration.fullName}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1A365D),
+                        color: Color(0xFF1A365D),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1072,9 +1116,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     const SizedBox(height: 2),
                     Text(
                       '${registration.email}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
-                        color: const Color(0xFF718096),
+                        color: Color(0xFF718096),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1094,12 +1138,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     width: 1,
                   ),
                 ),
-                child: Text(
+                child: const Text(
                   'Pending',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFFED8936),
+                    color: Color(0xFFED8936),
                   ),
                 ),
               ),
@@ -1125,7 +1169,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     ],
                   ),
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _showApproveDialog(context, registration);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
@@ -1133,7 +1179,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Approve',
                       style: TextStyle(
                         fontSize: 12,
@@ -1156,7 +1202,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _showRejectDialog(context, registration);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       shadowColor: Colors.transparent,
@@ -1164,12 +1212,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Reject',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: const Color(0xFFE53E3E),
+                        color: Color(0xFFE53E3E),
                       ),
                     ),
                   ),
@@ -1180,6 +1228,109 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         ],
       ),
     ).animate(delay: (index * 100).ms).fadeIn().slideX(begin: 0.3, end: 0);
+  }
+
+  void _showApproveDialog(BuildContext context, Data registration) {
+    String selectedRole = _roles.first['value']!;
+    // Save the parent context for Bloc access
+    final rootContext = context;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('Approve Registration'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('Select role for this user:'),
+                  const SizedBox(height: 12),
+                  DropdownButton<String>(
+                    value: selectedRole,
+                    isExpanded: true,
+                    items: _roles.map((role) {
+                      return DropdownMenuItem<String>(
+                        value: role['value'],
+                        child: Text(role['label']!),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => selectedRole = val);
+                    },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF48BB78), Color(0xFF38A169)]),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: TextButton(
+                    onPressed: () {
+                      // Use rootContext for Bloc access
+                      rootContext.read<ApproveRegistrationBloc>().add(FetchApproveRegistration(
+                        body: ApproveRequestBody(
+                          role: selectedRole,
+                          appCode: AppConstants.appCode
+                        ),
+                        id: registration.id!,
+                      ));
+                      Navigator.of(context).pop();
+                      // Remove mock snackbar, real feedback is handled by BlocListener
+                    },
+                    child: const Text('Approve', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showRejectDialog(BuildContext context, Data registration) {
+    final TextEditingController reasonController = TextEditingController();
+    // Save the parent context for Bloc access
+    final rootContext = context;
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Reject Registration'),
+          content:  const Text('Are you sure you want to reject this registration?',style: TextStyle(fontSize: 15,fontStyle: FontStyle.italic),),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [Color(0xFFF56565), Color(0xFFE53E3E)]),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: TextButton(
+                onPressed: () {
+                  // Use rootContext for Bloc access
+                  rootContext.read<RejectRegistrationBloc>().add(FetchRejectRegistration(id: registration.id!));
+                  Navigator.of(context).pop();
+                  // Remove mock snackbar, real feedback is handled by BlocListener
+                },
+                child: const Text('Reject', style: TextStyle(color: Colors.white)),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _buildPendingRegistrations() {
@@ -1206,13 +1357,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
+                    color: Colors.black.withAlpha((0.04 * 255).toInt()),
                     blurRadius: 25,
                     offset: const Offset(0, 10),
                     spreadRadius: -5,
                   ),
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.05),
+                    color: Colors.blue.withAlpha((0.05 * 255).toInt()),
                     blurRadius: 15,
                     offset: const Offset(0, 5),
                     spreadRadius: -8,
@@ -1253,7 +1404,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFF59E0B).withOpacity(0.3),
+                                  color: const Color(0xFFF59E0B).withAlpha((0.3 * 255).toInt()),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1276,10 +1427,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                       _showPending
                                           ? 'Pending Registrations'
                                           : 'All Users',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
-                                        color: const Color(0xFF1E293B),
+                                        color: Color(0xFF1E293B),
                                         letterSpacing: -0.3,
                                       ),
                                     ),
@@ -1290,9 +1441,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                   _showPending
                                       ? 'Review and approve new registrations'
                                       : 'View all registered users',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 10,
-                                    color: const Color(0xFF64748B),
+                                    color: Color(0xFF64748B),
                                   ),
                                 ),
                               ],
@@ -1360,9 +1511,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       final items = state.response.data ?? [];
       if (items.isEmpty) {
         // keep your existing “All caught up” UI
-        return Center(
+        return const Center(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1372,15 +1523,15 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1A365D),
+                    color: Color(0xFF1A365D),
                   ),
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Text(
                   'No pending registrations to review',
                   style: TextStyle(
                     fontSize: 12,
-                    color: const Color(0xFF718096),
+                    color: Color(0xFF718096),
                   ),
                 ),
               ],
@@ -1389,8 +1540,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         );
       }
 
-      final showViewAll = items.length > 5;
-      final visibleItems = showViewAll ? items.take(5).toList() : items;
+      final showViewAll = items.length > 2;
+      final visibleItems = showViewAll ? items.take(2).toList() : items;
 
       return Column(
         children: [
@@ -1409,7 +1560,11 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               alignment: Alignment.bottomRight,
               child: TextButton(
                 onPressed: () {
-                  // TODO: navigate to full pending list page / dialog
+
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PendingUsersScreen()));
+                  // context.pushNamed('pendingUsersScreen',
+                  //   pathParameters: {},
+                  // );
                 },
                 child: const Text('View all'),
               ),
@@ -1418,13 +1573,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       );
     } else if (state is PendingError) {
       // keep your existing error UI
-      return Center(
+      return const Center(
         child: Text(
           'Unable to load data',
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: const Color(0xFF1A365D),
+            color: Color(0xFF1A365D),
           ),
         ),
       );
@@ -1449,7 +1604,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark
-              ? Colors.white.withOpacity( 0.1)
+              ? Colors.white.withAlpha((0.1 * 255).toInt())
               : const Color(0xFFE2E8F0),
           width: 1,
         ),

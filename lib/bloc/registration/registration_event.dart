@@ -1,4 +1,6 @@
 // ==================== REGISTRATION EVENTS ====================
+import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
+
 abstract class RegistrationEvent {}
 
 /// Event to register a new user
@@ -23,6 +25,20 @@ class ResetRegistrationEvent extends RegistrationEvent {}
 
 
 abstract class PendingEvent {}
-/// Event to register a new user
 class GetPendingEvent extends PendingEvent {}
 
+
+
+abstract class ApproveRegistrationEvent {}
+class FetchApproveRegistration extends ApproveRegistrationEvent {
+  final ApproveRequestBody body;
+  final String id;
+  FetchApproveRegistration({required this.body,required this.id});
+}
+
+
+abstract class RejectRegistrationEvent {}
+class FetchRejectRegistration extends RejectRegistrationEvent {
+  final String id;
+  FetchRejectRegistration({required this.id});
+}
