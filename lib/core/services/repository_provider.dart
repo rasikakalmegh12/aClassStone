@@ -1,25 +1,77 @@
 import 'package:apclassstone/bloc/auth/auth_bloc.dart';
+import 'package:apclassstone/api/network/network_service.dart';
+import 'package:apclassstone/api/network/offline_api_wrapper.dart';
+import 'package:apclassstone/data/local/cache_repository.dart';
+import 'package:apclassstone/data/local/queue_repository.dart';
+import 'package:apclassstone/bloc/queue/queue_bloc.dart';
+import 'package:apclassstone/data/repositories/punch_repository.dart';
+
+import '../../bloc/attendance/attendance_bloc.dart';
+import 'connectivity_service.dart';
+import 'sync_service.dart';
+import '../../bloc/location_ping/location_ping_bloc.dart';
 
 import '../../bloc/bloc.dart';
+export 'package:apclassstone/api/network/offline_api_wrapper.dart';
 
-/// Service Provider for managing BLoCs
-/// Provides singleton instances of all BLoCs used throughout the app
+/// Service Provider for managing BLoCs and Services
+/// Provides singleton instances of all BLoCs and offline-first services
 class AppBlocProvider {
   static late LoginBloc _authBloc;
   static late RegistrationBloc _registrationBloc;
-  // static late AttendanceBloc _attendanceBloc;
-  // static late MeetingBloc _meetingBloc;
-  // static late DashboardBloc _dashboardBloc;
-  // static late UserProfileBloc _userProfileBloc;
+  static late QueueBloc _queueBloc;
+  static late AttendanceBloc _attendanceBloc;
+  static late LocationPingBloc _locationPingBloc;
 
-  /// Initialize all BLoCs
-  static void initialize() {
+  // Offline-first services
+  static late ConnectivityService _connectivityService;
+  static late CacheRepository _cacheRepository;
+  static late QueueRepository _queue_repository;
+  static late SyncService _syncService;
+  static late OfflineApiWrapper _offlineApiWrapper;
+  static late PunchRepository _punchRepository;
+
+  /// Initialize all BLoCs and services
+  static Future<void> initialize() async {
+    // Initialize connectivity service
+    _connectivityService = ConnectivityService.instance;
+    await _connectivityService.initialize();
+
+    // Initialize repositories
+    _cacheRepository = CacheRepository();
+    _queue_repository = QueueRepository();
+
+    // Initialize offline API wrapper
+    await OfflineApiWrapper.initialize(
+      cacheRepository: _cacheRepository,
+      queueRepository: _queue_repository,
+      connectivityService: _connectivityService,
+      dio: NetworkService.instance.dio,
+    );
+    _offlineApiWrapper = OfflineApiWrapper.instance;
+
+    // Initialize sync service
+    _syncService = await SyncService.initialize(
+      queueRepository: _queue_repository,
+      connectivityService: _connectivityService,
+      networkService: NetworkService.instance,
+    );
+
+    // Initialize BLoCs
     _authBloc = LoginBloc();
     _registrationBloc = RegistrationBloc();
-    // _attendanceBloc = AttendanceBloc();
-    // _meetingBloc = MeetingBloc();
-    // _dashboardBloc = DashboardBloc();
-    // _userProfileBloc = UserProfileBloc();
+    _queueBloc = QueueBloc(
+      queueRepository: _queue_repository,
+      syncService: _syncService,
+      offlineApiWrapper: _offlineApiWrapper,
+    );
+
+    // Initialize punch repository and attendance bloc
+    _punchRepository = PunchRepository();
+    _attendanceBloc = AttendanceBloc(repo: _punchRepository);
+
+    // Initialize location ping bloc
+    _locationPingBloc = LocationPingBloc(repo: _punchRepository);
   }
 
   /// Get AuthBloc instance
@@ -28,27 +80,31 @@ class AppBlocProvider {
   /// Get RegistrationBloc instance
   static RegistrationBloc get registrationBloc => _registrationBloc;
 
-  /// Get AttendanceBloc instance
-  // static AttendanceBloc get attendanceBloc => _attendanceBloc;
-  //
-  // /// Get MeetingBloc instance
-  // static MeetingBloc get meetingBloc => _meetingBloc;
-  //
-  // /// Get DashboardBloc instance
-  // static DashboardBloc get dashboardBloc => _dashboardBloc;
-  //
-  // /// Get UserProfileBloc instance
-  // static UserProfileBloc get userProfileBloc => _userProfileBloc;
+  /// Get QueueBloc instance (for super admin)
+  static QueueBloc get queueBloc => _queueBloc;
 
-  /// Dispose all BLoCs (call this when app closes)
+  /// Get AttendanceBloc instance
+  static AttendanceBloc get attendanceBloc => _attendanceBloc;
+
+  /// Get LocationPingBloc instance
+  static LocationPingBloc get locationPingBloc => _locationPingBloc;
+
+  // Service getters for direct access
+  static ConnectivityService get connectivityService => _connectivityService;
+  static CacheRepository get cacheRepository => _cacheRepository;
+  static QueueRepository get queueRepository => _queue_repository;
+  static SyncService get syncService => _syncService;
+  static OfflineApiWrapper get offlineApiWrapper => _offlineApiWrapper;
+  static PunchRepository get punchRepository => _punchRepository;
+
+  /// Dispose all BLoCs and services (call this when app closes)
   static void dispose() {
     _authBloc.close();
     _registrationBloc.close();
-    // _attendanceBloc.close();
-    // _meetingBloc.close();
-    // _dashboardBloc.close();
-    // _userProfileBloc.close();
+    _queueBloc.close();
+    _attendanceBloc.close();
+    _locationPingBloc.close();
+    _connectivityService.dispose();
+    _syncService.dispose();
   }
 }
-
-

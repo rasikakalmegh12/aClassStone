@@ -4,8 +4,10 @@ import 'package:apclassstone/bloc/dashboard/dashboard_state.dart';
 import 'package:apclassstone/bloc/registration/registration_bloc.dart';
 import 'package:apclassstone/bloc/registration/registration_event.dart';
 import 'package:apclassstone/bloc/registration/registration_state.dart';
-import 'package:apclassstone/core/navigation/app_router.dart';
 import 'package:apclassstone/core/session/session_manager.dart';
+import 'package:apclassstone/core/services/connectivity_service.dart';
+import 'package:apclassstone/core/services/repository_provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -34,6 +36,9 @@ class SuperAdminDashboard extends StatefulWidget {
 class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   bool _showPending = true;
+  bool _isOnline = true;
+  late ConnectivityService _connectivityService;
+
   final List<Map<String, String>> _roles = [
     {'value': AppConstants.roleExecutive.toUpperCase(), 'label': 'EXECUTIVE'},
     {'value': AppConstants.roleAdmin.toUpperCase(), 'label': 'ADMIN'},
@@ -42,14 +47,39 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   @override
   void initState() {
     super.initState();
+
+    // Initialize connectivity monitoring
+    _connectivityService = ConnectivityService.instance;
+    _isOnline = _connectivityService.isOnline;
+
+    // Listen to connectivity changes
+    _connectivityService.statusStream.listen((status) {
+      setState(() {
+        _isOnline = status == ConnectivityStatus.online;
+      });
+
+      // Refresh data when connectivity is restored
+      if (_isOnline) {
+        _refreshData();
+      }
+    });
+
     SessionManager.isLoggedIn().then((isLoggedIn) {
-      print("login status: $isLoggedIn");
-      print("access token: ${SessionManager.getAccessTokenSync()}");
+      if (kDebugMode) {
+        print("login status: $isLoggedIn");
+        print("access token: ${SessionManager.getAccessTokenSync()}");
+      }
+
     });
     // Load pending registrations and dashboard data
+    _refreshData();
+  }
+
+  void _refreshData() {
     context.read<PendingBloc>().add(GetPendingEvent());
     context.read<AllUsersBloc>().add(GetAllUsers());
-    // context.read<DashboardBloc>().add(LoadSuperAdminDashboardEvent());
+    // Note: getAllUsers() and getPendingUsers() now have built-in offline support
+    // They automatically fall back to cached data when offline
   }
 
   @override
@@ -63,8 +93,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 const SnackBar(content: Text('User approved successfully!')),
               );
               // Optionally refresh pending list
-              context.read<PendingBloc>().add(GetPendingEvent());
-              context.read<AllUsersBloc>().add(GetAllUsers());
+              _refreshData();
             } else if (state is ApproveRegistrationError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message ?? 'Failed to approve user')),
@@ -79,7 +108,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 const SnackBar(content: Text('User rejected successfully!')),
               );
               // Optionally refresh pending list
-              context.read<PendingBloc>().add(GetPendingEvent());
+              _refreshData();
             } else if (state is RejectRegistrationError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text(state.message ?? 'Failed to reject user')),
@@ -98,6 +127,34 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           child: SafeArea(
             child: Column(
               children: [
+                // Connectivity Status Bar
+                if (!_isOnline)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade100,
+                      border: Border(
+                        bottom: BorderSide(color: Colors.orange.shade300, width: 1),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.cloud_off_rounded, color: Colors.orange.shade700, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'No internet connectivity - Showing cached data',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.orange.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 _buildHeader(),
                 Expanded(
                   child: SingleChildScrollView(
@@ -218,6 +275,54 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 size: 16,
               ),
             ),
+          ),
+          const SizedBox(width: 8),
+          // Offline punches indicator
+          FutureBuilder<int>(
+            future: AppBlocProvider.punchRepository.getAllLocalPunches().then((list) => list.where((p) => p.status != 'success').length),
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? 0;
+              return GestureDetector(
+                onTap: () async {
+                  final punches = await AppBlocProvider.punchRepository.getAllLocalPunches();
+                  if (!mounted) return;
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) => _buildPunchesModal(punches),
+                  );
+                },
+                child: Stack(
+                  alignment: Alignment.topRight,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha((0.12 * 255).toInt()),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: const Icon(Icons.history, color: Colors.white, size: 16),
+                    ),
+                    if (count > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            count.toString(),
+                            style: const TextStyle(color: Colors.white, fontSize: 10),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -1561,10 +1666,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               child: TextButton(
                 onPressed: () {
 
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const PendingUsersScreen()));
-                  // context.pushNamed('pendingUsersScreen',
-                  //   pathParameters: {},
-                  // );
+                  // Navigator.push(context, MaterialPageRoute(builder: (context) => const PendingUsersScreen()));
+                  context.pushNamed('pendingUsersScreen',
+                    pathParameters: {},
+                  );
                 },
                 child: const Text('View all'),
               ),
@@ -1746,6 +1851,31 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ],
         );
       },
+    );
+  }
+
+  // Add helper widget at end of file (before class end)
+  Widget _buildPunchesModal(List<dynamic> punches) {
+    if (punches.isEmpty) {
+      return SizedBox(
+        height: 200,
+        child: Center(child: Text('No local punch records')),
+      );
+    }
+
+    return SizedBox(
+      height: 400,
+      child: ListView.builder(
+        itemCount: punches.length,
+        itemBuilder: (context, index) {
+          final p = punches[index];
+          return ListTile(
+            title: Text('${p.type.toUpperCase()} - ${p.capturedAt}'),
+            subtitle: Text('User: ${p.userId} • Status: ${p.status}'),
+            trailing: p.status == 'success' ? Icon(Icons.check, color: Colors.green) : Icon(Icons.sync_problem, color: Colors.orange),
+          );
+        },
+      ),
     );
   }
 

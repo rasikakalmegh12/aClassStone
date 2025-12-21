@@ -1,6 +1,7 @@
 import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
+import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
 import 'package:apclassstone/presentation/screens/super_admin/screens/all_users_screen.dart';
 import 'package:apclassstone/presentation/screens/super_admin/screens/pending_users_screen.dart';
@@ -12,7 +13,9 @@ import '../../bloc/bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../presentation/screens/attendance/attendance_history_screen.dart';
 import '../../presentation/screens/auth/profile_screen.dart';
+import '../../presentation/screens/dashboard/admin_dashboard.dart';
 import '../../presentation/screens/dashboard/admin_dashboard_screen.dart';
+import '../../presentation/screens/dashboard/executive_dashboard.dart';
 import '../../presentation/screens/dashboard/executive_dashboard_screen.dart';
 import '../../presentation/screens/dashboard/super_admin_dashboard_screen.dart';
 import '../../presentation/screens/meeting/meeting_detail_screen.dart';
@@ -23,6 +26,8 @@ import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/dashboard/dashboard_router.dart';
 
 import 'package:apclassstone/api/models/models.dart';
+
+import '../../presentation/screens/super_admin/screens/super_admin_dashboard.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -43,96 +48,160 @@ class AppRouter {
         builder: (context, state) => const LoginScreen(),
       ),
 
+
+
+
+
       // Dashboard + nested dashboards
+      // GoRoute(
+      //   path: '/dashboard',
+      //   name: 'dashboard',
+      //   builder: (context, state) {
+      //     final user = state.extra as String?;
+      //     if (user == null) {
+      //       return const LoginScreen();
+      //     }
+      //
+      //
+      //     // Only trigger redirect when the incoming location is exactly '/dashboard'
+      //     // to avoid redirect loops. Use a post-frame callback to call context.go.
+      //     if ((state.matchedLocation == '/dashboard') && user != null) {
+      //       WidgetsBinding.instance.addPostFrameCallback((_) {
+      //         if (user == AppConstants.roleExecutive) {
+      //           context.go('/dashboard/executive', extra: user);
+      //         } else if (user == AppConstants.roleSuperAdmin) {
+      //           context.go('/dashboard/superadmin', extra: user);
+      //         } else {
+      //           context.go('/dashboard/admin', extra: user);
+      //         }
+      //       });
+      //
+      //       // Return an empty placeholder while the redirect happens.
+      //       return const SizedBox.shrink();
+      //     }
+      //
+      //     // If we're already on a child route (or role is not yet available),
+      //     // return the dashboard router which will build the nested screens.
+      //     return DashboardRouter(user: user);
+      //   },
+      //   routes: [
+      //     // NOTE: child paths have no leading '/'
+      //     GoRoute(
+      //       path: 'executive',
+      //       name: 'executive-dashboard',
+      //       builder: (context, state) {
+      //         final user = state.extra as String?;
+      //         return ExecutiveDashboardScreen(user: user!);
+      //       },
+      //     ),
+      //
+      //     GoRoute(
+      //       path: 'admin',
+      //       name: 'admin-dashboard',
+      //       builder: (context, state) {
+      //         final user = state.extra as String?;
+      //         return MultiBlocProvider(
+      //           providers: [
+      //             BlocProvider<PendingBloc>(
+      //               create: (context) => PendingBloc(),
+      //             ),
+      //           ],
+      //           child: AdminDashboardScreen(user: user!),
+      //         );
+      //       },
+      //     ),
+      //
+      //     GoRoute(
+      //       path: 'superadmin',
+      //       name: 'superadmin-dashboard',
+      //       builder: (context, state) {
+      //         final user = state.extra as String?;
+      //         return MultiBlocProvider(
+      //           providers: [
+      //             BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+      //             BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+      //             BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+      //             BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+      //           ],
+      //           child: SuperAdminDashboardScreen(user: user!),
+      //         );
+      //       },
+      //
+      //     ),
+      //   ],
+      // ),
       GoRoute(
-        path: '/dashboard',
-        name: 'dashboard',
+        path: '/executive',
+        name: 'executive-dashboard',
         builder: (context, state) {
           final user = state.extra as String?;
-          if (user == null) {
-            return const LoginScreen();
-          }
-          return DashboardRouter(user: user);
+          return ExecutiveDashboard(user: user!);
         },
-        routes: [
-          // NOTE: child paths have no leading '/'
-          GoRoute(
-            path: 'executive',
-            name: 'executive-dashboard',
-            builder: (context, state) {
-              final user = state.extra as String?;
-              return ExecutiveDashboardScreen(user: user!);
-            },
-          ),
-
-          GoRoute(
-            path: 'admin',
-            name: 'admin-dashboard',
-            builder: (context, state) {
-              final user = state.extra as String?;
-              return MultiBlocProvider(
-                providers: [
-                  BlocProvider<PendingBloc>(
-                    create: (context) => PendingBloc(),
-                  ),
-                ],
-                child: AdminDashboardScreen(user: user!),
-              );
-            },
-          ),
-
-          GoRoute(
-            path: 'superadmin',
-            name: 'superadmin-dashboard',
-            builder: (context, state) {
-              final user = state.extra as String?;
-              return MultiBlocProvider(
-                providers: [
-                  BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
-                  BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
-                  BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
-                  BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
-                ],
-                child: SuperAdminDashboardScreen(user: user!),
-              );
-            },
-            routes: [
-              GoRoute(
-                path: 'allUsersScreen',
-                name: 'allUsersScreen',
-                builder: (context, state) {
-                  return MultiBlocProvider(
-                    providers: [
-                      BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
-                      BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
-                      BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
-                      BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
-                    ],
-                    child: AllUsersScreen(),
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'pendingUsersScreen',
-                name: 'pendingUsersScreen',
-                builder: (context, state) {
-                  return MultiBlocProvider(
-                    providers: [
-                      BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
-                      BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
-                      BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
-                      BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
-                    ],
-                    child: const PendingUsersScreen(),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
       ),
 
+      GoRoute(
+        path: '/admin',
+        name: 'admin-dashboard',
+        builder: (context, state) {
+          final user = state.extra as String?;
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<PendingBloc>(
+                create: (context) => PendingBloc(),
+              ),
+            ],
+            child: AdminDashboard(user: user!),
+          );
+        },
+      ),
 
+      GoRoute(
+        path: '/superadmin',
+        name: 'superadmin-dashboard',
+        builder: (context, state) {
+          final user = state.extra as String?;
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+              BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+              BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+              BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+            ],
+            child: SuperAdminDashboard(user: user!),
+          );
+        },
+
+      ),
+      GoRoute(
+        path: '/allUsersScreen',
+        name: 'allUsersScreen',
+        builder: (context, state) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+              BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+              BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+              BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+            ],
+            child: const AllUsersScreen(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/pendingUsersScreen',
+        name: 'pendingUsersScreen',
+        builder: (context, state) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+              BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
+              BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
+              BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+            ],
+            child: const PendingUsersScreen(),
+          );
+        },
+      ),
       // Profile Route
       GoRoute(
         path: '/profile',

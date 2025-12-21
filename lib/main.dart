@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'bloc/dashboard/dashboard_bloc.dart';
 import 'bloc/registration/registration_bloc.dart';
@@ -14,7 +13,7 @@ import 'core/session/session_manager.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SessionManager.init();
-  AppBlocProvider.initialize();
+  await AppBlocProvider.initialize();
   runApp(const MyApp());
 }
 
@@ -39,6 +38,9 @@ class MyApp extends StatelessWidget {
             BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
             BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
             BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+            BlocProvider(
+              create: (context) => AppBlocProvider.queueBloc,
+            ),
             // BlocProvider(
             //   create: (context) => AppBlocProvider.meetingBloc,
             // ),

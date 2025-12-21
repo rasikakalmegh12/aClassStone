@@ -1,30 +1,30 @@
-// Attendance Events
+import 'package:apclassstone/api/models/request/PunchInOutRequestBody.dart';
+
 abstract class AttendanceEvent {}
 
-class PunchInEvent extends AttendanceEvent {
-  final double? latitude;
-  final double? longitude;
-  final String? location;
+class PunchInRequested extends AttendanceEvent {
+  final String userId;
+  final PunchInOutRequestBody body;
 
-  PunchInEvent({
-    this.latitude,
-    this.longitude,
-    this.location,
-  });
+  PunchInRequested({required this.userId, required this.body});
 }
 
-class PunchOutEvent extends AttendanceEvent {
-  final double? latitude;
-  final double? longitude;
-  final String? location;
+class PunchOutRequested extends AttendanceEvent {
+  final String userId;
+  final PunchInOutRequestBody body;
 
-  PunchOutEvent({
-    this.latitude,
-    this.longitude,
-    this.location,
-  });
+  PunchOutRequested({required this.userId, required this.body});
 }
 
-class LoadAttendanceHistoryEvent extends AttendanceEvent {}
+class LoadLocalPunches extends AttendanceEvent {
+  final String userId;
+  LoadLocalPunches({required this.userId});
+}
 
-class RefreshAttendanceEvent extends AttendanceEvent {}
+
+abstract class LocationPingEvent {}
+class FetchLocationPing extends LocationPingEvent {
+  final PunchInOutRequestBody body;
+
+  FetchLocationPing({required this.body});
+}

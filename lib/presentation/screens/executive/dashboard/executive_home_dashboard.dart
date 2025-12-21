@@ -1,16 +1,20 @@
+import 'dart:async';
+import 'package:apclassstone/bloc/location_ping/location_ping_event.dart';
+import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import 'package:apclassstone/api/models/models.dart';
+import 'package:apclassstone/api/models/request/PunchInOutRequestBody.dart';
+import 'package:apclassstone/core/services/repository_provider.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../../core/constants/app_colors.dart';
 
+import '../../auth/login_screen.dart';
 import '../clients/clients_list_screen.dart';
 import '../meetings/meetings_list_screen.dart';
 import '../work_plans/work_plans_list_screen.dart';
 import '../leads/leads_list_screen.dart';
-import '../temporary_placeholder_screen.dart';
 
 class ExecutiveHomeDashboard extends StatefulWidget {
   final String user;
@@ -27,6 +31,8 @@ class ExecutiveHomeDashboard extends StatefulWidget {
 class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   bool isPunchedIn = false;
   DateTime? punchInTime;
+  bool isPunching = false; // new: disables repeated taps while processing
+  Timer? _pingTimer; // periodic timer for location pings
   String currentCity = "Jaipur";
   int plannedVisits = 5;
   int meetingsLogged = 2;
@@ -117,45 +123,58 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  'A-Class Executive',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: [
-                    Text(
-                      'Hello, ${widget.user}',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      formattedDate,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: AppColors.white.withOpacity(0.9),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hello, ${SessionManager.getUserNameSync()}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                           Text(
+                            formattedDate,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppColors.white.withOpacity(0.9),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: 12),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha((0.15 * 255).toInt()),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white.withAlpha((0.2 * 255).toInt()),
+                    width: 1,
+                  ),
+                ),
+                child: IconButton(
+                  onPressed: () => _showLogoutDialog(),
+                  icon: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                ),
+              ),
             ],
           ),
+
         ],
       ),
     ).animate().fadeIn().slideY(begin: -0.5, end: 0);
@@ -178,7 +197,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'ATTENDANCE',
             style: TextStyle(
               fontSize: 12,
@@ -215,7 +234,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             const SizedBox(height: 4),
             Text(
               'Tracking since ${_formatTime(punchInTime!)}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textLight,
               ),
@@ -237,7 +256,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               ),
               child: Text(
                 isPunchedIn ? 'Punch Out' : 'Punch In',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
@@ -246,7 +265,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           ),
           if (!isPunchedIn) ...[
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Punch in to start tracking',
               style: TextStyle(
                 fontSize: 12,
@@ -276,7 +295,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'TODAY SUMMARY',
             style: TextStyle(
               fontSize: 12,
@@ -288,7 +307,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           const SizedBox(height: 12),
           Text(
             'City: $currentCity',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -314,7 +333,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 borderRadius: BorderRadius.circular(6),
               ),
             ),
-            child: Row(
+            child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
@@ -324,8 +343,8 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(width: 4),
-                const Icon(Icons.arrow_forward_ios, size: 12),
+                SizedBox(width: 4),
+                Icon(Icons.arrow_forward_ios, size: 12),
               ],
             ),
           ),
@@ -350,7 +369,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           const SizedBox(width: 8),
           Text(
             '$label: $count',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
             ),
@@ -377,7 +396,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'ACTION FEED',
             style: TextStyle(
               fontSize: 12,
@@ -449,7 +468,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
-          border: isLast ? null : Border(
+          border: isLast ? null : const Border(
             bottom: BorderSide(
               color: AppColors.grey100,
               width: 1,
@@ -470,7 +489,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -479,7 +498,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textLight,
                     ),
@@ -515,7 +534,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'QUICK ACTIONS',
             style: TextStyle(
               fontSize: 12,
@@ -623,7 +642,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
@@ -707,18 +726,101 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     );
   }
 
-  void _handlePunchAction() {
+  void _handlePunchAction() async {
+    if (isPunching) return; // prevent re-entrancy
     setState(() {
-      if (isPunchedIn) {
-        isPunchedIn = false;
-        punchInTime = null;
-        _showSuccessMessage('Punched out successfully!');
-      } else {
-        isPunchedIn = true;
-        punchInTime = DateTime.now();
-        _showSuccessMessage('Punched in successfully!');
-      }
+      isPunching = true;
     });
+
+    double? lat;
+    double? lng;
+    int? accuracyM;
+
+    // Request permission and get location
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+        // Permission denied - we continue but without location
+        _showSuccessMessage('Location permission denied - punch will be saved without location');
+      } else {
+        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+        lat = pos.latitude;
+        lng = pos.longitude;
+        accuracyM = pos.accuracy.toInt();
+      }
+    } catch (e) {
+      // Could not get location (service disabled or other). Continue without location but notify.
+      _showSuccessMessage('Could not get location: ${e.toString()} - punch will be saved without location');
+    }
+
+    try {
+      final userId = SessionManager.getUserIdSync()?.toString() ?? '';
+      final capturedAt = DateTime.now().toUtc().toIso8601String();
+      final body = PunchInOutRequestBody(
+        capturedAt: capturedAt,
+        lat: lat,
+        lng: lng,
+        accuracyM: accuracyM,
+        deviceId: '',
+        deviceModel: '',
+      );
+
+      if (isPunchedIn) {
+
+
+
+        // currently punched in -> punch out
+        final record = await AppBlocProvider.punchRepository.punchOut(userId, body);
+        // update UI regardless of online/offline — local record was created
+        setState(() {
+          isPunchedIn = false;
+          punchInTime = null;
+        });
+
+        if (record.status == 'success') {
+          _showSuccessMessage('Punched out successfully!');
+          _stopPingTimer(); // stop periodic pings when punched out
+        } else if (record.status == 'failed') {
+          _showSuccessMessage('Punch-out saved locally (failed to sync): ${record.errorMessage ?? ''}');
+        } else {
+          _showSuccessMessage('Punch-out queued (will sync when online)');
+        }
+      } else {
+        // currently punched out -> punch in
+        final record = await AppBlocProvider.punchRepository.punchIn(userId, body);
+
+        setState(() {
+          isPunchedIn = true;
+          try {
+            punchInTime = DateTime.parse(record.capturedAt);
+          } catch (_) {
+            punchInTime = DateTime.now();
+          }
+        });
+
+        if (record.status == 'success') {
+          _showSuccessMessage('Punched in successfully!');
+          _startPingTimer(userId); // start location ping timer
+        } else if (record.status == 'failed') {
+          _showSuccessMessage('Punch-in saved locally (failed to sync): ${record.errorMessage ?? ''}');
+        } else {
+          _showSuccessMessage('Punch-in queued (will sync when online)');
+        }
+      }
+    } catch (e) {
+      // fallback: toggle state conservatively or keep previous state
+      _showSuccessMessage('Failed to record punch: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          isPunching = false;
+        });
+      }
+    }
   }
 
   void _showSuccessMessage(String message) {
@@ -733,5 +835,125 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
 
   String _formatTime(DateTime time) {
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Text(
+            'Confirm Logout',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              color: Color(0xFF1A365D),
+            ),
+          ),
+          content: const Text(
+            'Are you sure you want to logout from the admin portal?',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF718096),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  color: Color(0xFF718096),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
+                ),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: TextButton(
+                onPressed: () {
+
+                  // stop ongoing ping timer before logout/navigation
+                  _stopPingTimer();
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  );
+                },
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _pingTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPingTimer(String userId) {
+    // cancel existing if any
+    _pingTimer?.cancel();
+    // every 3 minutes while punched in
+    _pingTimer = Timer.periodic(const Duration(minutes: 3), (_) async {
+      try {
+        // capture current location
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        double? lat;
+        double? lng;
+        int? accuracyM;
+        if (permission != LocationPermission.denied && permission != LocationPermission.deniedForever) {
+          final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+          lat = pos.latitude;
+          lng = pos.longitude;
+          accuracyM = pos.accuracy.toInt();
+        }
+
+        final body = PunchInOutRequestBody(
+          capturedAt: DateTime.now().toUtc().toIso8601String(),
+          lat: lat,
+          lng: lng,
+          accuracyM: accuracyM,
+        );
+
+        // dispatch to LocationPingBloc to save locally
+        AppBlocProvider.locationPingBloc.add(PingLocation(userId: userId, body: body));
+      } catch (e) {
+        // ignore failures in timer ticks; they won't crash the app
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Location ping failed: ${e.toString()}')),
+          );
+        }
+      }
+    });
+  }
+
+  void _stopPingTimer() {
+    _pingTimer?.cancel();
+    _pingTimer = null;
   }
 }

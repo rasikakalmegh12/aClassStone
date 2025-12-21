@@ -10,6 +10,7 @@ import '../../../../bloc/registration/registration_state.dart';
 import '../../../../api/models/response/PendingRegistrationResponseBody.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../widgets/app_bar.dart';
 
 class PendingUsersScreen extends StatefulWidget {
   const PendingUsersScreen({Key? key}) : super(key: key);
@@ -30,13 +31,9 @@ class _PendingUsersScreenState extends State<PendingUsersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Pending Users'),
-        backgroundColor: AppColors.primaryTealDark,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+      appBar:  const PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: CoolAppCard(title: "Pending Users")
       ),
       body: BlocBuilder<PendingBloc, PendingState>(
         builder: (context, state) {

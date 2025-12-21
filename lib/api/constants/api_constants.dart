@@ -8,8 +8,8 @@ class ApiConstants {
   static const String loginSendOtp = "login/sendotp";
   static const String loginVerifyOtp = "login/verifyotp";
   static const String loginWithPassword = "${baseUrl}auth/login";
-  static const String logout = "login/logout";
-  static const String refreshToken = "auth/refresh-token";
+  static const String logout = "${baseUrl}auth/logout";
+  static const String refreshToken = "${baseUrl}auth/refresh";
 
   // User Management
   static const String register = "${baseUrl}auth/register";
@@ -24,9 +24,10 @@ class ApiConstants {
   static const String rejectRegistration = "${baseUrl}admin/users/reject";
 
   // Attendance
-  static const String punchIn = "attendance/punch-in";
-  static const String punchOut = "attendance/punch-out";
-  static const String attendanceHistory = "attendance/history";
+  static const String punchIn = "${baseUrl}marketing/executive/punch-in";
+  static const String punchOut = "${baseUrl}marketing/executive/punch-out";
+  static const String activeSession = "${baseUrl}marketing/executive/active-session";
+  static const String locationPing = "${baseUrl}marketing/executive/location-ping";
 
   // Meeting Management
   static const String startMeeting = "meeting/start";

@@ -15,9 +15,15 @@ class DashboardRouter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print( user);
     switch (user) {
+
       case AppConstants.roleExecutive:
-        return ExecutiveDashboard(user: user);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          context.goNamed('executive-dashboard', extra: user);
+        });
+        return const SizedBox.shrink();
+        // return ExecutiveDashboard(user: user);
 
       case AppConstants.roleAdmin:
         WidgetsBinding.instance.addPostFrameCallback((_) {

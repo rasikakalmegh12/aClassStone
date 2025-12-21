@@ -30,6 +30,8 @@ class Data {
   String? refreshToken;
   String? accessTokenExpiresAt;
   String? refreshTokenExpiresAt;
+  String? accessTokenExpiresAtDisplay;
+  String? refreshTokenExpiresAtDisplay;
   String? userId;
   String? fullName;
   String? role;
@@ -39,6 +41,8 @@ class Data {
         this.refreshToken,
         this.accessTokenExpiresAt,
         this.refreshTokenExpiresAt,
+        this.accessTokenExpiresAtDisplay,
+        this.refreshTokenExpiresAtDisplay,
         this.userId,
         this.fullName,
         this.role});
@@ -48,6 +52,8 @@ class Data {
     refreshToken = json['refreshToken'];
     accessTokenExpiresAt = json['accessTokenExpiresAt'];
     refreshTokenExpiresAt = json['refreshTokenExpiresAt'];
+    accessTokenExpiresAtDisplay = json['accessTokenExpiresAtDisplay'];
+    refreshTokenExpiresAtDisplay = json['refreshTokenExpiresAtDisplay'];
     userId = json['userId'];
     fullName = json['fullName'];
     role = json['role'];
@@ -59,6 +65,8 @@ class Data {
     data['refreshToken'] = this.refreshToken;
     data['accessTokenExpiresAt'] = this.accessTokenExpiresAt;
     data['refreshTokenExpiresAt'] = this.refreshTokenExpiresAt;
+    data['accessTokenExpiresAtDisplay'] = this.accessTokenExpiresAtDisplay;
+    data['refreshTokenExpiresAtDisplay'] = this.refreshTokenExpiresAtDisplay;
     data['userId'] = this.userId;
     data['fullName'] = this.fullName;
     data['role'] = this.role;

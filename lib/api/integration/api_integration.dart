@@ -3,18 +3,25 @@ import 'dart:async';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
+import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
+import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../../core/session/session_manager.dart';
+import '../../core/services/connectivity_service.dart';
+import '../../core/services/repository_provider.dart';
+import '../../data/models/cached_response.dart';
 import '../constants/api_constants.dart';
 import '../models/request/RegistrationRequestBody.dart';
 import '../models/response/PendingRegistrationResponseBody.dart';
 import '../models/response/RegistrationResponseBody.dart';
+import '../models/request/PunchInOutRequestBody.dart';
+
 
 /// Consolidated API Integration class - all API calls are managed here
 class ApiIntegration {
@@ -75,11 +82,11 @@ class ApiIntegration {
         );
       }
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error login: ${e.toString()}';
+      final errorMsg = 'Network error login: ${ErrorMessages.networkError}';
       print('❌ $errorMsg');
       return RegistrationResponseBody(
         status: false,
-        message: errorMsg,
+        message:errorMsg,
       );
     } catch (e) {
       final errorMsg = 'Error: ${e.toString()}';
@@ -257,13 +264,42 @@ class ApiIntegration {
 
   static Future<PendingRegistrationResponseBody> getPendingUsers() async {
     try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading pending registrations from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.pendingRegistrations);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return PendingRegistrationResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached pending registrations: $e');
+            return PendingRegistrationResponseBody(
+              status: false,
+              message: 'Failed to load cached registrations: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return PendingRegistrationResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
       final url = Uri.parse(ApiConstants.pendingRegistrations);
 
       if (kDebugMode) {
         print('📤 Sending Pending User request to: $url');
         print('📤 Sending Pending User header: ${ApiConstants.headerWithToken}');
       }
-
 
       final response = await http.get(
         url,
@@ -279,13 +315,30 @@ class ApiIntegration {
         print('Response pending body: ${response.body}');
       }
 
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
         final result = PendingRegistrationResponseBody.fromJson(jsonResponse);
+
         if (kDebugMode) {
           print('✅ Pending User successful: ${result.message}');
         }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                ApiConstants.pendingRegistrations,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached pending registrations response');
+          }
+        } catch (e) {
+          print('Error caching pending registrations: $e');
+        }
+
         return result;
       } else {
         if (kDebugMode) {
@@ -302,6 +355,20 @@ class ApiIntegration {
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.pendingRegistrations);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return PendingRegistrationResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
       return PendingRegistrationResponseBody(
         status: false,
         message: errorMsg,
@@ -311,6 +378,20 @@ class ApiIntegration {
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.pendingRegistrations);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return PendingRegistrationResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
       return PendingRegistrationResponseBody(
         status: false,
         message: errorMsg,
@@ -320,13 +401,42 @@ class ApiIntegration {
 
   static Future<AllUsersResponseBody> getAllUsers() async {
     try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading all users from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.allUsers);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return AllUsersResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached all users: $e');
+            return AllUsersResponseBody(
+              status: false,
+              message: 'Failed to load cached users: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return AllUsersResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
       final url = Uri.parse(ApiConstants.allUsers);
 
       if (kDebugMode) {
         print('📤 Sending All User request to: $url');
         print('📤 Sending All User header: ${ApiConstants.headerWithToken}');
       }
-
 
       final response = await http.get(
         url,
@@ -342,13 +452,30 @@ class ApiIntegration {
         print('Response all user body: ${response.body}');
       }
 
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
         final result = AllUsersResponseBody.fromJson(jsonResponse);
+
         if (kDebugMode) {
           print('✅ all  User successful: ${result.message}');
         }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                ApiConstants.allUsers,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached all users response');
+          }
+        } catch (e) {
+          print('Error caching all users: $e');
+        }
+
         return result;
       } else {
         if (kDebugMode) {
@@ -367,6 +494,20 @@ class ApiIntegration {
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.allUsers);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return AllUsersResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
       return AllUsersResponseBody(
         status: false,
         message: errorMsg,
@@ -376,6 +517,20 @@ class ApiIntegration {
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.allUsers);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return AllUsersResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
       return AllUsersResponseBody(
         status: false,
         message: errorMsg,
@@ -491,6 +646,8 @@ class ApiIntegration {
       );
     }
   }
+
+
 //
 //   /// Logout user
 //   static Future<BaseResponse> logout() async {
@@ -658,8 +815,165 @@ class ApiIntegration {
 //     }
 //   }
 //
-//   /// End an active meeting
-//   static Future<MeetingResponse> endMeeting(String meetingId) async {
+// }
+
+  // ===================== OFFLINE SUPPORT METHODS =====================
+
+  /// Check if device has internet connectivity
+  static Future<bool> hasConnectivity() async {
+    try {
+      final connectivityService = AppBlocProvider.connectivityService;
+      return connectivityService.isOnline;
+    } catch (e) {
+      print('Error checking connectivity: $e');
+      return false;
+    }
+  }
+
+
+  /// Helper method to create cached response object
+  static _createCachedResponse(String endpoint, dynamic data, int statusCode) {
+    try {
+      final jsonString = jsonEncode(data);
+      return CachedResponse(
+        id: endpoint,
+        endpoint: endpoint,
+        responseData: jsonString,
+        statusCode: statusCode,
+        cachedAt: DateTime.now(),
+        expiresAt: DateTime.now().add(const Duration(hours: 1)),
+        requestMethod: 'GET',
+      );
+    } catch (e) {
+      print('Error creating cached response: $e');
+      return null;
+    }
+  }
+
+  static Future<PunchInOutResponseBody> punchIn(PunchInOutRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.punchIn);
+      if (kDebugMode) print('📤 Sending punchIn request to: $url');
+
+      final response = await http.post(
+        url,
+        headers: ApiConstants.headerWithToken,
+        body: jsonEncode(body.toJson()),
+      ).timeout(_timeout);
+
+      if (kDebugMode) {
+        print('📥 punchIn status: ${response.statusCode}');
+        print('📥 punchIn request body: ${jsonEncode(body.toJson())}');
+        print('📥 punchIn body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PunchInOutResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PunchInOutResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Punch in failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ punchIn error: $e');
+      return PunchInOutResponseBody(status: false, message: e.toString());
+    }
+  }
+
+  static Future<PunchInOutResponseBody> punchOut(PunchInOutRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.punchOut);
+      if (kDebugMode) print('📤 Sending punchOut request to: $url');
+
+      final response = await http.post(
+        url,
+        headers: ApiConstants.headerWithToken,
+        body: jsonEncode(body.toJson()),
+      ).timeout(_timeout);
+
+      if (kDebugMode) {
+        print('📥 punchOut status: ${response.statusCode}');
+        print('📥 punchOut body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PunchInOutResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PunchInOutResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Punch out failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ punchOut error: $e');
+      return PunchInOutResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<ApiCommonResponseBody> locationPing(PunchInOutRequestBody requestBody) async {
+    try {
+      final url = Uri.parse(ApiConstants.locationPing);
+
+      print('📤 Sending locationPing request to: $url');
+      print('Request body: ${requestBody.toJson()}');
+
+      final response = await http.patch(
+        url,
+        headers: ApiConstants.headerWithToken,
+        body: jsonEncode(requestBody.toJson()),
+      ).timeout(_timeout);
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApiCommonResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ locationPing successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApiCommonResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ locationPing failed with status ${response.statusCode}');
+        }
+        return ApiCommonResponseBody(
+          status: false,
+          message: 'Location Ping failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error login: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+}
 //     try {
 //       await Future.delayed(const Duration(seconds: 1));
 //
@@ -795,5 +1109,3 @@ class ApiIntegration {
 //           username: 'john.doe@company.com',
 //           email: 'john.doe@company.com',
 //           firstName: 'John',
-
-}

@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 70,
             child: Text(
               role,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryGold,
@@ -105,7 +105,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 userRole: state.response.data!.role?.toLowerCase().toString());
 
             if (mounted) {
-              context.go("/dashboard", extra: state.response.data!.role?.toLowerCase().toString());
+              final role =state.response.data!.role?.toLowerCase().toString();
+              print("Navigating to dashboard for role: $role");
+              print("executive role: ${AppConstants.roleExecutive}");
+              print("superadmin role: ${AppConstants.roleSuperAdmin}");
+              if (role == AppConstants.roleExecutive) {
+                context.goNamed('executive-dashboard', extra: role);
+              } else if (role == AppConstants.roleSuperAdmin) {
+                context.goNamed('superadmin-dashboard', extra: role);
+              } else {
+                context.goNamed('admin-dashboard', extra: role);
+              }
             }
             // Navigator.of(context).pushReplacement(
             //   MaterialPageRoute(
@@ -275,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                         activeColor: AppColors.primaryGold,
                                       ),
-                                      Text(
+                                      const Text(
                                         'Remember me',
                                         style: TextStyle(
                                           fontSize: 14,
@@ -377,7 +387,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     const SizedBox(height: 8),
                                     _buildCredentialRow('Super Admin', 'superadmin@acls.local', 'SuperAdmin123!'),
                                     _buildCredentialRow('Admin', 'admin@demo.com', 'admin@123'),
-                                    _buildCredentialRow('Executive', 'executive@demo.com', 'admin@123'),
+                                    _buildCredentialRow('Executive', 'demouser4@gmail.com', 'demouser4'),
                                   ],
                                 ),
                               ),
