@@ -1,13 +1,17 @@
 import 'dart:async';
-import 'package:apclassstone/bloc/location_ping/location_ping_event.dart';
+
 import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:apclassstone/api/models/request/PunchInOutRequestBody.dart';
 import 'package:apclassstone/core/services/repository_provider.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../../bloc/attendance/attendance_bloc.dart';
+import '../../../../bloc/attendance/attendance_event.dart';
+import '../../../../bloc/attendance/attendance_state.dart';
 import '../../../../core/constants/app_colors.dart';
 
 import '../../auth/login_screen.dart';
@@ -29,8 +33,9 @@ class ExecutiveHomeDashboard extends StatefulWidget {
 }
 
 class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
+  bool isLoading = false;
   bool isPunchedIn = false;
-  DateTime? punchInTime;
+  String? punchInTime;
   bool isPunching = false; // new: disables repeated taps while processing
   Timer? _pingTimer; // periodic timer for location pings
   String currentCity = "Jaipur";
@@ -41,32 +46,127 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   int followUpsDue = 4;
   int leadsClosingSoon = 2;
 
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    isPunchedIn = SessionManager.isPunchedInSync();
+
+    final storedTime = SessionManager.getPunchInTimeSync();
+    if (storedTime != null) {
+      // punchInTime = DateTime.tryParse(storedTime);
+      punchInTime = storedTime;
+    }
+
+    if (isPunchedIn) {
+      _startPingTimer(SessionManager.getUserIdSync() ?? '');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildHeader(),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildAttendanceCard(),
-                    const SizedBox(height: 16),
-                    _buildTodaySummaryCard(),
-                    const SizedBox(height: 16),
-                    _buildActionFeedCard(),
-                    const SizedBox(height: 16),
-                    _buildQuickActionsCard(),
-                    const SizedBox(height: 80), // Space for bottom nav
-                  ],
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<LocationPingBloc, LocationPingState>(
+            listener: (context, state) {
+              if (state is LocationPingLoaded) {
+                debugPrint('Location ping success');
+              }
+
+              if (state is LocationPingError) {
+                debugPrint('Location ping error: ${state.message}');
+              }
+            },
+          ),
+
+          BlocListener<PunchInBloc, PunchInState>(
+            listener: (context, state) async {
+              if(state is PunchInLoading){
+                setState(() {
+                  isLoading = true;
+                });
+              } else {
+                setState(() {
+                  isLoading = false;
+                });
+              }
+              if (state is PunchInLoaded) {
+                await SessionManager.setPunchIn(
+                  isPunchedIn: true,
+                  punchInTime: state.response.data?.punchedInAtDisplay ?? '',
+                );
+                setState(() {
+                  isPunchedIn = true;
+                  punchInTime = state.response.data?.punchedInAtDisplay ?? '';
+
+                });
+                _startPingTimer(SessionManager.getUserNameSync() ?? '');
+                _showSuccessMessage('Punched in successfully');
+              }
+
+              if (state is PunchInError) {
+                _showSuccessMessage(state.message);
+              }
+            },
+          ),
+
+          BlocListener<PunchOutBloc, PunchOutState>(
+            listener: (context, state) async {
+              if(state is PunchOutLoading){
+                setState(() {
+                  isLoading = true;
+                });
+              } else {
+                setState(() {
+                  isLoading = false;
+                });
+              }
+              if (state is PunchOutLoaded) {
+                await SessionManager.setPunchIn(
+                  isPunchedIn: false,
+                  punchInTime: state.response.data?.punchedOutAtDisplay ?? '',
+                );
+                setState(() {
+                  isPunchedIn = false;
+                  punchInTime = null;
+                });
+                _stopPingTimer();
+                _showSuccessMessage('Punched out successfully');
+              }
+
+              if (state is PunchOutError) {
+                _showSuccessMessage(state.message);
+              }
+            },
+          ),
+
+        ],
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildHeader(),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildAttendanceCard(),
+                      const SizedBox(height: 16),
+                      _buildTodaySummaryCard(),
+                      const SizedBox(height: 16),
+                      _buildActionFeedCard(),
+                      const SizedBox(height: 16),
+                      _buildQuickActionsCard(),
+                      const SizedBox(height: 80), // Space for bottom nav
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -233,7 +333,8 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           if (isPunchedIn && punchInTime != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Tracking since ${_formatTime(punchInTime!)}',
+              // 'Tracking since ${_formatTime(punchInTime!)}',
+              'Tracking since ${punchInTime!}',
               style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textLight,
@@ -241,7 +342,51 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             ),
           ],
           const SizedBox(height: 16),
-          SizedBox(
+    // BlocBuilder<PunchInBloc, PunchInState>(
+    // builder: (context, punchInState) {
+    // return BlocBuilder<PunchOutBloc, PunchOutState>(
+    // builder: (context, punchOutState) {
+    //
+    // final bool isLoading =
+    // punchInState is PunchInLoading ||
+    // punchOutState is PunchOutLoading;
+    //
+    // return SizedBox(
+    // width: double.infinity,
+    // child: ElevatedButton(
+    // onPressed: isLoading ? null : _handlePunchAction,
+    // style: ElevatedButton.styleFrom(
+    // backgroundColor: AppColors.primaryTeal,
+    // foregroundColor: AppColors.white,
+    // padding: const EdgeInsets.symmetric(vertical: 12),
+    // shape: RoundedRectangleBorder(
+    // borderRadius: BorderRadius.circular(8),
+    // ),
+    // ),
+    // child: isLoading
+    // ? const SizedBox(
+    // height: 20,
+    // width: 20,
+    // child: CircularProgressIndicator(
+    // strokeWidth: 2,
+    // color: Colors.white,
+    // ),
+    // )
+    //     : Text(
+    // isPunchedIn ? 'Punch Out' : 'Punch In',
+    // style: const TextStyle(
+    // fontSize: 14,
+    // fontWeight: FontWeight.w600,
+    // ),
+    // ),
+    // ),
+    // );
+    // },
+    // );
+    // },
+    // ),
+
+    SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _handlePunchAction,
@@ -254,7 +399,16 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 ),
                 elevation: 0,
               ),
-              child: Text(
+              child: isLoading ?
+              const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+                ),
+                ):
+              Text(
                 isPunchedIn ? 'Punch Out' : 'Punch In',
                 style: const TextStyle(
                   fontSize: 14,
@@ -726,102 +880,157 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     );
   }
 
+  // void _handlePunchAction1() async {
+  //   if (isPunching) return; // prevent re-entrancy
+  //   setState(() {
+  //     isPunching = true;
+  //   });
+  //
+  //   double? lat;
+  //   double? lng;
+  //   int? accuracyM;
+  //
+  //   // Request permission and get location
+  //   try {
+  //     LocationPermission permission = await Geolocator.checkPermission();
+  //     if (permission == LocationPermission.denied) {
+  //       permission = await Geolocator.requestPermission();
+  //     }
+  //
+  //     if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
+  //       // Permission denied - we continue but without location
+  //       _showSuccessMessage('Location permission denied - punch will be saved without location');
+  //     } else {
+  //       final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+  //       lat = pos.latitude;
+  //       lng = pos.longitude;
+  //       accuracyM = pos.accuracy.toInt();
+  //     }
+  //   } catch (e) {
+  //     // Could not get location (service disabled or other). Continue without location but notify.
+  //     _showSuccessMessage('Could not get location: ${e.toString()} - punch will be saved without location');
+  //   }
+  //
+  //   try {
+  //     final userId = SessionManager.getUserIdSync()?.toString() ?? '';
+  //     final capturedAt = DateTime.now().toUtc().toIso8601String();
+  //     final body = PunchInOutRequestBody(
+  //       capturedAt: capturedAt,
+  //       lat: lat,
+  //       lng: lng,
+  //       accuracyM: accuracyM,
+  //       deviceId: '',
+  //       deviceModel: '',
+  //     );
+  //
+  //     if (isPunchedIn) {
+  //
+  //
+  //
+  //       // currently punched in -> punch out
+  //       final record = await AppBlocProvider.punchRepository.punchOut(userId, body);
+  //       // update UI regardless of online/offline — local record was created
+  //       setState(() {
+  //         isPunchedIn = false;
+  //         punchInTime = null;
+  //       });
+  //
+  //       if (record.status == 'success') {
+  //         _showSuccessMessage('Punched out successfully!');
+  //         _stopPingTimer(); // stop periodic pings when punched out
+  //       } else if (record.status == 'failed') {
+  //         _showSuccessMessage('Punch-out saved locally (failed to sync): ${record.errorMessage ?? ''}');
+  //       } else {
+  //         _showSuccessMessage('Punch-out queued (will sync when online)');
+  //       }
+  //     } else {
+  //       // currently punched out -> punch in
+  //       final record = await AppBlocProvider.punchRepository.punchIn(userId, body);
+  //
+  //       setState(() {
+  //         isPunchedIn = true;
+  //         try {
+  //           punchInTime = DateTime.parse(record.capturedAt);
+  //         } catch (_) {
+  //           punchInTime = DateTime.now();
+  //         }
+  //       });
+  //
+  //       if (record.status == 'success') {
+  //         _showSuccessMessage('Punched in successfully!');
+  //         _startPingTimer(userId); // start location ping timer
+  //       } else if (record.status == 'failed') {
+  //         _showSuccessMessage('Punch-in saved locally (failed to sync): ${record.errorMessage ?? ''}');
+  //       } else {
+  //         _showSuccessMessage('Punch-in queued (will sync when online)');
+  //       }
+  //     }
+  //   } catch (e) {
+  //     // fallback: toggle state conservatively or keep previous state
+  //     _showSuccessMessage('Failed to record punch: ${e.toString()}');
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() {
+  //         isPunching = false;
+  //       });
+  //     }
+  //   }
+  // }
+
   void _handlePunchAction() async {
-    if (isPunching) return; // prevent re-entrancy
-    setState(() {
-      isPunching = true;
-    });
+    if (isPunching) return;
+
+    setState(() => isPunching = true);
 
     double? lat;
     double? lng;
     int? accuracyM;
 
-    // Request permission and get location
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
-        // Permission denied - we continue but without location
-        _showSuccessMessage('Location permission denied - punch will be saved without location');
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _showSuccessMessage(
+            'Location permission denied - punch will be saved without location');
       } else {
-        final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
+        final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.best);
         lat = pos.latitude;
         lng = pos.longitude;
         accuracyM = pos.accuracy.toInt();
       }
     } catch (e) {
-      // Could not get location (service disabled or other). Continue without location but notify.
-      _showSuccessMessage('Could not get location: ${e.toString()} - punch will be saved without location');
+      _showSuccessMessage(
+          'Could not get location - punch will be saved without location');
     }
 
-    try {
-      final userId = SessionManager.getUserIdSync()?.toString() ?? '';
-      final capturedAt = DateTime.now().toUtc().toIso8601String();
-      final body = PunchInOutRequestBody(
-        capturedAt: capturedAt,
-        lat: lat,
-        lng: lng,
-        accuracyM: accuracyM,
-        deviceId: '',
-        deviceModel: '',
+    final userId = SessionManager.getUserIdSync()?.toString() ?? '';
+    final body = PunchInOutRequestBody(
+      capturedAt: DateTime.now().toUtc().toIso8601String(),
+      lat: lat,
+      lng: lng,
+      accuracyM: accuracyM,
+      deviceId: '',
+      deviceModel: '',
+    );
+
+    if (isPunchedIn) {
+      /// 👉 Punch OUT
+      context.read<PunchOutBloc>().add(
+        FetchPunchOut(body: body, id: userId),
       );
-
-      if (isPunchedIn) {
-
-
-
-        // currently punched in -> punch out
-        final record = await AppBlocProvider.punchRepository.punchOut(userId, body);
-        // update UI regardless of online/offline — local record was created
-        setState(() {
-          isPunchedIn = false;
-          punchInTime = null;
-        });
-
-        if (record.status == 'success') {
-          _showSuccessMessage('Punched out successfully!');
-          _stopPingTimer(); // stop periodic pings when punched out
-        } else if (record.status == 'failed') {
-          _showSuccessMessage('Punch-out saved locally (failed to sync): ${record.errorMessage ?? ''}');
-        } else {
-          _showSuccessMessage('Punch-out queued (will sync when online)');
-        }
-      } else {
-        // currently punched out -> punch in
-        final record = await AppBlocProvider.punchRepository.punchIn(userId, body);
-
-        setState(() {
-          isPunchedIn = true;
-          try {
-            punchInTime = DateTime.parse(record.capturedAt);
-          } catch (_) {
-            punchInTime = DateTime.now();
-          }
-        });
-
-        if (record.status == 'success') {
-          _showSuccessMessage('Punched in successfully!');
-          _startPingTimer(userId); // start location ping timer
-        } else if (record.status == 'failed') {
-          _showSuccessMessage('Punch-in saved locally (failed to sync): ${record.errorMessage ?? ''}');
-        } else {
-          _showSuccessMessage('Punch-in queued (will sync when online)');
-        }
-      }
-    } catch (e) {
-      // fallback: toggle state conservatively or keep previous state
-      _showSuccessMessage('Failed to record punch: ${e.toString()}');
-    } finally {
-      if (mounted) {
-        setState(() {
-          isPunching = false;
-        });
-      }
+    } else {
+      /// 👉 Punch IN
+      context.read<PunchInBloc>().add(
+        FetchPunchIn(body: body, id: userId),
+      );
     }
   }
+
 
   void _showSuccessMessage(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -911,7 +1120,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     super.dispose();
   }
 
-  void _startPingTimer(String userId) {
+  void _startPingTimer1(String userId) {
     // cancel existing if any
     _pingTimer?.cancel();
     // every 3 minutes while punched in
@@ -940,7 +1149,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
         );
 
         // dispatch to LocationPingBloc to save locally
-        AppBlocProvider.locationPingBloc.add(PingLocation(userId: userId, body: body));
+        // AppBlocProvider.locationPingBloc.add(PingLocation(userId: userId, body: body));
       } catch (e) {
         // ignore failures in timer ticks; they won't crash the app
         if (mounted) {
@@ -951,6 +1160,61 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       }
     });
   }
+
+
+  void _startPingTimer(String userId) {
+    // Cancel existing timer if any
+    _pingTimer?.cancel();
+
+    _pingTimer = Timer.periodic(
+      const Duration(minutes: 1),
+          (_) async {
+        try {
+          double? lat;
+          double? lng;
+          int? accuracyM;
+
+          LocationPermission permission =
+          await Geolocator.checkPermission();
+
+          if (permission == LocationPermission.denied) {
+            permission = await Geolocator.requestPermission();
+          }
+
+          if (permission != LocationPermission.denied &&
+              permission != LocationPermission.deniedForever) {
+            final pos = await Geolocator.getCurrentPosition(
+              desiredAccuracy: LocationAccuracy.best,
+            );
+            lat = pos.latitude;
+            lng = pos.longitude;
+            accuracyM = pos.accuracy.toInt();
+          }
+
+          final body = PunchInOutRequestBody(
+            capturedAt: DateTime.now().toUtc().toIso8601String(),
+            lat: lat,
+            lng: lng,
+            accuracyM: accuracyM,
+            deviceId: '',
+            deviceModel: '',
+          );
+
+          /// ✅ Dispatch Bloc event (THIS IS THE KEY CHANGE)
+          context.read<LocationPingBloc>().add(
+            FetchLocationPing(
+              body: body,
+              id: userId,
+            ),
+          );
+        } catch (e) {
+          // Silent failure: timer should never crash UI
+          debugPrint('Location ping failed: $e');
+        }
+      },
+    );
+  }
+
 
   void _stopPingTimer() {
     _pingTimer?.cancel();

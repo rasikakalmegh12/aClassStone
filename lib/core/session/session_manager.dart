@@ -11,6 +11,9 @@ class SessionManager {
   static const String _keyUserPhone = 'userPhone';
   static const String _keyAccessToken = 'accessToken';
   static const String _keyRefreshToken = 'refreshToken';
+  static const String _keyIsPunchedIn = 'isPunchedIn';
+  static const String _keyPunchInTime = 'punchInTime';
+
 
   static Future init() async =>
       prefs = await SharedPreferences.getInstance();
@@ -45,6 +48,15 @@ class SessionManager {
   static bool isLoggedInSync() {
     return prefs?.getBool(_keyIsLoggedIn) ?? false;
   }
+
+  static bool isPunchedInSync() {
+    return prefs?.getBool(_keyIsPunchedIn) ?? false;
+  }
+
+  static String? getPunchInTimeSync() {
+    return prefs?.getString(_keyPunchInTime);
+  }
+
 
   // ========== ASYNCHRONOUS METHODS (for when you need fresh data) ==========
 
@@ -134,6 +146,22 @@ class SessionManager {
     SessionManager.prefs = prefs;
   }
 
+  static Future<void> setPunchIn({
+    required bool isPunchedIn,
+    String? punchInTime,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyIsPunchedIn, isPunchedIn);
+
+    if (punchInTime != null) {
+      await prefs.setString(_keyPunchInTime, punchInTime);
+    }
+
+    // update cached prefs
+    SessionManager.prefs = prefs;
+  }
+
+
   // static Future<String?> getRefreshToken() async {
   //   final prefs = await SharedPreferences.getInstance();
   //   return prefs.getString(_keyRefreshToken);
@@ -142,8 +170,18 @@ class SessionManager {
   // Clear all session data
   static Future<void> clearSession() async {
     final prefs = await SharedPreferences.getInstance();
+    clearPunchIn();
     await prefs.clear();
   }
+
+  static Future<void> clearPunchIn() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyIsPunchedIn);
+    await prefs.remove(_keyPunchInTime);
+
+    SessionManager.prefs = prefs;
+  }
+
 
   // Save user session data after login
   static Future<void> saveUserSession({

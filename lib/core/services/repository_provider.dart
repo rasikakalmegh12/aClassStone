@@ -9,7 +9,7 @@ import 'package:apclassstone/data/repositories/punch_repository.dart';
 import '../../bloc/attendance/attendance_bloc.dart';
 import 'connectivity_service.dart';
 import 'sync_service.dart';
-import '../../bloc/location_ping/location_ping_bloc.dart';
+
 
 import '../../bloc/bloc.dart';
 export 'package:apclassstone/api/network/offline_api_wrapper.dart';
@@ -20,7 +20,8 @@ class AppBlocProvider {
   static late LoginBloc _authBloc;
   static late RegistrationBloc _registrationBloc;
   static late QueueBloc _queueBloc;
-  static late AttendanceBloc _attendanceBloc;
+  static late PunchInBloc _punchInBloc;
+  static late PunchOutBloc _punchOutBloc;
   static late LocationPingBloc _locationPingBloc;
 
   // Offline-first services
@@ -68,10 +69,11 @@ class AppBlocProvider {
 
     // Initialize punch repository and attendance bloc
     _punchRepository = PunchRepository();
-    _attendanceBloc = AttendanceBloc(repo: _punchRepository);
+    _punchInBloc = PunchInBloc();
+    _punchOutBloc = PunchOutBloc();
 
     // Initialize location ping bloc
-    _locationPingBloc = LocationPingBloc(repo: _punchRepository);
+    _locationPingBloc = LocationPingBloc();
   }
 
   /// Get AuthBloc instance
@@ -84,7 +86,8 @@ class AppBlocProvider {
   static QueueBloc get queueBloc => _queueBloc;
 
   /// Get AttendanceBloc instance
-  static AttendanceBloc get attendanceBloc => _attendanceBloc;
+  static PunchInBloc get punchInBloc => _punchInBloc;
+  static PunchOutBloc get punchOutBloc => _punchOutBloc;
 
   /// Get LocationPingBloc instance
   static LocationPingBloc get locationPingBloc => _locationPingBloc;
@@ -95,14 +98,15 @@ class AppBlocProvider {
   static QueueRepository get queueRepository => _queue_repository;
   static SyncService get syncService => _syncService;
   static OfflineApiWrapper get offlineApiWrapper => _offlineApiWrapper;
-  static PunchRepository get punchRepository => _punchRepository;
+  // static PunchRepository get punchRepository => _punchRepository;
 
   /// Dispose all BLoCs and services (call this when app closes)
   static void dispose() {
     _authBloc.close();
     _registrationBloc.close();
     _queueBloc.close();
-    _attendanceBloc.close();
+    _punchInBloc.close();
+    _punchOutBloc.close();
     _locationPingBloc.close();
     _connectivityService.dispose();
     _syncService.dispose();

@@ -1,30 +1,34 @@
-import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 
-abstract class AttendanceState {}
 
-class AttendanceInitial extends AttendanceState {}
-class AttendanceLoading extends AttendanceState {}
 
-class PunchQueued extends AttendanceState {
-  final dynamic record;
-  PunchQueued(this.record);
+import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
+
+import '../../api/models/response/ApiCommonResponseBody.dart';
+
+abstract class PunchInState {}
+class PunchInInitial extends PunchInState {}
+class PunchInLoading extends PunchInState {}
+class PunchInLoaded extends PunchInState {
+  final PunchInOutResponseBody response;
+  PunchInLoaded({required this.response});
+}
+class PunchInError extends PunchInState {
+  final String message;
+  PunchInError({required this.message});
 }
 
-class PunchSuccess extends AttendanceState {
-  final dynamic record;
-  PunchSuccess(this.record);
-}
 
-class PunchFailure extends AttendanceState {
-  final String error;
-  PunchFailure(this.error);
+abstract class PunchOutState {}
+class PunchOutInitial extends PunchOutState {}
+class PunchOutLoading extends PunchOutState {}
+class PunchOutLoaded extends PunchOutState {
+  final PunchInOutResponseBody response;
+  PunchOutLoaded({required this.response});
 }
-
-class LocalPunchesLoaded extends AttendanceState {
-  final List<dynamic> punches;
-  LocalPunchesLoaded(this.punches);
+class PunchOutError extends PunchOutState {
+  final String message;
+  PunchOutError({required this.message});
 }
-
 
 
 abstract class LocationPingState {}

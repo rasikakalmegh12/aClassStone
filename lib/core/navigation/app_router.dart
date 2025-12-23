@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../presentation/screens/attendance/attendance_history_screen.dart';
@@ -135,7 +136,19 @@ class AppRouter {
         name: 'executive-dashboard',
         builder: (context, state) {
           final user = state.extra as String?;
-          return ExecutiveDashboard(user: user!);
+          return
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<PendingBloc>(
+                  create: (context) => PendingBloc(),
+                ),
+                BlocProvider(create: (_) => PunchInBloc()),
+                BlocProvider(create: (_) => PunchOutBloc()),
+                BlocProvider(create: (_) => LocationPingBloc()),
+              ],
+              child:  ExecutiveDashboard(user: user!)
+            );
+
         },
       ),
 

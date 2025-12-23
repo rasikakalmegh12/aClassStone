@@ -919,13 +919,13 @@ class ApiIntegration {
 
 
   static Future<ApiCommonResponseBody> locationPing(PunchInOutRequestBody requestBody) async {
-    try {
+    // try {
       final url = Uri.parse(ApiConstants.locationPing);
 
       print('📤 Sending locationPing request to: $url');
-      print('Request body: ${requestBody.toJson()}');
+      print('Request body: ${json.encode(requestBody)}');
 
-      final response = await http.patch(
+      final response = await http.post(
         url,
         headers: ApiConstants.headerWithToken,
         body: jsonEncode(requestBody.toJson()),
@@ -955,21 +955,21 @@ class ApiIntegration {
           statusCode: response.statusCode,
         );
       }
-    } on http.ClientException catch (e) {
-      final errorMsg = 'Network error login: ${e.toString()}';
-      print('❌ $errorMsg');
-      return ApiCommonResponseBody(
-        status: false,
-        message: errorMsg,
-      );
-    } catch (e) {
-      final errorMsg = 'Error: ${e.toString()}';
-      print('❌ $errorMsg');
-      return ApiCommonResponseBody(
-        status: false,
-        message: errorMsg,
-      );
-    }
+    // } on http.ClientException catch (e) {
+    //   final errorMsg = 'Network error login: ${e.toString()}';
+    //   print('❌ $errorMsg');
+    //   return ApiCommonResponseBody(
+    //     status: false,
+    //     message: errorMsg,
+    //   );
+    // } catch (e) {
+    //   final errorMsg = 'Error: ${e.toString()}';
+    //   print('❌ $errorMsg');
+    //   return ApiCommonResponseBody(
+    //     status: false,
+    //     message: errorMsg,
+    //   );
+    // }
   }
 
 

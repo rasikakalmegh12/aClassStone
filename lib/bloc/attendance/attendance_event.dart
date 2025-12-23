@@ -1,30 +1,26 @@
-import 'package:apclassstone/api/models/request/PunchInOutRequestBody.dart';
 
-abstract class AttendanceEvent {}
 
-class PunchInRequested extends AttendanceEvent {
-  final String userId;
+import '../../api/models/request/PunchInOutRequestBody.dart';
+
+abstract class PunchInEvent {}
+class FetchPunchIn extends PunchInEvent {
   final PunchInOutRequestBody body;
-
-  PunchInRequested({required this.userId, required this.body});
+  final String id;
+  FetchPunchIn({required this.body,required this.id});
 }
 
-class PunchOutRequested extends AttendanceEvent {
-  final String userId;
+
+abstract class PunchOutEvent {}
+class FetchPunchOut extends PunchOutEvent {
   final PunchInOutRequestBody body;
-
-  PunchOutRequested({required this.userId, required this.body});
-}
-
-class LoadLocalPunches extends AttendanceEvent {
-  final String userId;
-  LoadLocalPunches({required this.userId});
+  final String id;
+  FetchPunchOut({required this.body,required this.id});
 }
 
 
 abstract class LocationPingEvent {}
 class FetchLocationPing extends LocationPingEvent {
   final PunchInOutRequestBody body;
-
-  FetchLocationPing({required this.body});
+  final String id;
+  FetchLocationPing({required this.body,required this.id});
 }

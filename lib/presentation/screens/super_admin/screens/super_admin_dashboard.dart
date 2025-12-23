@@ -278,52 +278,52 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ),
           const SizedBox(width: 8),
           // Offline punches indicator
-          FutureBuilder<int>(
-            future: AppBlocProvider.punchRepository.getAllLocalPunches().then((list) => list.where((p) => p.status != 'success').length),
-            builder: (context, snapshot) {
-              final count = snapshot.data ?? 0;
-              return GestureDetector(
-                onTap: () async {
-                  final punches = await AppBlocProvider.punchRepository.getAllLocalPunches();
-                  if (!mounted) return;
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) => _buildPunchesModal(punches),
-                  );
-                },
-                child: Stack(
-                  alignment: Alignment.topRight,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha((0.12 * 255).toInt()),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(Icons.history, color: Colors.white, size: 16),
-                    ),
-                    if (count > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            count.toString(),
-                            style: const TextStyle(color: Colors.white, fontSize: 10),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              );
-            },
-          ),
+          // FutureBuilder<int>(
+          //   future: AppBlocProvider.punchRepository.getAllLocalPunches().then((list) => list.where((p) => p.status != 'success').length),
+          //   builder: (context, snapshot) {
+          //     final count = snapshot.data ?? 0;
+          //     return GestureDetector(
+          //       onTap: () async {
+          //         final punches = await AppBlocProvider.punchRepository.getAllLocalPunches();
+          //         if (!mounted) return;
+          //         showModalBottomSheet(
+          //           context: context,
+          //           builder: (context) => _buildPunchesModal(punches),
+          //         );
+          //       },
+          //       child: Stack(
+          //         alignment: Alignment.topRight,
+          //         children: [
+          //           Container(
+          //             width: 36,
+          //             height: 36,
+          //             decoration: BoxDecoration(
+          //               color: Colors.white.withAlpha((0.12 * 255).toInt()),
+          //               borderRadius: BorderRadius.circular(18),
+          //             ),
+          //             child: const Icon(Icons.history, color: Colors.white, size: 16),
+          //           ),
+          //           if (count > 0)
+          //             Positioned(
+          //               right: 0,
+          //               top: 0,
+          //               child: Container(
+          //                 padding: const EdgeInsets.all(4),
+          //                 decoration: BoxDecoration(
+          //                   color: Colors.red,
+          //                   borderRadius: BorderRadius.circular(10),
+          //                 ),
+          //                 child: Text(
+          //                   count.toString(),
+          //                   style: const TextStyle(color: Colors.white, fontSize: 10),
+          //                 ),
+          //               ),
+          //             ),
+          //         ],
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
     ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.5, end: 0);

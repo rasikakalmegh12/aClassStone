@@ -6,58 +6,94 @@ import 'package:apclassstone/bloc/attendance/attendance_state.dart';
 
 import '../../api/integration/api_integration.dart';
 
-class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
-  final PunchRepository _repo;
+class PunchInBloc extends Bloc<PunchInEvent, PunchInState> {
+  PunchInBloc() : super(PunchInInitial()) {
+    // Handle user registration
+    on<FetchPunchIn>((event, emit) async {
+      emit(PunchInLoading());
 
-  AttendanceBloc({required PunchRepository repo})
-      : _repo = repo,
-        super(AttendanceInitial()) {
-    on<PunchInRequested>(_onPunchIn);
-    on<PunchOutRequested>(_onPunchOut);
-    on<LoadLocalPunches>(_onLoadLocal);
-  }
+      try {
 
-  Future<void> _onPunchIn(PunchInRequested event, Emitter<AttendanceState> emit) async {
-    emit(AttendanceLoading());
-    try {
-      final userId = event.userId;
-      final record = await _repo.punchIn(userId, event.body);
-      if (record.status == 'success') {
-        emit(PunchSuccess(record));
-      } else if (record.status == 'failed') {
-        emit(PunchFailure(record.errorMessage ?? 'Failed'));
-      } else {
-        emit(PunchQueued(record));
+
+        // Call API
+        final response = await ApiIntegration.punchIn(event.body);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(PunchInLoaded(response: response));
+        } else {
+          emit(PunchInError(
+            message: response.message ?? 'Approval failed',
+          ));
+        }
+      } catch (e) {
+        emit(PunchInError(
+          message: 'Error: ${e.toString()}',
+        ));
       }
-    } catch (e) {
-      emit(PunchFailure(e.toString()));
-    }
-  }
+    });
 
-  Future<void> _onPunchOut(PunchOutRequested event, Emitter<AttendanceState> emit) async {
-    emit(AttendanceLoading());
-    try {
-      final userId = event.userId;
-      final record = await _repo.punchOut(userId, event.body);
-      if (record.status == 'success') {
-        emit(PunchSuccess(record));
-      } else if (record.status == 'failed') {
-        emit(PunchFailure(record.errorMessage ?? 'Failed'));
-      } else {
-        emit(PunchQueued(record));
+  }
+}
+
+
+class PunchOutBloc extends Bloc<PunchOutEvent, PunchOutState> {
+  PunchOutBloc() : super(PunchOutInitial()) {
+    // Handle user registration
+    on<FetchPunchOut>((event, emit) async {
+      emit(PunchOutLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.punchOut(event.body);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(PunchOutLoaded(response: response));
+        } else {
+          emit(PunchOutError(
+            message: response.message ?? 'Approval failed',
+          ));
+        }
+      } catch (e) {
+        emit(PunchOutError(
+          message: 'Error: ${e.toString()}',
+        ));
       }
-    } catch (e) {
-      emit(PunchFailure(e.toString()));
-    }
-  }
+    });
 
-  Future<void> _onLoadLocal(LoadLocalPunches event, Emitter<AttendanceState> emit) async {
-    emit(AttendanceLoading());
-    try {
-      final list = await _repo.getLocalPunches(userId: event.userId);
-      emit(LocalPunchesLoaded(list));
-    } catch (e) {
-      emit(PunchFailure(e.toString()));
-    }
+  }
+}
+
+
+class LocationPingBloc extends Bloc<LocationPingEvent, LocationPingState> {
+  LocationPingBloc() : super(LocationPingInitial()) {
+    // Handle user registration
+    on<FetchLocationPing>((event, emit) async {
+      emit(LocationPingLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.locationPing(event.body);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(LocationPingLoaded(response: response));
+        } else {
+          emit(LocationPingError(
+            message: response.message ?? 'Approval failed',
+          ));
+        }
+      } catch (e) {
+        emit(LocationPingError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
   }
 }
