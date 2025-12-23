@@ -14,7 +14,7 @@ class ApiConstants {
   // User Management
   static const String register = "${baseUrl}auth/register";
   static const String getUserProfile = "${baseUrl}profile";
-  static const String updateProfile = "auth/update-profile";
+  static const String updateProfile = "${baseUrl}profile";
   static const String changePassword = "auth/change-password";
 
   // Registration Management

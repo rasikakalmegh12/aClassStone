@@ -4,6 +4,7 @@ import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:apclassstone/api/models/request/PunchInOutRequestBody.dart';
 import 'package:apclassstone/core/services/repository_provider.dart';
@@ -223,32 +224,37 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hello, ${SessionManager.getUserNameSync()}',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.white,
+                child: GestureDetector(
+                  onTap: (){
+                    context.pushNamed("profile");
+                  },
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Hello, ${SessionManager.getUserNameSync()}',
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.white,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 2),
-                           Text(
-                            formattedDate,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.white.withOpacity(0.9),
+                            const SizedBox(height: 2),
+                             Text(
+                              formattedDate,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppColors.white.withOpacity(0.9),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 12),

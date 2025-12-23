@@ -17,6 +17,7 @@ import '../../core/services/connectivity_service.dart';
 import '../../core/services/repository_provider.dart';
 import '../../data/models/cached_response.dart';
 import '../constants/api_constants.dart';
+import '../models/request/GetProfileRequestBody.dart';
 import '../models/request/RegistrationRequestBody.dart';
 import '../models/response/PendingRegistrationResponseBody.dart';
 import '../models/response/RegistrationResponseBody.dart';
@@ -211,10 +212,7 @@ class ApiIntegration {
 
       final response = await http.get(
         url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
-        }
+        headers: ApiConstants.headerWithToken,
 
       ).timeout(_timeout);
 
@@ -255,6 +253,61 @@ class ApiIntegration {
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
+      return GetProfileResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetProfileResponseBody> updateProfile(GetProfileRequestBody requestBody) async {
+    try {
+      final url = Uri.parse(ApiConstants.updateProfile);
+
+      print('📤 Sending updateProfile request to: $url');
+      print('Request body: ${requestBody.toJson()}');
+
+      final response = await http.patch(
+        url,
+        headers: ApiConstants.headerWithToken,
+        body: jsonEncode(requestBody.toJson()),
+      ).timeout(_timeout);
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProfileResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ update Profile successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProfileResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ Update Profile failed with status ${response.statusCode}');
+        }
+        return GetProfileResponseBody(
+          status: false,
+          message: 'Update Profile failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error login: ${ErrorMessages.networkError}';
+      print('❌ $errorMsg');
+      return GetProfileResponseBody(
+        status: false,
+        message:errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
       return GetProfileResponseBody(
         status: false,
         message: errorMsg,
@@ -537,6 +590,8 @@ class ApiIntegration {
       );
     }
   }
+
+
 
   static Future<ApproveResponseBody> approvePendingUsers(ApproveRequestBody requestBody,String id) async {
     try {

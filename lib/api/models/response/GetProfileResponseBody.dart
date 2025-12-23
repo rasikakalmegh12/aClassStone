@@ -33,7 +33,7 @@ class Data {
   String? phone;
   bool? isActive;
   String? createdAt;
-  Null? updatedAt;
+  String? updatedAt;
 
   Data(
       {this.id,

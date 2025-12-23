@@ -1,17 +1,18 @@
 // User Profile Events
+import 'package:apclassstone/api/models/request/GetProfileRequestBody.dart';
+import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
+
 abstract class UserProfileEvent {}
 
 class LoadUserProfileEvent extends UserProfileEvent {}
 
 class UpdateUserProfileEvent extends UserProfileEvent {
-  final String firstName;
-  final String lastName;
-  final String email;
+  final GetProfileRequestBody requestBody;
+
 
   UpdateUserProfileEvent({
-    required this.firstName,
-    required this.lastName,
-    required this.email,
+    required this.requestBody,
+
   });
 }
 

@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
+import '../../presentation/common.dart';
 import '../../presentation/screens/attendance/attendance_history_screen.dart';
 import '../../presentation/screens/auth/profile_screen.dart';
 import '../../presentation/screens/dashboard/admin_dashboard.dart';
@@ -219,7 +220,7 @@ class AppRouter {
       GoRoute(
         path: '/profile',
         name: 'profile',
-        builder: (context, state) => const ProfileScreen(),
+        builder: (context, state) => const UserProfilePage(),
       ),
 
       // Attendance Routes
