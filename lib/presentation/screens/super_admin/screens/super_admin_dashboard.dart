@@ -206,125 +206,130 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-              ),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha((0.3 * 255).toInt()),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
+      child: GestureDetector(
+        onTap: (){
+          context.pushNamed("profile");
+        },
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
                 ),
-              ],
-            ),
-            child: const Icon(
-              Icons.admin_panel_settings_rounded,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Super Admin Portal',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -0.3,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha((0.3 * 255).toInt()),
+                    blurRadius: 8,
+                    offset: const Offset(0, 3),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'System Management Dashboard',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withAlpha((0.8 * 255).toInt()),
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha((0.15 * 255).toInt()),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: Colors.white.withAlpha((0.2 * 255).toInt()),
-                width: 1,
+                ],
               ),
-            ),
-            child: IconButton(
-              onPressed: () => _showLogoutDialog(),
-              icon: const Icon(
-                Icons.logout_rounded,
+              child: const Icon(
+                Icons.admin_panel_settings_rounded,
                 color: Colors.white,
-                size: 16,
+                size: 20,
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          // Offline punches indicator
-          // FutureBuilder<int>(
-          //   future: AppBlocProvider.punchRepository.getAllLocalPunches().then((list) => list.where((p) => p.status != 'success').length),
-          //   builder: (context, snapshot) {
-          //     final count = snapshot.data ?? 0;
-          //     return GestureDetector(
-          //       onTap: () async {
-          //         final punches = await AppBlocProvider.punchRepository.getAllLocalPunches();
-          //         if (!mounted) return;
-          //         showModalBottomSheet(
-          //           context: context,
-          //           builder: (context) => _buildPunchesModal(punches),
-          //         );
-          //       },
-          //       child: Stack(
-          //         alignment: Alignment.topRight,
-          //         children: [
-          //           Container(
-          //             width: 36,
-          //             height: 36,
-          //             decoration: BoxDecoration(
-          //               color: Colors.white.withAlpha((0.12 * 255).toInt()),
-          //               borderRadius: BorderRadius.circular(18),
-          //             ),
-          //             child: const Icon(Icons.history, color: Colors.white, size: 16),
-          //           ),
-          //           if (count > 0)
-          //             Positioned(
-          //               right: 0,
-          //               top: 0,
-          //               child: Container(
-          //                 padding: const EdgeInsets.all(4),
-          //                 decoration: BoxDecoration(
-          //                   color: Colors.red,
-          //                   borderRadius: BorderRadius.circular(10),
-          //                 ),
-          //                 child: Text(
-          //                   count.toString(),
-          //                   style: const TextStyle(color: Colors.white, fontSize: 10),
-          //                 ),
-          //               ),
-          //             ),
-          //         ],
-          //       ),
-          //     );
-          //   },
-          // ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Super Admin Portal',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'System Management Dashboard',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.white.withAlpha((0.8 * 255).toInt()),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha((0.15 * 255).toInt()),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: Colors.white.withAlpha((0.2 * 255).toInt()),
+                  width: 1,
+                ),
+              ),
+              child: IconButton(
+                onPressed: () => _showLogoutDialog(),
+                icon: const Icon(
+                  Icons.logout_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            // Offline punches indicator
+            // FutureBuilder<int>(
+            //   future: AppBlocProvider.punchRepository.getAllLocalPunches().then((list) => list.where((p) => p.status != 'success').length),
+            //   builder: (context, snapshot) {
+            //     final count = snapshot.data ?? 0;
+            //     return GestureDetector(
+            //       onTap: () async {
+            //         final punches = await AppBlocProvider.punchRepository.getAllLocalPunches();
+            //         if (!mounted) return;
+            //         showModalBottomSheet(
+            //           context: context,
+            //           builder: (context) => _buildPunchesModal(punches),
+            //         );
+            //       },
+            //       child: Stack(
+            //         alignment: Alignment.topRight,
+            //         children: [
+            //           Container(
+            //             width: 36,
+            //             height: 36,
+            //             decoration: BoxDecoration(
+            //               color: Colors.white.withAlpha((0.12 * 255).toInt()),
+            //               borderRadius: BorderRadius.circular(18),
+            //             ),
+            //             child: const Icon(Icons.history, color: Colors.white, size: 16),
+            //           ),
+            //           if (count > 0)
+            //             Positioned(
+            //               right: 0,
+            //               top: 0,
+            //               child: Container(
+            //                 padding: const EdgeInsets.all(4),
+            //                 decoration: BoxDecoration(
+            //                   color: Colors.red,
+            //                   borderRadius: BorderRadius.circular(10),
+            //                 ),
+            //                 child: Text(
+            //                   count.toString(),
+            //                   style: const TextStyle(color: Colors.white, fontSize: 10),
+            //                 ),
+            //               ),
+            //             ),
+            //         ],
+            //       ),
+            //     );
+            //   },
+            // ),
+          ],
+        ),
       ),
     ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.5, end: 0);
   }

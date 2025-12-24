@@ -12,7 +12,7 @@ class CoolAppCard extends StatelessWidget {
   final String? hintText;
   final TextInputType? keyboardType;
   final bool obscureText;
-  final Color backgroundColor = AppColors.primaryTealDark;
+  final Color backgroundColor ;
 
   const CoolAppCard({
     Key? key,
@@ -22,6 +22,7 @@ class CoolAppCard extends StatelessWidget {
     this.hintText,
     this.keyboardType,
     this.obscureText = false,
+    this.backgroundColor = AppColors.primaryTealDark,
   }) : super(key: key);
 
   @override

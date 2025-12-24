@@ -7,6 +7,7 @@ import '../api/models/request/GetProfileRequestBody.dart';
 import '../bloc/user_profile/user_profile_bloc.dart';
 import '../bloc/user_profile/user_profile_event.dart';
 import '../bloc/user_profile/user_profile_state.dart';
+import '../core/constants/app_colors.dart';
 
 class UserProfilePage extends StatelessWidget {
   const UserProfilePage({super.key});
@@ -26,9 +27,9 @@ class _UserProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
+      appBar: const PreferredSize(
           preferredSize: Size.fromHeight(56),
-          child: CoolAppCard(title: "My Profile")
+          child: CoolAppCard(title: "My Profile",backgroundColor: AppColors.primaryGold)
       ),
       body: BlocConsumer<UserProfileBloc, UserProfileState>(
         listener: (context, state) {
