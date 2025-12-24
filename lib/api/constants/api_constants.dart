@@ -28,6 +28,7 @@ class ApiConstants {
   static const String punchOut = "${baseUrl}marketing/executive/punch-out";
   static const String activeSession = "${baseUrl}marketing/executive/active-session";
   static const String locationPing = "${baseUrl}marketing/executive/location-ping";
+  static const String executiveTrackingByDays = "${baseUrl}marketing/admin/executives/0d00de8b-6f17-493c-b67e-c583317a74ad/days/24-Dec-2025";
 
   // Meeting Management
   static const String startMeeting = "meeting/start";
@@ -39,6 +40,9 @@ class ApiConstants {
   static const String executiveDashboard = "dashboard/executive";
   static const String adminDashboard = "dashboard/admin";
   static const String superAdminDashboard = "dashboard/super-admin";
+
+
+
 
   // Common Headers
   static const Map<String, String> defaultHeaders = {

@@ -886,104 +886,61 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     );
   }
 
-  // void _handlePunchAction1() async {
-  //   if (isPunching) return; // prevent re-entrancy
-  //   setState(() {
-  //     isPunching = true;
-  //   });
-  //
-  //   double? lat;
-  //   double? lng;
-  //   int? accuracyM;
-  //
-  //   // Request permission and get location
-  //   try {
-  //     LocationPermission permission = await Geolocator.checkPermission();
-  //     if (permission == LocationPermission.denied) {
-  //       permission = await Geolocator.requestPermission();
-  //     }
-  //
-  //     if (permission == LocationPermission.deniedForever || permission == LocationPermission.denied) {
-  //       // Permission denied - we continue but without location
-  //       _showSuccessMessage('Location permission denied - punch will be saved without location');
-  //     } else {
-  //       final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-  //       lat = pos.latitude;
-  //       lng = pos.longitude;
-  //       accuracyM = pos.accuracy.toInt();
-  //     }
-  //   } catch (e) {
-  //     // Could not get location (service disabled or other). Continue without location but notify.
-  //     _showSuccessMessage('Could not get location: ${e.toString()} - punch will be saved without location');
-  //   }
-  //
-  //   try {
-  //     final userId = SessionManager.getUserIdSync()?.toString() ?? '';
-  //     final capturedAt = DateTime.now().toUtc().toIso8601String();
-  //     final body = PunchInOutRequestBody(
-  //       capturedAt: capturedAt,
-  //       lat: lat,
-  //       lng: lng,
-  //       accuracyM: accuracyM,
-  //       deviceId: '',
-  //       deviceModel: '',
-  //     );
-  //
-  //     if (isPunchedIn) {
-  //
-  //
-  //
-  //       // currently punched in -> punch out
-  //       final record = await AppBlocProvider.punchRepository.punchOut(userId, body);
-  //       // update UI regardless of online/offline — local record was created
-  //       setState(() {
-  //         isPunchedIn = false;
-  //         punchInTime = null;
-  //       });
-  //
-  //       if (record.status == 'success') {
-  //         _showSuccessMessage('Punched out successfully!');
-  //         _stopPingTimer(); // stop periodic pings when punched out
-  //       } else if (record.status == 'failed') {
-  //         _showSuccessMessage('Punch-out saved locally (failed to sync): ${record.errorMessage ?? ''}');
-  //       } else {
-  //         _showSuccessMessage('Punch-out queued (will sync when online)');
-  //       }
-  //     } else {
-  //       // currently punched out -> punch in
-  //       final record = await AppBlocProvider.punchRepository.punchIn(userId, body);
-  //
-  //       setState(() {
-  //         isPunchedIn = true;
-  //         try {
-  //           punchInTime = DateTime.parse(record.capturedAt);
-  //         } catch (_) {
-  //           punchInTime = DateTime.now();
-  //         }
-  //       });
-  //
-  //       if (record.status == 'success') {
-  //         _showSuccessMessage('Punched in successfully!');
-  //         _startPingTimer(userId); // start location ping timer
-  //       } else if (record.status == 'failed') {
-  //         _showSuccessMessage('Punch-in saved locally (failed to sync): ${record.errorMessage ?? ''}');
-  //       } else {
-  //         _showSuccessMessage('Punch-in queued (will sync when online)');
-  //       }
-  //     }
-  //   } catch (e) {
-  //     // fallback: toggle state conservatively or keep previous state
-  //     _showSuccessMessage('Failed to record punch: ${e.toString()}');
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() {
-  //         isPunching = false;
-  //       });
-  //     }
-  //   }
-  // }
-
   void _handlePunchAction() async {
+    if (isLoading) return;
+
+    setState(() => isLoading = true);
+
+    double? lat;
+    double? lng;
+    int? accuracyM;
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        _showSuccessMessage(
+            'Location permission denied - punch saved without location');
+      } else {
+        final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.best);
+        lat = pos.latitude;
+        lng = pos.longitude;
+        accuracyM = pos.accuracy.toInt();
+      }
+    } catch (_) {
+      _showSuccessMessage(
+          'Could not get location - punch saved without location');
+    }
+
+    final userId = SessionManager.getUserIdSync()?.toString() ?? '';
+
+    final body = PunchInOutRequestBody(
+      capturedAt: DateTime.now().toUtc().toIso8601String(),
+      lat: lat,
+      lng: lng,
+      accuracyM: accuracyM,
+      deviceId: '',
+      deviceModel: '',
+    );
+
+    if (isPunchedIn) {
+      context.read<PunchOutBloc>().add(
+        FetchPunchOut(body: body, id: userId),
+      );
+    } else {
+      context.read<PunchInBloc>().add(
+        FetchPunchIn(body: body, id: userId),
+      );
+    }
+  }
+
+
+  void _handlePunchAction1() async {
     if (isPunching) return;
 
     setState(() => isPunching = true);

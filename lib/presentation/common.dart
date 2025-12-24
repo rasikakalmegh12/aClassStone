@@ -1,3 +1,4 @@
+import 'package:apclassstone/presentation/widgets/app_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -25,10 +26,9 @@ class _UserProfileView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Profile'),
-        centerTitle: true,
-        elevation: 0,
+      appBar: PreferredSize(
+          preferredSize: Size.fromHeight(56),
+          child: CoolAppCard(title: "My Profile")
       ),
       body: BlocConsumer<UserProfileBloc, UserProfileState>(
         listener: (context, state) {
