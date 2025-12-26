@@ -42,6 +42,8 @@ class ApiConstants {
   static const String superAdminDashboard = "dashboard/super-admin";
 
 
+ //  Admin and SuperAdmin Common Apis
+  static const String executiveAttendance = "${baseUrl}marketing/admin/executives/attendance/day?date=25-dec-2025";
 
 
   // Common Headers

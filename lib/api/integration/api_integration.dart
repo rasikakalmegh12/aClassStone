@@ -5,6 +5,7 @@ import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
+import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
@@ -201,6 +202,8 @@ class ApiIntegration {
 
 
 
+  /// ------------------GET METHOD --------------------------
+
   static Future<GetProfileResponseBody> getProfile() async {
     try {
       final url = Uri.parse(ApiConstants.getUserProfile);
@@ -253,61 +256,6 @@ class ApiIntegration {
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
-      return GetProfileResponseBody(
-        status: false,
-        message: errorMsg,
-      );
-    }
-  }
-
-
-  static Future<GetProfileResponseBody> updateProfile(GetProfileRequestBody requestBody) async {
-    try {
-      final url = Uri.parse(ApiConstants.updateProfile);
-
-      print('📤 Sending updateProfile request to: $url');
-      print('Request body: ${requestBody.toJson()}');
-
-      final response = await http.patch(
-        url,
-        headers: ApiConstants.headerWithToken,
-        body: jsonEncode(requestBody.toJson()),
-      ).timeout(_timeout);
-
-      print('📥 Response status: ${response.statusCode}');
-      if (kDebugMode) {
-        print('Response body: ${response.body}');
-      }
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = jsonDecode(response.body);
-        final result = GetProfileResponseBody.fromJson(jsonResponse);
-        if (kDebugMode) {
-          print('✅ update Profile successful: ${result.message}');
-        }
-        return result;
-      } else {
-        final jsonResponse = jsonDecode(response.body);
-        final result = GetProfileResponseBody.fromJson(jsonResponse);
-        if (kDebugMode) {
-          print('❌ Update Profile failed with status ${response.statusCode}');
-        }
-        return GetProfileResponseBody(
-          status: false,
-          message: 'Update Profile failed. Status: ${result.message}',
-          statusCode: response.statusCode,
-        );
-      }
-    } on http.ClientException catch (e) {
-      final errorMsg = 'Network error login: ${ErrorMessages.networkError}';
-      print('❌ $errorMsg');
-      return GetProfileResponseBody(
-        status: false,
-        message:errorMsg,
-      );
-    } catch (e) {
-      final errorMsg = 'Error: ${e.toString()}';
-      print('❌ $errorMsg');
       return GetProfileResponseBody(
         status: false,
         message: errorMsg,
@@ -593,6 +541,68 @@ class ApiIntegration {
 
 
 
+
+
+
+
+
+  ///-----------------PATCH METHOD --------------------------
+
+  static Future<GetProfileResponseBody> updateProfile(GetProfileRequestBody requestBody) async {
+    try {
+      final url = Uri.parse(ApiConstants.updateProfile);
+
+      print('📤 Sending updateProfile request to: $url');
+      print('Request body: ${requestBody.toJson()}');
+
+      final response = await http.patch(
+        url,
+        headers: ApiConstants.headerWithToken,
+        body: jsonEncode(requestBody.toJson()),
+      ).timeout(_timeout);
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProfileResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ update Profile successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProfileResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ Update Profile failed with status ${response.statusCode}');
+        }
+        return GetProfileResponseBody(
+          status: false,
+          message: 'Update Profile failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error login: ${ErrorMessages.networkError}';
+      print('❌ $errorMsg');
+      return GetProfileResponseBody(
+        status: false,
+        message:errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetProfileResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
   static Future<ApproveResponseBody> approvePendingUsers(ApproveRequestBody requestBody,String id) async {
     try {
       final url = Uri.parse("${ApiConstants.approveRegistration}/$id");
@@ -647,6 +657,10 @@ class ApiIntegration {
     }
   }
 
+
+
+
+  /// ---------------- DELETE METHOD -------------------------
 
   static Future<ApproveResponseBody> rejectPendingUsers(String id) async {
     try {
@@ -905,6 +919,9 @@ class ApiIntegration {
     }
   }
 
+
+  ///---------------------POST METHOD ---------------------------
+
   static Future<PunchInOutResponseBody> punchIn(PunchInOutRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.punchIn);
@@ -1010,6 +1027,60 @@ class ApiIntegration {
           statusCode: response.statusCode,
         );
       }
+    // } on http.ClientException catch (e) {
+    //   final errorMsg = 'Network error login: ${e.toString()}';
+    //   print('❌ $errorMsg');
+    //   return ApiCommonResponseBody(
+    //     status: false,
+    //     message: errorMsg,
+    //   );
+    // } catch (e) {
+    //   final errorMsg = 'Error: ${e.toString()}';
+    //   print('❌ $errorMsg');
+    //   return ApiCommonResponseBody(
+    //     status: false,
+    //     message: errorMsg,
+    //   );
+    // }
+  }
+
+  static Future<ExecutiveAttendanceResponseBody> executiveAttendance() async {
+    // try {
+    final url = Uri.parse(ApiConstants.executiveAttendance);
+
+    print('📤 Sending locationPing request to: $url');
+
+
+    final response = await http.post(
+      url,
+      headers: ApiConstants.headerWithToken,
+
+    ).timeout(_timeout);
+
+    print('📥 Response status: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ locationPing successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ locationPing failed with status ${response.statusCode}');
+      }
+      return ExecutiveAttendanceResponseBody(
+        status: false,
+        message: 'Location Ping failed. Status: ${result.message}',
+        statusCode: response.statusCode,
+      );
+    }
     // } on http.ClientException catch (e) {
     //   final errorMsg = 'Network error login: ${e.toString()}';
     //   print('❌ $errorMsg');
