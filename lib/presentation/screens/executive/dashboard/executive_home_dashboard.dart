@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:apclassstone/core/session/session_manager.dart';
+import 'package:apclassstone/core/utils/battery_optimization_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -936,6 +937,17 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
 
     setState(() => isLoading = true);
 
+    // 🔋 Request all permissions including battery optimization (only when punching IN)
+    if (!isPunchedIn) {
+      final permissionsGranted = await BatteryOptimizationHelper.requestAllPermissions();
+      if (!permissionsGranted) {
+        setState(() => isLoading = false);
+        _showSuccessMessage(
+            'Please grant all permissions for background location tracking');
+        return;
+      }
+    }
+
     double? lat;
     double? lng;
     int? accuracyM;
@@ -1234,13 +1246,27 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
 
       if (permission != LocationPermission.denied &&
           permission != LocationPermission.deniedForever) {
-        final pos = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium,
-          timeLimit: const Duration(seconds: 5),
-        );
-        lat = pos.latitude;
-        lng = pos.longitude;
-        accuracyM = pos.accuracy.toInt();
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 20),
+          );
+          lat = pos.latitude;
+          lng = pos.longitude;
+          accuracyM = pos.accuracy.toInt();
+        } catch (e) {
+          // fallback to last known position
+          try {
+            final lk = await Geolocator.getLastKnownPosition();
+            if (lk != null) {
+              lat = lk.latitude;
+              lng = lk.longitude;
+              accuracyM = lk.accuracy.toInt();
+            }
+          } catch (e2) {
+            debugPrint('Failed to get last known position fallback: $e2');
+          }
+        }
       }
 
       final body = PunchInOutRequestBody(

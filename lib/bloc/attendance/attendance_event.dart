@@ -1,5 +1,3 @@
-
-
 import '../../api/models/request/PunchInOutRequestBody.dart';
 
 abstract class PunchInEvent {}
@@ -37,6 +35,7 @@ abstract class ExecutiveTrackingEvent {}
 class FetchExecutiveTracking extends ExecutiveTrackingEvent {
   final String userId;
   final String  date;
+  final bool showLoader; // new: whether the UI should show a full-page loader
 
-  FetchExecutiveTracking({required this.date, required this.userId});
+  FetchExecutiveTracking({required this.date, required this.userId, this.showLoader = false});
 }

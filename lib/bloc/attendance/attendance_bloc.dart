@@ -135,7 +135,8 @@ class ExecutiveTrackingBloc extends Bloc<ExecutiveTrackingEvent, ExecutiveTracki
   ExecutiveTrackingBloc() : super(ExecutiveTrackingInitial()) {
     // Handle user registration
     on<FetchExecutiveTracking>((event, emit) async {
-      emit(ExecutiveTrackingLoading());
+      // Emit loading but preserve whether UI should show a loader
+      emit(ExecutiveTrackingLoading(showLoader: event.showLoader));
 
       try {
 

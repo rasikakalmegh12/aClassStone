@@ -1,5 +1,3 @@
-import 'dart:developer' as developer;
-
 import 'package:apclassstone/bloc/attendance/attendance_bloc.dart';
 import 'package:apclassstone/presentation/widgets/location_handler.dart';
 import 'package:flutter/material.dart';
@@ -7,10 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
-
-import 'api/integration/api_integration.dart';
-import 'api/models/request/PunchInOutRequestBody.dart';
 import 'bloc/auth/auth_bloc.dart';
 import 'bloc/auth/auth_state.dart';
 import 'bloc/dashboard/dashboard_bloc.dart';
@@ -20,14 +16,6 @@ import 'core/constants/app_constants.dart';
 import 'core/services/repository_provider.dart';
 import 'core/navigation/app_router.dart';
 import 'core/session/session_manager.dart';
-import 'dart:developer';
-import 'package:flutter/material.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-
-
-import 'core/session/session_manager.dart';
-import 'api/integration/api_integration.dart';
-import 'api/models/request/PunchInOutRequestBody.dart';
 
 
 @pragma('vm:entry-point')
@@ -52,7 +40,7 @@ Future<void> main() async {
 
   AppBlocProvider.initialize();
 
-  // ✅ 3. Foreground Task (with error handling)
+  // ✅ 3. Foreground Task (with error handling and wake lock settings)
   try {
       FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
@@ -61,6 +49,9 @@ Future<void> main() async {
         channelDescription: 'Tracks location while punched in',
         channelImportance: NotificationChannelImportance.LOW,
         priority: NotificationPriority.LOW,
+        enableVibration: true,
+        playSound: false,
+        showWhen: false,
       ),
       iosNotificationOptions: const IOSNotificationOptions(
         showNotification: true,
@@ -68,19 +59,16 @@ Future<void> main() async {
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
         eventAction: ForegroundTaskEventAction.repeat(60000), // ✅ 1 minute
-        allowWakeLock: true,
-        allowWifiLock: true,
+        allowWakeLock: true, // ✅ Keep CPU awake even when screen is locked
+        allowWifiLock: true, // ✅ Keep WiFi awake for network requests
         autoRunOnBoot: false,
         autoRunOnMyPackageReplaced: false,
       ),
     );
-    print('✅ Foreground task initialized');
+    print('✅ Foreground task initialized with wake lock');
   } catch (e) {
     print('❌ Foreground task init failed: $e');
   }
-
-
-
 
 
   runApp(const MyApp());

@@ -62,6 +62,9 @@ class LocationTaskHandler extends TaskHandler {
 
   Future<void> _sendLocation() async {
     try {
+      // Ensure SessionManager is initialized
+      await SessionManager.init();
+
       final bool isPunchedIn = SessionManager.isPunchedIn();
       if (kDebugMode) {
         print('📍 Punch in status: $isPunchedIn');
@@ -88,17 +91,42 @@ class LocationTaskHandler extends TaskHandler {
         return;
       }
 
-      Position? position = await Geolocator.getLastKnownPosition();
-      position ??= await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-      );
+      // Try to obtain a fresh GPS fix first. Background tasks should prefer a current position
+      // so we don't send stale last-known coordinates while the executive is moving.
+      Position? position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 20), // try up to 20s for a fresh fix
+        );
+        if (kDebugMode) print('🔄 Obtained current position (fresh): ${position.latitude},${position.longitude}');
+        await _appendDeviceLog('Got fresh position: ${position.latitude},${position.longitude} acc=${position.accuracy}');
+      } catch (e) {
+        // If current position couldn't be obtained (timeout, no fix), fallback to last known position
+        if (kDebugMode) print('⚠️ getCurrentPosition failed/timeout: $e — falling back to last known position');
+        await _appendDeviceLog('getCurrentPosition failed: $e');
 
-      // currentPosition will be non-null if permission granted; proceed.
+        try {
+          position = await Geolocator.getLastKnownPosition();
+          if (position != null) {
+            if (kDebugMode) print('ℹ️ Using last known position: ${position.latitude},${position.longitude}');
+            await _appendDeviceLog('Using last known position: ${position.latitude},${position.longitude} acc=${position.accuracy}');
+          }
+        } catch (e2) {
+          if (kDebugMode) print('❌ Failed to get last known position: $e2');
+          await _appendDeviceLog('Failed to get last known position: $e2');
+        }
+      }
+
+      if (position == null) {
+        await _appendDeviceLog('No position available after attempts — skipping ping');
+        if (kDebugMode) print('⛔ No position available, skipping ping');
+        return;
+      }
 
       if (kDebugMode) {
-        print('📍 LAT=${position.latitude}, LNG=${position.longitude}');
+        print('📍 LAT=${position.latitude}, LNG=${position.longitude} (acc=${position.accuracy})');
       }
-      await _appendDeviceLog('Got position: ${position.latitude},${position.longitude} acc=${position.accuracy}');
 
       final body = PunchInOutRequestBody(
         capturedAt: DateTime.now().toUtc().toIso8601String(),
@@ -113,7 +141,7 @@ class LocationTaskHandler extends TaskHandler {
       if (kDebugMode) {
         print("response of location ping ${json.encode(response.message)}");
       }
-      await _appendDeviceLog('Ping response: ${response.status} ${response.message}');
+      await _appendDeviceLog('Ping response: status: ${response.status} message: ${response.message} ');
 
       if (kDebugMode) {
         print('✅ Location ping sent successfully');

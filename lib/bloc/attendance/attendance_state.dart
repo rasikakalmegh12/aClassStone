@@ -1,6 +1,3 @@
-
-
-
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 
@@ -60,7 +57,10 @@ class ExecutiveAttendanceError extends ExecutiveAttendanceState {
 
 abstract class ExecutiveTrackingState {}
 class ExecutiveTrackingInitial extends ExecutiveTrackingState {}
-class ExecutiveTrackingLoading extends ExecutiveTrackingState {}
+class ExecutiveTrackingLoading extends ExecutiveTrackingState {
+  final bool showLoader; // new: UI should show loader only if true
+  ExecutiveTrackingLoading({this.showLoader = false});
+}
 class ExecutiveTrackingLoaded extends ExecutiveTrackingState {
   final ExecutiveTrackingByDaysResponse response;
   ExecutiveTrackingLoaded({required this.response});

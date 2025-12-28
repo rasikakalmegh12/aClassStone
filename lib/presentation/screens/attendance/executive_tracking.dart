@@ -1,3 +1,7 @@
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
+
 import 'package:apclassstone/core/constants/app_colors.dart';
 import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
@@ -26,9 +30,15 @@ class ExecutiveTracking extends StatefulWidget {
 class _ExecutiveTrackingState extends State<ExecutiveTracking> {
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
+
+  Timer? _pollTimer;
 
   bool _isMapReady = false;
   List<LocationStays>? _pendingStays;
+
+  // cache for arrow bitmaps keyed by rounded angle
+  final Map<int, BitmapDescriptor> _arrowBitmapCache = {};
 
   // 🇮🇳 India default
   static const LatLng indiaLatLng = LatLng(20.5937, 78.9629);
@@ -36,12 +46,32 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
   @override
   void initState() {
     super.initState();
+    // initial load with loader
     context.read<ExecutiveTrackingBloc>().add(
       FetchExecutiveTracking(
         date: widget.date,
         userId: widget.userId,
+        showLoader: true,
       ),
     );
+
+    // start polling every 1 minute, subsequent loads without loader
+    _pollTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+      context.read<ExecutiveTrackingBloc>().add(
+        FetchExecutiveTracking(
+          date: widget.date,
+          userId: widget.userId,
+          showLoader: false,
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    _mapController?.dispose();
+    super.dispose();
   }
 
   // ================= MAP CREATED =================
@@ -55,73 +85,185 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
     }
   }
 
-  // ================= MARKERS =================
-  void _setMarkers(List<LocationStays>? stays) {
+  // ================= MARKERS & POLYLINES =================
+  void _setMarkers(List<LocationStays>? stays) async {
     setState(() {
       _markers.clear();
+      _polylines.clear();
 
       if (stays == null || stays.isEmpty) return;
 
-      for (int i = 0; i < stays.length; i++) {
-        final stay = stays[i];
+    });
 
-        if (stay.lat != null && stay.lng != null) {
-          _markers.add(
-            Marker(
-              markerId: MarkerId(
-                '${stay.sessionId}_$i', // ✅ UNIQUE ID
-              ),
-              position: LatLng(stay.lat!, stay.lng!),
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                BitmapDescriptor.hueAzure,
-              ),
-              infoWindow: InfoWindow(
-                title:
-                "Ping ${i + 1} • ${(stay.stayDurationSeconds ?? 0) ~/ 60} min",
-              ),
+    // build points and markers outside setState for async arrow creation
+    List<LatLng> points = [];
+    final List<Marker> newMarkers = [];
+
+    for (int i = 0; i < (stays ?? []).length; i++) {
+      final stay = stays![i];
+      if (stay.lat != null && stay.lng != null) {
+        final pos = LatLng(stay.lat!, stay.lng!);
+        points.add(pos);
+
+        newMarkers.add(
+          Marker(
+            markerId: MarkerId('${stay.sessionId}_$i'),
+            position: pos,
+            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+            infoWindow: InfoWindow(
+              title: "Ping ${i + 1} • ${(stay.stayDurationSeconds ?? 0) ~/ 60} min",
             ),
-          );
+          ),
+        );
+      }
+    }
+
+    // create polyline
+    if (points.length >= 2) {
+      final polyId = PolylineId('route');
+      final polyline = Polyline(
+        polylineId: polyId,
+        points: points,
+        color: const Color(0xFF4A6CF7),
+        width: 5,
+      );
+
+      // create arrow markers asynchronously
+      final arrows = await _createArrowMarkers(points);
+
+      // create a center arrow to show overall direction
+      final centerIndex = (points.length / 2).floor();
+      LatLng centerPos;
+      double centerRotation;
+      if (points.length % 2 == 0 && centerIndex > 0) {
+        // midpoint between centerIndex-1 and centerIndex
+        final a = points[centerIndex - 1];
+        final b = points[centerIndex];
+        centerPos = LatLng((a.latitude + b.latitude) / 2, (a.longitude + b.longitude) / 2);
+        centerRotation = _computeBearing(a, b);
+      } else {
+        // use exact center point
+        centerPos = points[centerIndex];
+        // compute bearing from previous point if available else from first->last
+        if (centerIndex > 0) {
+          centerRotation = _computeBearing(points[centerIndex - 1], points[centerIndex]);
+        } else {
+          centerRotation = _computeBearing(points.first, points.last);
         }
       }
-    });
+
+      final centerBmp = await _createArrowBitmapDescriptor(centerRotation, size: 64);
+      final centerArrow = Marker(
+        markerId: const MarkerId('center_arrow'),
+        position: centerPos,
+        anchor: const Offset(0.5, 0.5),
+        icon: centerBmp,
+        infoWindow: InfoWindow.noText,
+      );
+
+      setState(() {
+        _polylines.add(polyline);
+        _markers.addAll(newMarkers);
+        _markers.addAll(arrows);
+        _markers.add(centerArrow);
+      });
+    } else {
+      setState(() {
+        _markers.addAll(newMarkers);
+      });
+    }
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateCamera(stays);
     });
   }
 
-  // void _setMarkers(List<LocationStays>? stays) {
-  //   setState(() {
-  //     _markers.clear();
-  //
-  //     if (stays == null || stays.isEmpty) return;
-  //
-  //     for (var stay in stays) {
-  //       if (stay.lat != null && stay.lng != null) {
-  //         _markers.add(
-  //           Marker(
-  //             markerId: MarkerId(
-  //               stay.sessionId ?? '${stay.lat}-${stay.lng}',
-  //             ),
-  //             position: LatLng(stay.lat!, stay.lng!),
-  //             icon: BitmapDescriptor.defaultMarkerWithHue(
-  //               BitmapDescriptor.hueAzure,
-  //             ),
-  //             infoWindow: InfoWindow(
-  //               title:
-  //               "Work Time: ${(stay.stayDurationSeconds ?? 0) ~/ 60} min",
-  //             ),
-  //           ),
-  //         );
-  //       }
-  //     }
-  //   });
-  //
-  //   // Zoom AFTER markers render
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     _updateCamera(stays);
-  //   });
-  // }
+  // create small rotated arrow markers along the path to show direction
+  Future<Set<Marker>> _createArrowMarkers(List<LatLng> points) async {
+    final Set<Marker> arrows = {};
+
+    // Place arrows at midpoints of segments; to reduce clutter place every 2nd segment if many points
+    final step = (points.length > 12) ? 2 : 1;
+
+    for (int i = 0; i < points.length - 1; i += step) {
+      final a = points[i];
+      final b = points[i + 1];
+      final midLat = (a.latitude + b.latitude) / 2;
+      final midLng = (a.longitude + b.longitude) / 2;
+
+      final rotation = _computeBearing(a, b);
+      final int key = rotation.round();
+
+      BitmapDescriptor? bmp = _arrowBitmapCache[key];
+      if (bmp == null) {
+        bmp = await _createArrowBitmapDescriptor(rotation);
+        _arrowBitmapCache[key] = bmp;
+      }
+
+      arrows.add(Marker(
+        markerId: MarkerId('arrow_$i'),
+        position: LatLng(midLat, midLng),
+        anchor: const Offset(0.5, 0.5),
+        icon: bmp,
+        infoWindow: InfoWindow.noText,
+      ));
+    }
+
+    return arrows;
+  }
+
+  // draws a small arrow bitmap rotated by rotationDegrees and returns BitmapDescriptor
+  Future<BitmapDescriptor> _createArrowBitmapDescriptor(double rotationDegrees, {int size = 48}) async {
+    // round rotation to integer to reuse cache
+    final recorder = ui.PictureRecorder();
+    final canvas = ui.Canvas(recorder);
+    final paint = ui.Paint()..color = const ui.Color(0xFFEF4444);
+
+    final center = size / 3;
+
+    canvas.translate(center, center);
+    canvas.rotate((rotationDegrees) * math.pi / 180);
+
+    // draw a simple arrow (triangle) pointing up from center
+    final path = ui.Path();
+    path.moveTo(0, - (size * 0.18));
+    path.lineTo(size * 0.12, size * 0.12);
+    path.lineTo(-size * 0.12, size * 0.12);
+    path.close();
+
+    canvas.drawPath(path, paint);
+
+    // optional shaft
+    final shaftPaint = ui.Paint()
+      ..color = const ui.Color(0xFFEF4444)
+      ..strokeWidth = size * 0.05
+      ..strokeCap = ui.StrokeCap.round;
+    canvas.drawLine(ui.Offset(0, size * 0.12), ui.Offset(0, size * 0.28), shaftPaint);
+
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(size, size);
+    final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
+    final bytes = byteData!.buffer.asUint8List();
+    return BitmapDescriptor.fromBytes(bytes);
+  }
+
+  // compute bearing between two LatLng points (degrees)
+  double _computeBearing(LatLng from, LatLng to) {
+    final lat1 = _degToRad(from.latitude);
+    final lon1 = _degToRad(from.longitude);
+    final lat2 = _degToRad(to.latitude);
+    final lon2 = _degToRad(to.longitude);
+
+    final dLon = lon2 - lon1;
+    final y = math.sin(dLon) * math.cos(lat2);
+    final x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+    final brng = math.atan2(y, x);
+    var bearing = (_radToDeg(brng) + 360) % 360;
+    return bearing;
+  }
+
+  double _degToRad(double deg) => deg * (math.pi / 180.0);
+  double _radToDeg(double rad) => rad * (180.0 / math.pi);
 
   // ================= CAMERA =================
   void _updateCamera(List<LocationStays>? stays) {
@@ -211,7 +353,10 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
         },
         builder: (context, state) {
           if (state is ExecutiveTrackingLoading) {
-            return const Center(child: CircularProgressIndicator());
+            // show loader only on first load when showLoader true
+            if (state.showLoader) {
+              return const Center(child: CircularProgressIndicator());
+            }
           }
 
           if (state is ExecutiveTrackingError) {
@@ -234,6 +379,7 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
                         compassEnabled: false,
                         myLocationEnabled: false,
                         markers: _markers,
+                        polylines: _polylines,
                         initialCameraPosition: const CameraPosition(
                           target: indiaLatLng,
                           zoom: 5,
