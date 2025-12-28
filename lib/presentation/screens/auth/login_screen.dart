@@ -98,30 +98,47 @@ class _LoginScreenState extends State<LoginScreen> {
         listener: (context, state) async {
           if (state is LoginSuccess) {
             print("Access Token: ${state.response.data!.accessToken!}");
-            await SessionManager.setAccessToken(state.response.data!.accessToken!);
-            await SessionManager.saveUserSession(accessToken: state.response.data!.accessToken!,
-                refreshToken: state.response.data!.refreshToken!,
-                userName: state.response.data!.fullName,
-                userRole: state.response.data!.role?.toLowerCase().toString());
+            // ✅ FIXED: Single saveUserSession call with ALL required params
+            final success = await SessionManager.saveUserSession(
+              userId: state.response.data!.userId.toString(),        // ✅ REQUIRED
+              userRole: state.response.data!.role!.toLowerCase(),    // ✅ "executive"
+              userName: state.response.data!.fullName,
+                              // ✅ Add phone if available
+              accessToken: state.response.data!.accessToken!,
+              refreshToken: state.response.data!.refreshToken!,
+              // headerKey: "Bearer ${state.response.data!.accessToken}", // Optional
+            );
 
-            if (mounted) {
-              final role =state.response.data!.role?.toLowerCase().toString();
-              print("Navigating to dashboard for role: $role");
-              print("executive role: ${AppConstants.roleExecutive}");
-              print("superadmin role: ${AppConstants.roleSuperAdmin}");
-              if (role == AppConstants.roleExecutive) {
-                context.goNamed('executive-dashboard', extra: role);
-              } else if (role == AppConstants.roleSuperAdmin) {
-                context.goNamed('superadmin-dashboard', extra: role);
-              } else {
-                context.goNamed('admin-dashboard', extra: role);
+            // Set token expiry AFTER session save
+            await SessionManager.setAccessTokenExpiry(
+              state.response.data!.accessTokenExpiresAt!,
+            );
+
+            if (success) {
+              print('🎉 Session saved! Role: ${SessionManager.getRefreshToken()}');
+              print('🔍 Debug: ${SessionManager.getUserName()}');
+              if (mounted) {
+                final role = state.response.data!
+                    .role
+                    ?.toLowerCase()
+                    .toString();
+                print("Navigating to dashboard for role: $role");
+                print("executive role: ${AppConstants.roleExecutive}");
+                print("superadmin role: ${AppConstants.roleSuperAdmin}");
+                if (role == AppConstants.roleExecutive) {
+                  context.goNamed('executive-dashboard', extra: role);
+                } else if (role == AppConstants.roleSuperAdmin) {
+                  context.goNamed('superadmin-dashboard', extra: role);
+                } else {
+                  context.goNamed('admin-dashboard', extra: role);
+                }
               }
+              // Navigator.of(context).pushReplacement(
+              //   MaterialPageRoute(
+              //     builder: (context) => DashboardRouter(user: state.user!),
+              //   ),
+              // );
             }
-            // Navigator.of(context).pushReplacement(
-            //   MaterialPageRoute(
-            //     builder: (context) => DashboardRouter(user: state.user!),
-            //   ),
-            // );
           } else if (state is LoginError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

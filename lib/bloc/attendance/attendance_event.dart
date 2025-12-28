@@ -24,3 +24,19 @@ class FetchLocationPing extends LocationPingEvent {
   final String id;
   FetchLocationPing({required this.body,required this.id});
 }
+
+abstract class ExecutiveAttendanceEvent {}
+class FetchExecutiveAttendance extends ExecutiveAttendanceEvent {
+  final String  date;
+
+  FetchExecutiveAttendance({required this.date});
+}
+
+
+abstract class ExecutiveTrackingEvent {}
+class FetchExecutiveTracking extends ExecutiveTrackingEvent {
+  final String userId;
+  final String  date;
+
+  FetchExecutiveTracking({required this.date, required this.userId});
+}

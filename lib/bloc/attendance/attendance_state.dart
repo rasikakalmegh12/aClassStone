@@ -1,9 +1,11 @@
 
 
 
+import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 
 import '../../api/models/response/ApiCommonResponseBody.dart';
+import '../../api/models/response/ExecutiveTrackingByDaysResponse.dart';
 
 abstract class PunchInState {}
 class PunchInInitial extends PunchInState {}
@@ -41,4 +43,29 @@ class LocationPingLoaded extends LocationPingState {
 class LocationPingError extends LocationPingState {
   final String message;
   LocationPingError({required this.message});
+}
+
+abstract class ExecutiveAttendanceState {}
+class ExecutiveAttendanceInitial extends ExecutiveAttendanceState {}
+class ExecutiveAttendanceLoading extends ExecutiveAttendanceState {}
+class ExecutiveAttendanceLoaded extends ExecutiveAttendanceState {
+  final ExecutiveAttendanceResponseBody response;
+  ExecutiveAttendanceLoaded({required this.response});
+}
+class ExecutiveAttendanceError extends ExecutiveAttendanceState {
+  final String message;
+  ExecutiveAttendanceError({required this.message});
+}
+
+
+abstract class ExecutiveTrackingState {}
+class ExecutiveTrackingInitial extends ExecutiveTrackingState {}
+class ExecutiveTrackingLoading extends ExecutiveTrackingState {}
+class ExecutiveTrackingLoaded extends ExecutiveTrackingState {
+  final ExecutiveTrackingByDaysResponse response;
+  ExecutiveTrackingLoaded({required this.response});
+}
+class ExecutiveTrackingError extends ExecutiveTrackingState {
+  final String message;
+  ExecutiveTrackingError({required this.message});
 }

@@ -1,3 +1,4 @@
+import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 
 import '../../api/models/api_models.dart';
@@ -27,3 +28,20 @@ class LoginError extends LoginState {
   LoginError({required this.message});
 }
 
+/// ✅ ADD THIS
+class LoginLoggedOut extends LoginState {}
+
+
+
+
+abstract class LogoutState {}
+class LogoutInitial extends LogoutState {}
+class LogoutLoading extends LogoutState {}
+class LogoutLoaded extends LogoutState {
+  final ApiCommonResponseBody response;
+  LogoutLoaded({required this.response});
+}
+class LogoutError extends LogoutState {
+  final String message;
+  LogoutError({required this.message});
+}

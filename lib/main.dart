@@ -1,7 +1,18 @@
+import 'dart:developer' as developer;
+
+import 'package:apclassstone/bloc/attendance/attendance_bloc.dart';
+import 'package:apclassstone/presentation/widgets/location_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 
+
+import 'api/integration/api_integration.dart';
+import 'api/models/request/PunchInOutRequestBody.dart';
+import 'bloc/auth/auth_bloc.dart';
+import 'bloc/auth/auth_state.dart';
 import 'bloc/dashboard/dashboard_bloc.dart';
 import 'bloc/registration/registration_bloc.dart';
 import 'core/constants/app_colors.dart';
@@ -9,11 +20,69 @@ import 'core/constants/app_constants.dart';
 import 'core/services/repository_provider.dart';
 import 'core/navigation/app_router.dart';
 import 'core/session/session_manager.dart';
+import 'dart:developer';
+import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+
+
+import 'core/session/session_manager.dart';
+import 'api/integration/api_integration.dart';
+import 'api/models/request/PunchInOutRequestBody.dart';
+
+
+@pragma('vm:entry-point')
+void startCallback() {
+  FlutterForegroundTask.setTaskHandler(LocationTaskHandler());
+}
+
+
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await SessionManager.init();
-  await AppBlocProvider.initialize();
+
+  // ✅ 2. Geolocator check
+  bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    print('⚠️ Location services disabled');
+  }
+
+
+  AppBlocProvider.initialize();
+
+  // ✅ 3. Foreground Task (with error handling)
+  try {
+      FlutterForegroundTask.init(
+      androidNotificationOptions: AndroidNotificationOptions(
+        channelId: 'location_tracking',
+        channelName: 'Location Tracking',
+        channelDescription: 'Tracks location while punched in',
+        channelImportance: NotificationChannelImportance.LOW,
+        priority: NotificationPriority.LOW,
+      ),
+      iosNotificationOptions: const IOSNotificationOptions(
+        showNotification: true,
+        playSound: false,
+      ),
+      foregroundTaskOptions: ForegroundTaskOptions(
+        eventAction: ForegroundTaskEventAction.repeat(60000), // ✅ 1 minute
+        allowWakeLock: true,
+        allowWifiLock: true,
+        autoRunOnBoot: false,
+        autoRunOnMyPackageReplaced: false,
+      ),
+    );
+    print('✅ Foreground task initialized');
+  } catch (e) {
+    print('❌ Foreground task init failed: $e');
+  }
+
+
+
+
+
   runApp(const MyApp());
 }
 
@@ -32,12 +101,21 @@ class MyApp extends StatelessWidget {
             BlocProvider(
               create: (context) => AppBlocProvider.authBloc,),
             BlocProvider(
+              create: (context) => AppBlocProvider.logoutBloc,),
+            BlocProvider(
               create: (context) => AppBlocProvider.registrationBloc,
             ),
+
+            BlocProvider(
+              create: (context) => AppBlocProvider.locationPingBloc,
+            ),
+            BlocProvider<LoginBloc>(create: (context) => LoginBloc(),),
+            BlocProvider<LogoutBloc>(create: (context) => LogoutBloc(),),
             BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
             BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
             BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
             BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+            BlocProvider<LocationPingBloc>(create: (context) => LocationPingBloc(),),
             BlocProvider(
               create: (context) => AppBlocProvider.queueBloc,
             ),
@@ -48,12 +126,28 @@ class MyApp extends StatelessWidget {
             //   create: (context) => AppBlocProvider.userProfileBloc,
             // ),
           ],
-          child: MaterialApp.router(
-            title: AppConstants.appName,
-            debugShowCheckedModeBanner: false,
-            theme: _buildTheme(),
-            routerConfig: AppRouter.router,
+          child:
+          BlocListener<LoginBloc, LoginState>(
+            listener: (context, state) {
+              if (state is LoginLoggedOut) {
+                // 🔥 Forced logout from anywhere
+                context.goNamed('login');
+              }
+            },
+            child: MaterialApp.router(
+              title: AppConstants.appName,
+              debugShowCheckedModeBanner: false,
+              theme: _buildTheme(),
+              routerConfig: AppRouter.router,
+            ),
           ),
+
+          // MaterialApp.router(
+          //   title: AppConstants.appName,
+          //   debugShowCheckedModeBanner: false,
+          //   theme: _buildTheme(),
+          //   routerConfig: AppRouter.router,
+          // ),
         );
       },
     );

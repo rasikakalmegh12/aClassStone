@@ -283,7 +283,7 @@ class OfflineApiWrapper {
       endpoint: endpoint,
       method: method.toUpperCase(),
       requestBody: data != null ? jsonEncode(data) : null,
-      headers: {'Authorization': 'Bearer ${SessionManager.getAccessTokenSync() ?? ''}'},
+      headers: {'Authorization': 'Bearer ${SessionManager.getAccessToken() ?? ''}'},
       status: QueueRequestStatus.pending,
       createdAt: DateTime.now(),
       retryCount: 0,

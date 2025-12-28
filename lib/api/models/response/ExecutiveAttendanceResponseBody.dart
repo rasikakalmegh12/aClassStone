@@ -82,8 +82,8 @@ class Items {
   int? sessionCount;
   String? firstPunchInAt;
   String? firstPunchInAtDisplay;
-  Null? lastPunchOutAt;
-  Null? lastPunchOutAtDisplay;
+  String? lastPunchOutAt;
+  String? lastPunchOutAtDisplay;
   String? activeSessionPunchInAt;
   String? activeSessionPunchInAtDisplay;
   bool? isActive;

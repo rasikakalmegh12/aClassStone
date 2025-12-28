@@ -15,6 +15,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../api/models/request/ApproveRequestBody.dart';
 import '../../../../api/models/response/PendingRegistrationResponseBody.dart';
+import '../../../../bloc/auth/auth_bloc.dart';
+import '../../../../bloc/auth/auth_event.dart';
+import '../../../../bloc/auth/auth_state.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../auth/login_screen.dart';
@@ -64,13 +67,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       }
     });
 
-    SessionManager.isLoggedIn().then((isLoggedIn) {
+    // SessionManager.isLoggedIn().then((isLoggedIn) {
       if (kDebugMode) {
-        print("login status: $isLoggedIn");
-        print("access token: ${SessionManager.getAccessTokenSync()}");
+        print("login status: ${SessionManager.isLoggedIn()}");
+        print("access token: ${SessionManager.getAccessToken()}");
       }
 
-    });
+    // });
     // Load pending registrations and dashboard data
     _refreshData();
   }
@@ -165,7 +168,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                         _buildStatsGrid(),
                         const SizedBox(height: 10),
                         _buildPendingRegistrations(),
-
+                        const SizedBox(height: 10),
+                        _buildQuickActionsCard(),
                         const SizedBox(height: 40), // Extra padding at bottom
                       ],
                     ),
@@ -853,10 +857,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   else
                     Text(
                       value,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: const Color(0xFF1A365D),
+                        color: Color(0xFF1A365D),
                         letterSpacing: -0.5,
                         height: 1.0,
                       ),
@@ -864,9 +868,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   const SizedBox(height: 4),
                   Text(
                     title,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 11,
-                      color: const Color(0xFF64748B),
+                      color: Color(0xFF64748B),
                       fontWeight: FontWeight.w500,
                       height: 1.2,
                     ),
@@ -1487,7 +1491,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   children: [
                     // HEADER – keep almost same, only title dynamic
                     Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(10),
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -1501,8 +1505,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                       child: Row(
                         children: [
                           Container(
-                            width: 35,
-                            height: 35,
+                            width: 30,
+                            height: 30,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
@@ -1802,57 +1806,114 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: Text(
+          title: const Text(
             'Confirm Logout',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 16,
-              color: const Color(0xFF1A365D),
+              color: Color(0xFF1A365D),
             ),
           ),
-          content: Text(
+          content: const Text(
             'Are you sure you want to logout from the admin portal?',
             style: TextStyle(
               fontSize: 14,
-              color: const Color(0xFF718096),
+              color: Color(0xFF718096),
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
+              child: const Text(
                 'Cancel',
                 style: TextStyle(
-                  color: const Color(0xFF718096),
+                  color: Color(0xFF718096),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: TextButton(
-                onPressed: () {
+            // Container(
+            //   decoration: BoxDecoration(
+            //     gradient: const LinearGradient(
+            //       colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
+            //     ),
+            //     borderRadius: BorderRadius.circular(6),
+            //   ),
+            //   child: TextButton(
+            //     onPressed: () {
+            //
+            //       context.read<LogoutBloc>().add(FetchLogout(refreshToken: SessionManager.getRefreshTokenSync().toString()));
+            //       Navigator.of(context).pop();
+            //     },
+            //     child: const Text(
+            //       'Logout',
+            //       style: TextStyle(
+            //         color: Colors.white,
+            //         fontWeight: FontWeight.w600,
+            //         fontSize: 14,
+            //       ),
+            //     ),
+            //   ),
+            // ),
 
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+            BlocProvider(
+              create: (context) => LogoutBloc(),
+              child: BlocConsumer<LogoutBloc, LogoutState>(
+                listener: (context, state) {
+                  if (state is LogoutLoaded) {
+                    // Logout successful - clear session and navigate
+                    SessionManager.logout();
+                    context.goNamed("login");
+                  } else if (state is LogoutError) {
+                    // Show error snackbar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: state is LogoutLoading
+                        ? const SizedBox(
+                      height: 44,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      ),
+                    )
+                        : TextButton(
+                      onPressed: () {
+                        context.read<LogoutBloc>().add(
+                            FetchLogout(refreshToken: SessionManager.getRefreshToken().toString())
+                        );
+                      },
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   );
                 },
-                child: Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
               ),
             ),
+
           ],
         );
       },
@@ -1862,7 +1923,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   // Add helper widget at end of file (before class end)
   Widget _buildPunchesModal(List<dynamic> punches) {
     if (punches.isEmpty) {
-      return SizedBox(
+      return const SizedBox(
         height: 200,
         child: Center(child: Text('No local punch records')),
       );
@@ -1880,6 +1941,134 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             trailing: p.status == 'success' ? Icon(Icons.check, color: Colors.green) : Icon(Icons.sync_problem, color: Colors.orange),
           );
         },
+      ),
+    );
+  }
+
+
+
+  Widget _buildQuickActionsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'QUICK ACTIONS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionButton(
+                  label: 'Attendance',
+                  icon: Icons.assignment_outlined,
+                  onTap: () {
+                    context.pushNamed("attendance");
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
+                  label: 'Catalogues',
+                  icon: Icons.calendar_today_outlined,
+                  onTap: () {
+                    context.pushNamed("cataloguePage");
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionButton(
+                  label: 'Leads',
+                  icon: Icons.star_outline,
+                  onTap: () {
+
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
+                  label: 'Clients',
+                  icon: Icons.person_outline,
+                  onTap: () {
+
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
+                  label: 'More',
+                  icon: Icons.more_horiz,
+                  onTap: () {
+                    // Show more options
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0);
+  }
+
+
+  Widget _buildQuickActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.grey200),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: AppColors.primaryTeal,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

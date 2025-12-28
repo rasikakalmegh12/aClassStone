@@ -47,5 +47,18 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>This app needs location access for attendance tracking</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>This app needs background location for continuous tracking</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>background-fetch</string>
+        <string>background-processing</string>
+    </array>
+
+
 </dict>
 </plist>

@@ -6,6 +6,7 @@ import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
+import 'package:apclassstone/api/models/response/ExecutiveTrackingByDaysResponse.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
@@ -23,6 +24,7 @@ import '../models/request/RegistrationRequestBody.dart';
 import '../models/response/PendingRegistrationResponseBody.dart';
 import '../models/response/RegistrationResponseBody.dart';
 import '../models/request/PunchInOutRequestBody.dart';
+import '../network/api_client.dart';
 
 
 /// Consolidated API Integration class - all API calls are managed here
@@ -200,6 +202,180 @@ class ApiIntegration {
     }
   }
 
+  static Future<ApiCommonResponseBody> logout(String refreshToken) async {
+    try {
+      final url = Uri.parse(ApiConstants.logout);
+
+      if (kDebugMode) {
+        print('📤 Sending refreshToken request to: $url');
+      }
+
+      final requestBody = {
+        "refreshToken": refreshToken,
+      };
+
+      if (kDebugMode) {
+        print('📥 Request body refreshToken : ${jsonEncode(requestBody)}');
+      }
+
+      final response = await http.post(
+        url,
+        headers: ApiConstants.headerWithToken(),
+        body: jsonEncode(requestBody),
+      ).timeout(_timeout);
+
+      if (kDebugMode) {
+        print('Response body refreshToken: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApiCommonResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ refreshToken successful: ${result.message}');
+        }
+        return result;
+      } else {
+        try {
+          final jsonResponse = jsonDecode(response.body);
+          final result = ApiCommonResponseBody.fromJson(jsonResponse);
+          if (kDebugMode) {
+            print('❌ refreshToken failed with status ${response.statusCode}');
+          }
+          return ApiCommonResponseBody(
+            status: false,
+            message: result.message ?? 'refreshToken failed with status ${response.statusCode}',
+            statusCode: response.statusCode,
+          );
+        } catch (parseError) {
+          if (kDebugMode) {
+            print('❌ Failed to parse error response: $parseError');
+          }
+          return ApiCommonResponseBody(
+            status: false,
+            message: 'Server error: ${response.statusCode} - ${response.body}',
+            statusCode: response.statusCode,
+          );
+        }
+      }
+    } on TimeoutException catch (e) {
+      const errorMsg = 'Request timeout: The server took too long to respond. Please check your internet connection and try again.';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+        print('Timeout details: ${e.toString()}');
+      }
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Unexpected error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  static Future<LoginResponseBody> refreshToken(String refreshToken) async {
+    try {
+      final url = Uri.parse(ApiConstants.refreshToken);
+
+      if (kDebugMode) {
+        print('📤 Sending refreshToken request to: $url');
+      }
+
+      final requestBody = {
+        "refreshToken": refreshToken,
+
+      };
+
+      if (kDebugMode) {
+        print('📥 Request body refreshToken : ${jsonEncode(requestBody)}');
+      }
+
+      final response = await http.post(
+        url,
+        headers: ApiConstants.headerWithToken(),
+        body: jsonEncode(requestBody),
+      ).timeout(_timeout);
+
+      if (kDebugMode) {
+        print('Response body refreshToken: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = LoginResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ refreshToken successful: ${result.message}');
+        }
+        return result;
+      } else {
+        try {
+          final jsonResponse = jsonDecode(response.body);
+          final result = LoginResponseBody.fromJson(jsonResponse);
+          if (kDebugMode) {
+            print('❌ refreshToken failed with status ${response.statusCode}');
+          }
+          return LoginResponseBody(
+            status: false,
+            message: result.message ?? 'refreshToken failed with status ${response.statusCode}',
+            statusCode: response.statusCode,
+          );
+        } catch (parseError) {
+          if (kDebugMode) {
+            print('❌ Failed to parse error response: $parseError');
+          }
+          return LoginResponseBody(
+            status: false,
+            message: 'Server error: ${response.statusCode} - ${response.body}',
+            statusCode: response.statusCode,
+          );
+        }
+      }
+    } on TimeoutException catch (e) {
+      const errorMsg = 'Request timeout: The server took too long to respond. Please check your internet connection and try again.';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+        print('Timeout details: ${e.toString()}');
+      }
+      return LoginResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return LoginResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Unexpected error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return LoginResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
 
 
   /// ------------------GET METHOD --------------------------
@@ -212,12 +388,13 @@ class ApiIntegration {
         print('📤 Sending Profile request to: $url');
       }
 
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
 
-      final response = await http.get(
-        url,
-        headers: ApiConstants.headerWithToken,
-
-      ).timeout(_timeout);
 
       if (kDebugMode) {
         print('📥 Response getUserProfile status: ${response.statusCode}');
@@ -302,14 +479,16 @@ class ApiIntegration {
         print('📤 Sending Pending User header: ${ApiConstants.headerWithToken}');
       }
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
-        },
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${SessionManager.getAccessToken()}',
+          },
 
-      ).timeout(_timeout);
+        ).timeout(_timeout);
+      });
 
       if (kDebugMode) {
         print('📥 Response pending status: ${response.statusCode}');
@@ -439,14 +618,13 @@ class ApiIntegration {
         print('📤 Sending All User header: ${ApiConstants.headerWithToken}');
       }
 
-      final response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
-        },
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
+        ).timeout(_timeout);
+      });
 
       if (kDebugMode) {
         print('📥 Response all user status: ${response.statusCode}');
@@ -539,9 +717,119 @@ class ApiIntegration {
     }
   }
 
+  static Future<ExecutiveAttendanceResponseBody> executiveAttendance(String date) async {
+    // try {
+    final url = Uri.parse("${ApiConstants.executiveAttendance}?date=$date");
+
+    print('📤 Sending locationPing request to: $url');
 
 
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
 
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body: ${response.body}');
+      print('headers body: ${ApiConstants.headerWithToken}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ locationPing successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ locationPing failed with status ${response.statusCode}');
+      }
+      return ExecutiveAttendanceResponseBody(
+        status: false,
+        message: 'Location Ping failed. Status: ${result.message}',
+        statusCode: response.statusCode,
+      );
+    }
+    // } on http.ClientException catch (e) {
+    //   final errorMsg = 'Network error login: ${e.toString()}';
+    //   print('❌ $errorMsg');
+    //   return ApiCommonResponseBody(
+    //     status: false,
+    //     message: errorMsg,
+    //   );
+    // } catch (e) {
+    //   final errorMsg = 'Error: ${e.toString()}';
+    //   print('❌ $errorMsg');
+    //   return ApiCommonResponseBody(
+    //     status: false,
+    //     message: errorMsg,
+    //   );
+    // }
+  }
+
+  static Future<ExecutiveTrackingByDaysResponse> executiveTrackingByDays(String userId, String date) async {
+    try {
+    final url = Uri.parse("${ApiConstants.executiveTrackingByDays}/$userId/days/$date");
+
+    print('📤 Sending executiveTrackingByDays request to: $url');
+
+    print('headers executiveTrackingByDays: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status executiveTrackingByDays: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body executiveTrackingByDays: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = ExecutiveTrackingByDaysResponse.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ executiveTrackingByDays successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = ExecutiveTrackingByDaysResponse.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ executiveTrackingByDays  failed with status ${response.statusCode}');
+      }
+      return ExecutiveTrackingByDaysResponse(
+        status: false,
+        message: 'Executive Tracking failed. Status: ${result.message}',
+        statusCode: response.statusCode,
+      );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error login: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ExecutiveTrackingByDaysResponse(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ExecutiveTrackingByDaysResponse(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
 
 
 
@@ -555,11 +843,13 @@ class ApiIntegration {
       print('📤 Sending updateProfile request to: $url');
       print('Request body: ${requestBody.toJson()}');
 
-      final response = await http.patch(
-        url,
-        headers: ApiConstants.headerWithToken,
-        body: jsonEncode(requestBody.toJson()),
-      ).timeout(_timeout);
+      final response = await ApiClient.send(() {
+        return http.patch(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
 
       print('📥 Response status: ${response.statusCode}');
       if (kDebugMode) {
@@ -610,11 +900,13 @@ class ApiIntegration {
       print('📤 Sending approveRegistration request to: $url');
       print('Request body: ${requestBody.toJson()}');
 
-      final response = await http.patch(
-        url,
-        headers: ApiConstants.headerWithToken,
-        body: jsonEncode(requestBody.toJson()),
-      ).timeout(_timeout);
+      final response = await ApiClient.send(() {
+        return http.patch(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
 
       print('📥 Response status: ${response.statusCode}');
       if (kDebugMode) {
@@ -669,11 +961,13 @@ class ApiIntegration {
       print('📤 Sending rejectRegistration request to: $url');
 
 
-      final response = await http.delete(
-        url,
-        headers: ApiConstants.headerWithToken,
+      final response = await ApiClient.send(() {
+        return http.delete(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
+        ).timeout(_timeout);
+      });
 
       print('📥 Response status: ${response.statusCode}');
       if (kDebugMode) {
@@ -717,176 +1011,6 @@ class ApiIntegration {
   }
 
 
-//
-//   /// Logout user
-//   static Future<BaseResponse> logout() async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//       await SessionManager.clearSession();
-//
-//       return const BaseResponse(
-//         success: true,
-//         message: 'Logout successful',
-//       );
-//     } catch (e) {
-//       return BaseResponse(
-//         success: false,
-//         message: 'Logout failed: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-//   // ===================== REGISTRATION APIs =====================
-
-//
-//   /// Approve a pending registration
-//   static Future<BaseResponse> approveRegistration(String registrationId) async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return const BaseResponse(
-//         success: true,
-//         message: 'Registration approved successfully',
-//       );
-//     } catch (e) {
-//       return BaseResponse(
-//         success: false,
-//         message: 'Failed to approve registration: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-//   /// Reject a pending registration
-//   static Future<BaseResponse> rejectRegistration(String registrationId) async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return const BaseResponse(
-//         success: true,
-//         message: 'Registration rejected successfully',
-//       );
-//     } catch (e) {
-//       return BaseResponse(
-//         success: false,
-//         message: 'Failed to reject registration: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-//   // ===================== ATTENDANCE APIs =====================
-//
-//   /// Record punch in with location
-//   static Future<PunchResponse> punchIn({
-//     double? latitude,
-//     double? longitude,
-//     String? location,
-//   }) async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return PunchResponse(
-//         success: true,
-//         message: 'Punched in successfully',
-//         timestamp: DateTime.now(),
-//         type: 'punch_in',
-//         location: location ?? 'Office',
-//       );
-//     } catch (e) {
-//       return PunchResponse(
-//         success: false,
-//         message: 'Failed to punch in: ${e.toString()}',
-//         timestamp: DateTime.now(),
-//         type: 'punch_in',
-//       );
-//     }
-//   }
-//
-//   /// Record punch out with location
-//   static Future<PunchResponse> punchOut({
-//     double? latitude,
-//     double? longitude,
-//     String? location,
-//   }) async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return PunchResponse(
-//         success: true,
-//         message: 'Punched out successfully',
-//         timestamp: DateTime.now(),
-//         type: 'punch_out',
-//         location: location ?? 'Office',
-//       );
-//     } catch (e) {
-//       return PunchResponse(
-//         success: false,
-//         message: 'Failed to punch out: ${e.toString()}',
-//         timestamp: DateTime.now(),
-//         type: 'punch_out',
-//       );
-//     }
-//   }
-//
-//   /// Get attendance history
-//   static Future<AttendanceHistoryResponse> getAttendanceHistory() async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return const AttendanceHistoryResponse(
-//         success: true,
-//         message: 'Attendance history loaded',
-//         attendance: [],
-//       );
-//     } catch (e) {
-//       return AttendanceHistoryResponse(
-//         success: false,
-//         message: 'Failed to load attendance history: ${e.toString()}',
-//         attendance: [],
-//       );
-//     }
-//   }
-//
-//   // ===================== MEETING APIs =====================
-//
-//   /// Start a new meeting
-//   static Future<MeetingResponse> startMeeting({
-//     required String title,
-//     String? description,
-//     List<String>? attendees,
-//     double? latitude,
-//     double? longitude,
-//     String? location,
-//   }) async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       final meeting = Meeting(
-//         id: 'meeting_${DateTime.now().millisecondsSinceEpoch}',
-//         title: title,
-//         description: description,
-//         status: 'active',
-//         startTime: DateTime.now(),
-//         organizer: 'current_user',
-//         location: location ?? 'Office',
-//         attendees: attendees,
-//       );
-//
-//       return MeetingResponse(
-//         success: true,
-//         message: 'Meeting started successfully',
-//         meeting: meeting,
-//       );
-//     } catch (e) {
-//       return MeetingResponse(
-//         success: false,
-//         message: 'Failed to start meeting: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-// }
-
-  // ===================== OFFLINE SUPPORT METHODS =====================
 
   /// Check if device has internet connectivity
   static Future<bool> hasConnectivity() async {
@@ -926,12 +1050,15 @@ class ApiIntegration {
     try {
       final url = Uri.parse(ApiConstants.punchIn);
       if (kDebugMode) print('📤 Sending punchIn request to: $url');
+      if (kDebugMode) print('📤 Sending headers: ${ApiConstants.headerWithToken()}');
 
-      final response = await http.post(
-        url,
-        headers: ApiConstants.headerWithToken,
-        body: jsonEncode(body.toJson()),
-      ).timeout(_timeout);
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
 
       if (kDebugMode) {
         print('📥 punchIn status: ${response.statusCode}');
@@ -961,11 +1088,13 @@ class ApiIntegration {
       final url = Uri.parse(ApiConstants.punchOut);
       if (kDebugMode) print('📤 Sending punchOut request to: $url');
 
-      final response = await http.post(
-        url,
-        headers: ApiConstants.headerWithToken,
-        body: jsonEncode(body.toJson()),
-      ).timeout(_timeout);
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
 
       if (kDebugMode) {
         print('📥 punchOut status: ${response.statusCode}');
@@ -990,16 +1119,96 @@ class ApiIntegration {
   }
 
 
+  // static Future<ApiCommonResponseBody> locationPing(PunchInOutRequestBody requestBody) async {
+  //   // try {
+  //     final url = Uri.parse(ApiConstants.locationPing);
+  //
+  //     print('📤 Sending locationPing request to: $url');
+  //     print('Request body: ${json.encode(requestBody)}');
+  //     print('headers: ${ApiConstants.headerWithToken()}');
+  //     print('headers: ${SessionManager.getAccessTokenSync()}');
+  //
+  //     final response = await
+  //     // ApiClient.send(() {
+  //     //   return http.post(
+  //     //     url,
+  //     //     headers: {
+  //     //       'Content-Type': 'application/json',
+  //     //       'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
+  //     //     },
+  //     //     body: jsonEncode(requestBody.toJson()),
+  //     //   ).timeout(_timeout);
+  //     // });
+  //     http.post(
+  //       url,
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
+  //       },
+  //       body: jsonEncode(requestBody.toJson()),
+  //     ).timeout(_timeout);
+  //
+  //     print('📥 Response status: ${response.statusCode}');
+  //     if (kDebugMode) {
+  //       print('Response body: ${response.body}');
+  //     }
+  //
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       final jsonResponse = jsonDecode(response.body);
+  //       final result = ApiCommonResponseBody.fromJson(jsonResponse);
+  //       if (kDebugMode) {
+  //         print('✅ locationPing successful: ${result.message}');
+  //       }
+  //       return result;
+  //     } else {
+  //       final jsonResponse = jsonDecode(response.body);
+  //       final result = ApiCommonResponseBody.fromJson(jsonResponse);
+  //       if (kDebugMode) {
+  //         print('❌ locationPing failed with status ${response.statusCode}');
+  //       }
+  //       return ApiCommonResponseBody(
+  //         status: false,
+  //         message: 'Location Ping failed. Status: ${result.message}',
+  //         statusCode: response.statusCode,
+  //       );
+  //     }
+  //   // } on http.ClientException catch (e) {
+  //   //   final errorMsg = 'Network error login: ${e.toString()}';
+  //   //   print('❌ $errorMsg');
+  //   //   return ApiCommonResponseBody(
+  //   //     status: false,
+  //   //     message: errorMsg,
+  //   //   );
+  //   // } catch (e) {
+  //   //   final errorMsg = 'Error: ${e.toString()}';
+  //   //   print('❌ $errorMsg');
+  //   //   return ApiCommonResponseBody(
+  //   //     status: false,
+  //   //     message: errorMsg,
+  //   //   );
+  //   // }
+  // }
+  //
+  //
+
   static Future<ApiCommonResponseBody> locationPing(PunchInOutRequestBody requestBody) async {
-    // try {
+    try {
       final url = Uri.parse(ApiConstants.locationPing);
 
       print('📤 Sending locationPing request to: $url');
       print('Request body: ${json.encode(requestBody)}');
 
+      // ✅ Ensure SessionManager is ready
+
+
+      print('🔑 Access Token: ${SessionManager.getAccessToken()}');
+
       final response = await http.post(
         url,
-        headers: ApiConstants.headerWithToken,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${SessionManager.getAccessToken()}',
+        },
         body: jsonEncode(requestBody.toJson()),
       ).timeout(_timeout);
 
@@ -1011,91 +1220,48 @@ class ApiIntegration {
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
         final result = ApiCommonResponseBody.fromJson(jsonResponse);
-        if (kDebugMode) {
-          print('✅ locationPing successful: ${result.message}');
-        }
+        print('✅ locationPing successful: ${result.message}');
         return result;
+      } else if (response.statusCode == 401) {
+        // ✅ FIXED: Handle 401 without void method
+        print('🔓 Token expired - clearing session locally');
+
+        // Option 1: Clear session locally (no bloc needed)
+        await SessionManager.logout();
+
+        // Option 2: Dispatch logout event (if you have AuthBloc)
+        // context.read<AuthBloc>().add(AuthLogoutRequested());
+
+        return ApiCommonResponseBody(
+          status: false,
+          message: 'Session expired. Please login again.',
+          statusCode: 401,
+        );
       } else {
         final jsonResponse = jsonDecode(response.body);
         final result = ApiCommonResponseBody.fromJson(jsonResponse);
-        if (kDebugMode) {
-          print('❌ locationPing failed with status ${response.statusCode}');
-        }
+        print('❌ locationPing failed with status ${response.statusCode}');
         return ApiCommonResponseBody(
           status: false,
-          message: 'Location Ping failed. Status: ${result.message}',
+          message: 'Location Ping failed: ${result.message}',
           statusCode: response.statusCode,
         );
       }
-    // } on http.ClientException catch (e) {
-    //   final errorMsg = 'Network error login: ${e.toString()}';
-    //   print('❌ $errorMsg');
-    //   return ApiCommonResponseBody(
-    //     status: false,
-    //     message: errorMsg,
-    //   );
-    // } catch (e) {
-    //   final errorMsg = 'Error: ${e.toString()}';
-    //   print('❌ $errorMsg');
-    //   return ApiCommonResponseBody(
-    //     status: false,
-    //     message: errorMsg,
-    //   );
-    // }
-  }
-
-  static Future<ExecutiveAttendanceResponseBody> executiveAttendance() async {
-    // try {
-    final url = Uri.parse(ApiConstants.executiveAttendance);
-
-    print('📤 Sending locationPing request to: $url');
-
-
-    final response = await http.post(
-      url,
-      headers: ApiConstants.headerWithToken,
-
-    ).timeout(_timeout);
-
-    print('📥 Response status: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('✅ locationPing successful: ${result.message}');
-      }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ locationPing failed with status ${response.statusCode}');
-      }
-      return ExecutiveAttendanceResponseBody(
+    } on http.ClientException catch (e) {
+      print('❌ Network error locationPing: ${e.toString()}');
+      return ApiCommonResponseBody(
         status: false,
-        message: 'Location Ping failed. Status: ${result.message}',
-        statusCode: response.statusCode,
+        message: 'Network error: ${e.toString()}',
+        statusCode: 0,
+      );
+    } catch (e) {
+      print('❌ Unexpected error locationPing: $e');
+      return ApiCommonResponseBody(
+        status: false,
+        message: 'Error: ${e.toString()}',
+        statusCode: 0,
       );
     }
-    // } on http.ClientException catch (e) {
-    //   final errorMsg = 'Network error login: ${e.toString()}';
-    //   print('❌ $errorMsg');
-    //   return ApiCommonResponseBody(
-    //     status: false,
-    //     message: errorMsg,
-    //   );
-    // } catch (e) {
-    //   final errorMsg = 'Error: ${e.toString()}';
-    //   print('❌ $errorMsg');
-    //   return ApiCommonResponseBody(
-    //     status: false,
-    //     message: errorMsg,
-    //   );
-    // }
   }
 
 

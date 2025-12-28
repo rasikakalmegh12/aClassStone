@@ -12,8 +12,10 @@ import 'package:go_router/go_router.dart';
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
+import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/common.dart';
 import '../../presentation/screens/attendance/attendance_history_screen.dart';
+import '../../presentation/screens/attendance/executive_tracking.dart';
 import '../../presentation/screens/auth/profile_screen.dart';
 import '../../presentation/screens/dashboard/admin_dashboard.dart';
 import '../../presentation/screens/dashboard/admin_dashboard_screen.dart';
@@ -132,6 +134,8 @@ class AppRouter {
       //     ),
       //   ],
       // ),
+
+
       GoRoute(
         path: '/executive',
         name: 'executive-dashboard',
@@ -227,9 +231,39 @@ class AppRouter {
       GoRoute(
         path: '/attendance',
         name: 'attendance',
-        builder: (context, state) => const AttendanceHistoryScreen(),
-      ),
+        builder: (context, state) {
+        return   MultiBlocProvider(
+              providers: [
+              BlocProvider<ExecutiveAttendanceBloc>(create: (context) => ExecutiveAttendanceBloc(),),
 
+              ],
+              child: const AttendanceHistoryScreen(),
+              );
+        }
+
+
+
+      ),
+      GoRoute(
+        path: '/executiveTracking',
+        name: 'executiveTracking',
+        builder: (context, state) {
+          // Retrieve the extra data
+          final extra = state.extra as Map<String, dynamic>;
+          final userId = extra['userId'] as String;
+          final date = extra['date'] as String;
+
+          return
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<ExecutiveTrackingBloc>(create: (context) => ExecutiveTrackingBloc(),),
+
+              ],
+              child: ExecutiveTracking(userId: userId, date: date),
+            );
+
+        },
+      ),
       // Meeting Routes
       GoRoute(
         path: '/meetings',
@@ -247,6 +281,16 @@ class AppRouter {
         ],
       ),
 
+
+      GoRoute(
+        path: '/cataloguePage',
+        name: 'cataloguePage',
+        builder: (context, state) {
+          final meetingId = state.pathParameters['meetingId'];
+          // return MeetingDetailScreen(meetingId: meetingId);
+          return CataloguePage();
+        },
+      ),
       // Registration Management Routes
       GoRoute(
         path: '/pendingRegistrations',

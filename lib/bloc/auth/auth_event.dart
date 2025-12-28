@@ -8,3 +8,15 @@ class FetchLogin extends LoginEvent {
   FetchLogin({required this.username, required this.password});
 }
 
+/// ✅ ADD THIS
+class ForceLogoutRequested extends LoginEvent {}
+
+
+
+
+abstract class LogoutEvent {}
+class FetchLogout extends LogoutEvent {
+  final String  refreshToken;
+
+  FetchLogout({required this.refreshToken});
+}

@@ -28,7 +28,7 @@ class ApiConstants {
   static const String punchOut = "${baseUrl}marketing/executive/punch-out";
   static const String activeSession = "${baseUrl}marketing/executive/active-session";
   static const String locationPing = "${baseUrl}marketing/executive/location-ping";
-  static const String executiveTrackingByDays = "${baseUrl}marketing/admin/executives/0d00de8b-6f17-493c-b67e-c583317a74ad/days/24-Dec-2025";
+  static const String executiveTrackingByDays = "${baseUrl}marketing/admin/executives";
 
   // Meeting Management
   static const String startMeeting = "meeting/start";
@@ -43,7 +43,7 @@ class ApiConstants {
 
 
  //  Admin and SuperAdmin Common Apis
-  static const String executiveAttendance = "${baseUrl}marketing/admin/executives/attendance/day?date=25-dec-2025";
+  static const String executiveAttendance = "${baseUrl}marketing/admin/executives/attendance/day";
 
 
   // Common Headers
@@ -51,10 +51,12 @@ class ApiConstants {
     'Content-Type': 'application/json',
   };
 
-  //  Headers with Token
-  static final Map<String, String> headerWithToken = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${SessionManager.getAccessTokenSync()}',
-  };
+  static Map<String, String> headerWithToken() {
+    final token = SessionManager.getAccessToken();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
 }
 

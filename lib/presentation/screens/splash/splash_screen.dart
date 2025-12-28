@@ -56,13 +56,13 @@ class _SplashScreenState extends State<SplashScreen>
     if (mounted) {
       final isLoggedIn = await SessionManager.isLoggedIn();
       print("Checking login status...$isLoggedIn");
-      print("Checking login status...${SessionManager.getUserIdSync()}");
+      print("Checking login status...${SessionManager.getUserId()}");
       if (isLoggedIn) {
 
 // File: `lib/presentation/screens/splash/splash_screen.dart`
 // Use the exact route names defined in `AppRouter` and pass the role as extra.
         if (mounted) {
-          final role = SessionManager.getUserIdSync().toString().toLowerCase();
+          final role = SessionManager.getUserRole().toString().toLowerCase();
           print("Navigating to dashboard for role: $role");
           print("executive role: ${AppConstants.roleExecutive}");
           print("superadmin role: ${AppConstants.roleSuperAdmin}");

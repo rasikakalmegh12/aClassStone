@@ -1,204 +1,241 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionManager {
+  static SharedPreferences? _preferences;
 
-  static SharedPreferences? prefs;
-  static const String _keyIsLoggedIn = 'isLoggedIn';
-  static const String _keyHeaderKey = 'headerKey';
-  static const String _keyUserId = 'userId';
-  static const String _keyUserName = 'userName';
-  static const String _keyUserEmail = 'userEmail';
-  static const String _keyUserPhone = 'userPhone';
-  static const String _keyAccessToken = 'accessToken';
-  static const String _keyRefreshToken = 'refreshToken';
-  static const String _keyIsPunchedIn = 'isPunchedIn';
-  static const String _keyPunchInTime = 'punchInTime';
+  // Constants following your exact structure
+  static const _isLOGIN = "is_login";
+  static const _userId = 'userId';           // Replaces depoId
+  static const _userRole = 'userRole';       // NEW: For permissions
+  static const _userName = 'userName';       // Replaces depoName
+  static const _userEmail = 'userEmail';     // NEW
+  static const _userPhone = 'userPhone';     // Replaces depoMobile
+  static const _accessToken = 'accessToken'; // Replaces encryptedToken
+  static const _refreshToken = 'refreshToken'; // NEW
+  static const _headerKey = 'headerKey';
+  static const _isPunchedIn = 'isPunchedIn'; // NEW
+  static const _punchInTime = 'punchInTime'; // NEW
+  static const _fgsRunning = 'fgsRunning'; // foreground service running flag
+  static const _accessTokenExpiry = 'accessTokenExpiry'; // NEW
 
-
+  // ✅ EXACT SAME INIT METHOD
   static Future init() async =>
-      prefs = await SharedPreferences.getInstance();
+      _preferences = await SharedPreferences.getInstance();
 
-  // ========== SYNCHRONOUS GETTERS (for immediate access) ==========
-  // These use the cached prefs instance initialized in main()
+  // Helper to provide a consistent fallback for setter return values
+  static Future<bool> _falseFuture() => Future.value(false);
 
-  static String? getAccessTokenSync() {
-    return prefs?.getString(_keyAccessToken);
+  // ========== SYNCHRONOUS GETTERS/SETTERS (Your Style) ==========
+  static dynamic setUserLoggedIn(bool isLogin) {
+    return _preferences?.setBool(_isLOGIN, isLogin) ?? _falseFuture();
   }
 
-  static String? getRefreshTokenSync() {
-    return prefs?.getString(_keyRefreshToken);
+  static dynamic isLoggedIn() {
+    return _preferences?.getBool(_isLOGIN) ?? false;
   }
 
-  static String? getUserIdSync() {
-    return prefs?.getString(_keyUserId);
+  static dynamic setUserId(String userId) {
+    return _preferences?.setString(_userId, userId) ?? _falseFuture();
   }
 
-  static String? getUserNameSync() {
-    return prefs?.getString(_keyUserName);
+  static dynamic getUserId() {
+    return _preferences?.getString(_userId);
   }
 
-  static String? getUserEmailSync() {
-    return prefs?.getString(_keyUserEmail);
+  static dynamic setUserRole(String userRole) {
+    return _preferences?.setString(_userRole, userRole) ?? _falseFuture();
   }
 
-  static String? getUserPhoneSync() {
-    return prefs?.getString(_keyUserPhone);
+  static dynamic getUserRole() {
+    return _preferences?.getString(_userRole);
   }
 
-  static bool isLoggedInSync() {
-    return prefs?.getBool(_keyIsLoggedIn) ?? false;
+  static dynamic setUserName(String name) {
+    return _preferences?.setString(_userName, name) ?? _falseFuture();
   }
 
-  static bool isPunchedInSync() {
-    return prefs?.getBool(_keyIsPunchedIn) ?? false;
+  static dynamic getUserName() {
+    return _preferences?.getString(_userName);
   }
 
-  static String? getPunchInTimeSync() {
-    return prefs?.getString(_keyPunchInTime);
+  static dynamic setUserEmail(String email) {
+    return _preferences?.setString(_userEmail, email) ?? _falseFuture();
   }
 
-
-  // ========== ASYNCHRONOUS METHODS (for when you need fresh data) ==========
-
-  static Future<void> setLoginStatus(bool isLoggedIn) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyIsLoggedIn, isLoggedIn);
+  static dynamic getUserEmail() {
+    return _preferences?.getString(_userEmail);
   }
 
-  static Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_keyIsLoggedIn) ?? false;
+  static dynamic setUserPhone(String mobile) {
+    return _preferences?.setString(_userPhone, mobile) ?? _falseFuture();
   }
 
-  // Header key for API calls
-  static Future<void> setLoginHeaderkey(String headerKey) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyHeaderKey, headerKey);
-  }
-  //
-  // static Future<String?> getLoginHeaderkey() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyHeaderKey);
-  // }
-
-  // User ID
-  static Future<void> setUserId(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserId, userId);
+  static dynamic getUserPhone() {
+    return _preferences?.getString(_userPhone);
   }
 
-  // static Future<String?> getUserId() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyUserId);
-  // }
-
-  // User Name
-  static Future<void> setUserName(String userName) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserName, userName);
+  static dynamic setAccessToken(String token) {
+    return _preferences?.setString(_accessToken, token) ?? _falseFuture();
   }
 
-  // static Future<String?> getUserName() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyUserName);
-  // }
-
-  // User Email
-  static Future<void> setUserEmail(String userEmail) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserEmail, userEmail);
+  static dynamic getAccessToken() {
+    return _preferences?.getString(_accessToken);
   }
 
-  // static Future<String?> getUserEmail() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyUserEmail);
-  // }
-
-  // User Phone
-  static Future<void> setUserPhone(String userPhone) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserPhone, userPhone);
-  }
-  //
-  // static Future<String?> getUserPhone() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyUserPhone);
-  // }
-
-  // Access Token
-  static Future<void> setAccessToken(String accessToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyAccessToken, accessToken);
-    // Also update the cached instance
-    SessionManager.prefs = prefs;
+  static dynamic setRefreshToken(String token) {
+    return _preferences?.setString(_refreshToken, token) ?? _falseFuture();
   }
 
-  // static Future<String?> getAccessToken() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyAccessToken);
-  // }
-
-  // Refresh Token
-  static Future<void> setRefreshToken(String refreshToken) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyRefreshToken, refreshToken);
-    // Also update the cached instance
-    SessionManager.prefs = prefs;
+  static dynamic getRefreshToken() {
+    return _preferences?.getString(_refreshToken);
   }
 
-  static Future<void> setPunchIn({
-    required bool isPunchedIn,
-    String? punchInTime,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_keyIsPunchedIn, isPunchedIn);
+  static dynamic setHeaderKey(String header) {
+    return _preferences?.setString(_headerKey, header) ?? _falseFuture();
+  }
 
-    if (punchInTime != null) {
-      await prefs.setString(_keyPunchInTime, punchInTime);
+  static dynamic getHeaderKey() {
+    return _preferences?.getString(_headerKey);
+  }
+
+  static dynamic setPunchIn(bool isPunchedIn) {
+    return _preferences?.setBool(_isPunchedIn, isPunchedIn) ?? _falseFuture();
+  }
+
+  // Return a non-null bool; default to false if SharedPreferences isn't initialized
+  static bool isPunchedIn() {
+    try {
+      final val = _preferences?.getBool(_isPunchedIn);
+      return val ?? false;
+    } catch (e) {
+      return false;
     }
-
-    // update cached prefs
-    SessionManager.prefs = prefs;
   }
 
-
-  // static Future<String?> getRefreshToken() async {
-  //   final prefs = await SharedPreferences.getInstance();
-  //   return prefs.getString(_keyRefreshToken);
-  // }
-
-  // Clear all session data
-  static Future<void> clearSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    clearPunchIn();
-    await prefs.clear();
+  /// Persist whether the foreground service is running (so we don't start duplicates)
+  static Future<bool> setForegroundServiceRunning(bool running) async {
+    return _preferences?.setBool(_fgsRunning, running) ?? false;
   }
 
-  static Future<void> clearPunchIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyIsPunchedIn);
-    await prefs.remove(_keyPunchInTime);
-
-    SessionManager.prefs = prefs;
+  static bool isForegroundServiceRunning() {
+    try {
+      return _preferences?.getBool(_fgsRunning) ?? false;
+    } catch (e) {
+      return false;
+    }
   }
 
+  static dynamic setPunchInTime(String? time) {
+    if (time == null) {
+      return _preferences?.remove(_punchInTime) ?? _falseFuture();
+    }
+    return _preferences?.setString(_punchInTime, time) ?? _falseFuture();
+  }
 
-  // Save user session data after login
-  static Future<void> saveUserSession({
+  static dynamic getPunchInTime() {
+    return _preferences?.getString(_punchInTime);
+  }
+
+  static dynamic setAccessTokenExpiry(String expiry) {
+    return _preferences?.setString(_accessTokenExpiry, expiry) ?? _falseFuture();
+  }
+
+  static dynamic getAccessTokenExpiry() {
+    final expiryStr = _preferences?.getString(_accessTokenExpiry);
+    if (expiryStr == null) return null;
+    try {
+      return DateTime.parse(expiryStr);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // ========== UTILITY METHODS (Modern Features) ==========
+  /// Get user role for catalogue permissions (superadmin/admin/executive)
+  static String getUserRoleForPermissions() {
+    final role = getUserRole()?.toLowerCase() ?? '';
+    if (role.contains('superadmin')) return 'superadmin';
+    if (role.contains('admin')) return 'admin';
+    return 'executive';
+  }
+
+  /// Save complete user session after login (Your Style)
+  static dynamic saveUserSession({
+    required String userId,
+    required String userRole,
     String? userName,
     String? userEmail,
     String? userPhone,
-    String? accessToken,
-    String? refreshToken,
-    String? userRole,
-  }) async {
-    await setLoginStatus(true);
-    print("access token in session manager: $accessToken");
-    if (userName != null) await setUserName(userName);
-    if (userEmail != null) await setUserEmail(userEmail);
-    if (userPhone != null) await setUserPhone(userPhone);
-    if (accessToken != null) await setAccessToken(accessToken);
-    if (refreshToken != null) await setRefreshToken(refreshToken);
-    if (userRole != null) await setUserId(userRole);
+    required String accessToken,
+    required String refreshToken,
+    String? headerKey,
+  }) {
+    print('🔐 Saving user session: $userId ($userRole)');
+
+    final results = [
+      setUserLoggedIn(true),
+      setUserId(userId),
+      setUserRole(userRole),
+      if (userName != null) setUserName(userName),
+      if (userEmail != null) setUserEmail(userEmail),
+      if (userPhone != null) setUserPhone(userPhone),
+      setAccessToken(accessToken),
+      setRefreshToken(refreshToken),
+      if (headerKey != null) setHeaderKey(headerKey),
+    ];
+
+    print('✅ Session saved successfully (${results.length} operations)');
+    return results.every((r) => r != null);
+  }
+
+  /// Clear entire session (Your Style + Modern)
+  static dynamic logout() {
+    print('🧹 Clearing session');
+    _preferences?.remove(_isLOGIN);
+    _preferences?.remove(_userId);
+    _preferences?.remove(_userRole);
+    _preferences?.remove(_userName);
+    _preferences?.remove(_userEmail);
+    _preferences?.remove(_userPhone);
+    _preferences?.remove(_accessToken);
+    _preferences?.remove(_refreshToken);
+    _preferences?.remove(_headerKey);
+    _preferences?.remove(_isPunchedIn);
+    _preferences?.remove(_punchInTime);
+    _preferences?.remove(_fgsRunning);
+    _preferences?.remove(_accessTokenExpiry);
+    print('✅ Logout completed');
+  }
+
+  /// Clear only punch-in data
+  static dynamic clearPunchIn() {
+    setPunchIn(false);
+    setPunchInTime(null);
+  }
+
+  /// Check if access token is expiring soon
+  static bool isAccessTokenExpiringSoon() {
+    final expiry = getAccessTokenExpiry();
+    if (expiry == null) return true;
+    return DateTime.now().isAfter(expiry.toLocal().subtract(const Duration(minutes: 2)));
+  }
+
+  /// Session validation
+  static bool isSessionValid() {
+    return isLoggedIn() &&
+        getUserId() != null &&
+        getAccessToken() != null;
+  }
+
+  /// Debug info (Optional - remove in production)
+  static Map<String, dynamic> getDebugInfo() {
+    return {
+      'isLoggedIn': isLoggedIn(),
+      'userId': getUserId(),
+      'userRole': getUserRole(),
+      'userName': getUserName(),
+      'hasAccessToken': getAccessToken() != null,
+      'isPunchedIn': isPunchedIn(),
+    };
   }
 }

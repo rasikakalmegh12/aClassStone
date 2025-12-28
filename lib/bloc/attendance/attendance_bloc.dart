@@ -22,9 +22,10 @@ class PunchInBloc extends Bloc<PunchInEvent, PunchInState> {
         if (response.status == true) {
           emit(PunchInLoaded(response: response));
         } else {
-          emit(PunchInError(
-            message: response.message ?? 'Approval failed',
-          ));
+          emit(PunchInLoaded(response: response));
+          // emit(PunchInError(
+          //   message: response.message ?? 'Approval failed',
+          // ));
         }
       } catch (e) {
         emit(PunchInError(
@@ -90,6 +91,66 @@ class LocationPingBloc extends Bloc<LocationPingEvent, LocationPingState> {
         }
       } catch (e) {
         emit(LocationPingError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}
+
+
+class ExecutiveAttendanceBloc extends Bloc<ExecutiveAttendanceEvent, ExecutiveAttendanceState> {
+  ExecutiveAttendanceBloc() : super(ExecutiveAttendanceInitial()) {
+    // Handle user registration
+    on<FetchExecutiveAttendance>((event, emit) async {
+      emit(ExecutiveAttendanceLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.executiveAttendance(event.date);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(ExecutiveAttendanceLoaded(response: response));
+        } else {
+          emit(ExecutiveAttendanceError(
+            message: response.message ?? 'Failed to load executive attendance',
+          ));
+        }
+      } catch (e) {
+        emit(ExecutiveAttendanceError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}
+
+
+class ExecutiveTrackingBloc extends Bloc<ExecutiveTrackingEvent, ExecutiveTrackingState> {
+  ExecutiveTrackingBloc() : super(ExecutiveTrackingInitial()) {
+    // Handle user registration
+    on<FetchExecutiveTracking>((event, emit) async {
+      emit(ExecutiveTrackingLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.executiveTrackingByDays(event.userId,event.date);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(ExecutiveTrackingLoaded(response: response));
+        } else {
+          emit(ExecutiveTrackingLoaded(response: response));
+        }
+      } catch (e) {
+        emit(ExecutiveTrackingError(
           message: 'Error: ${e.toString()}',
         ));
       }

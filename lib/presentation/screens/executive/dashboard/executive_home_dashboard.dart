@@ -4,18 +4,25 @@ import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:apclassstone/api/models/request/PunchInOutRequestBody.dart';
 import 'package:apclassstone/core/services/repository_provider.dart';
 import 'package:geolocator/geolocator.dart';
 
+
 import '../../../../bloc/attendance/attendance_bloc.dart';
 import '../../../../bloc/attendance/attendance_event.dart';
 import '../../../../bloc/attendance/attendance_state.dart';
+import '../../../../bloc/auth/auth_bloc.dart';
+import '../../../../bloc/auth/auth_event.dart';
+import '../../../../bloc/auth/auth_state.dart';
 import '../../../../core/constants/app_colors.dart';
 
+import '../../../../main.dart';
 import '../../auth/login_screen.dart';
+import '../../debug/log_viewer.dart';
 import '../clients/clients_list_screen.dart';
 import '../meetings/meetings_list_screen.dart';
 import '../work_plans/work_plans_list_screen.dart';
@@ -38,7 +45,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   bool isPunchedIn = false;
   String? punchInTime;
   bool isPunching = false; // new: disables repeated taps while processing
-  Timer? _pingTimer; // periodic timer for location pings
+
   String currentCity = "Jaipur";
   int plannedVisits = 5;
   int meetingsLogged = 2;
@@ -47,23 +54,31 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   int followUpsDue = 4;
   int leadsClosingSoon = 2;
 
-
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    isPunchedIn = SessionManager.isPunchedInSync();
-
-    final storedTime = SessionManager.getPunchInTimeSync();
+    print("session refresh token ${SessionManager.getRefreshToken()}");
+    isPunchedIn = SessionManager.isPunchedIn();
+    print('isPunchedIn: $isPunchedIn');
+    final storedTime = SessionManager.getPunchInTime();
     if (storedTime != null) {
-      // punchInTime = DateTime.tryParse(storedTime);
       punchInTime = storedTime;
     }
 
     if (isPunchedIn) {
-      _startPingTimer(SessionManager.getUserIdSync() ?? '');
+      print("start foreground service");
+      _startForegroundService();
     }
   }
+
+  Future<void> _startForegroundService() async {
+    await FlutterForegroundTask.startService(
+      notificationTitle: 'Attendance Tracking',
+      notificationText: 'Location tracking active',
+      callback: startCallback,
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -74,10 +89,12 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           BlocListener<LocationPingBloc, LocationPingState>(
             listener: (context, state) {
               if (state is LocationPingLoaded) {
+                _showSuccessMessage(state.response.message.toString());
                 debugPrint('Location ping success');
               }
 
               if (state is LocationPingError) {
+                _showSuccessMessage(state.message.toString());
                 debugPrint('Location ping error: ${state.message}');
               }
             },
@@ -95,20 +112,30 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 });
               }
               if (state is PunchInLoaded) {
-                await SessionManager.setPunchIn(
-                  isPunchedIn: true,
-                  punchInTime: state.response.data?.punchedInAtDisplay ?? '',
-                );
+                await SessionManager.setPunchIn(true);
+                await SessionManager.setPunchInTime(state.response.data?.punchedInAtDisplay ?? '');
                 setState(() {
                   isPunchedIn = true;
                   punchInTime = state.response.data?.punchedInAtDisplay ?? '';
 
                 });
-                _startPingTimer(SessionManager.getUserNameSync() ?? '');
+                await FlutterForegroundTask.startService(
+                  notificationTitle: 'Attendance Tracking',
+                  notificationText: 'Location tracking active',
+                  callback: startCallback,
+                );
+                // _startPingTimer(SessionManager.getUserNameSync() ?? '');
                 _showSuccessMessage('Punched in successfully');
               }
 
               if (state is PunchInError) {
+                 print('PunchInError: ${state.message}');
+                 if(state.message =="Already punched in"){
+                   setState(() {
+                     isPunchedIn = false;
+                   });
+
+                 }
                 _showSuccessMessage(state.message);
               }
             },
@@ -126,19 +153,24 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 });
               }
               if (state is PunchOutLoaded) {
-                await SessionManager.setPunchIn(
-                  isPunchedIn: false,
-                  punchInTime: state.response.data?.punchedOutAtDisplay ?? '',
-                );
+                await SessionManager.setPunchIn(false,);
                 setState(() {
                   isPunchedIn = false;
                   punchInTime = null;
                 });
-                _stopPingTimer();
+                await FlutterForegroundTask.stopService();
+
+                // _stopPingTimer();
                 _showSuccessMessage('Punched out successfully');
               }
 
               if (state is PunchOutError) {
+                if(state.message =="Not punched in"){
+                  setState(() {
+                    isPunchedIn = false;
+                  });
+
+                }
                 _showSuccessMessage(state.message);
               }
             },
@@ -235,9 +267,9 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Hello, ${SessionManager.getUserNameSync()}',
+                              'Hello, ${SessionManager.getUserName()}',
                               style: const TextStyle(
-                                fontSize: 20,
+                                fontSize: 18,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.white,
                               ),
@@ -257,10 +289,10 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 5),
               Container(
-                width: 36,
-                height: 36,
+                width: 37,
+                height: 37,
                 decoration: BoxDecoration(
                   color: Colors.white.withAlpha((0.15 * 255).toInt()),
                   borderRadius: BorderRadius.circular(18),
@@ -274,8 +306,21 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   icon: const Icon(
                     Icons.logout_rounded,
                     color: Colors.white,
-                    size: 16,
+                    size: 15,
                   ),
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LogViewerScreen()),
+                  );
+                },
+                icon: const Icon(
+                  Icons.bug_report,
+                  color: Colors.white,
+                  size: 16,
                 ),
               ),
             ],
@@ -917,7 +962,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           'Could not get location - punch saved without location');
     }
 
-    final userId = SessionManager.getUserIdSync()?.toString() ?? '';
+    final userId = SessionManager.getUserId()?.toString() ?? '';
 
     final body = PunchInOutRequestBody(
       capturedAt: DateTime.now().toUtc().toIso8601String(),
@@ -971,7 +1016,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           'Could not get location - punch will be saved without location');
     }
 
-    final userId = SessionManager.getUserIdSync()?.toString() ?? '';
+    final userId = SessionManager.getUserId()?.toString() ?? '';
     final body = PunchInOutRequestBody(
       capturedAt: DateTime.now().toUtc().toIso8601String(),
       lat: lat,
@@ -1045,32 +1090,87 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                 ),
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
-                ),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: TextButton(
-                onPressed: () {
+            // Container(
+            //   decoration: BoxDecoration(
+            //     gradient: const LinearGradient(
+            //       colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
+            //     ),
+            //     borderRadius: BorderRadius.circular(6),
+            //   ),
+            //   child: TextButton(
+            //     onPressed: () {
+            //
+            //       context.read<LogoutBloc>().add(FetchLogout(refreshToken: SessionManager.getRefreshTokenSync().toString()));
+            //       Navigator.of(context).pop();
+            //     },
+            //     child: const Text(
+            //       'Logout',
+            //       style: TextStyle(
+            //         color: Colors.white,
+            //         fontWeight: FontWeight.w600,
+            //         fontSize: 14,
+            //       ),
+            //     ),
+            //   ),
+            // ),
 
-                  // stop ongoing ping timer before logout/navigation
-                  _stopPingTimer();
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+            BlocProvider(
+              create: (context) => LogoutBloc(),
+              child: BlocConsumer<LogoutBloc, LogoutState>(
+                listener: (context, state) {
+                  if (state is LogoutLoaded) {
+                    // Logout successful - clear session and navigate
+                    SessionManager.logout();
+                    context.goNamed("login");
+                  } else if (state is LogoutError) {
+                    // Show error snackbar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFF56565), Color(0xFFE53E3E)],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: state is LogoutLoading
+                        ? const SizedBox(
+                      height: 44,
+                      child: Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                      ),
+                    )
+                        : TextButton(
+                      onPressed: () {
+                        context.read<LogoutBloc>().add(
+                            FetchLogout(refreshToken: SessionManager.getRefreshToken().toString())
+                        );
+                      },
+                      child: const Text(
+                        'Logout',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
                   );
                 },
-                child: const Text(
-                  'Logout',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
               ),
             ),
+
           ],
         );
       },
@@ -1079,108 +1179,144 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
 
   @override
   void dispose() {
-    _pingTimer?.cancel();
+    // _pingTimer?.cancel();
     super.dispose();
   }
+  //
+  // void _startPingTimer(String userId) async {
+  //   // Cancel existing timers/tasks
+  //   _pingTimer?.cancel();
+  //   await Workmanager().cancelByUniqueName('location_ping_$userId');
+  //
+  //   // ✅ FOREGROUND: 1min Timer (when app visible)
+  //   _pingTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+  //     if (!mounted || !SessionManager.isPunchedInSync()) {
+  //       _pingTimer?.cancel();
+  //       return;
+  //     }
+  //
+  //     await _sendLocationPing(userId);
+  //   });
+  //
+  //   // ✅ BACKGROUND: Workmanager 1min (when app closed/killed)
+  //   await Workmanager().registerPeriodicTask(
+  //     'location_ping_$userId',  // Unique name
+  //     'locationPingTask',
+  //     frequency: const Duration(minutes: 1),
+  //     inputData: {'userId': userId},
+  //     constraints: Constraints(networkType: NetworkType.connected),
+  //   );
+  //
+  //   debugPrint('✅ Timer(1min) + Workmanager(1min) started for $userId');
+  // }
+  //
+  // void _stopPingTimer() async {
+  //   final userId = SessionManager.getUserIdSync() ?? '';
+  //
+  //   // Stop both
+  //   _pingTimer?.cancel();
+  //   _pingTimer = null;
+  //   await Workmanager().cancelByUniqueName('location_ping_$userId');
+  //
+  //   debugPrint('❌ Timer + Workmanager stopped for $userId');
+  // }
 
-  void _startPingTimer1(String userId) {
-    // cancel existing if any
-    _pingTimer?.cancel();
-    // every 3 minutes while punched in
-    _pingTimer = Timer.periodic(const Duration(minutes: 3), (_) async {
-      try {
-        // capture current location
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
-        double? lat;
-        double? lng;
-        int? accuracyM;
-        if (permission != LocationPermission.denied && permission != LocationPermission.deniedForever) {
-          final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-          lat = pos.latitude;
-          lng = pos.longitude;
-          accuracyM = pos.accuracy.toInt();
-        }
+// Extract ping logic (shared)
+  Future<void> _sendLocationPing(String userId) async {
+    try {
+      double? lat, lng;
+      int? accuracyM;
 
-        final body = PunchInOutRequestBody(
-          capturedAt: DateTime.now().toUtc().toIso8601String(),
-          lat: lat,
-          lng: lng,
-          accuracyM: accuracyM,
-        );
-
-        // dispatch to LocationPingBloc to save locally
-        // AppBlocProvider.locationPingBloc.add(PingLocation(userId: userId, body: body));
-      } catch (e) {
-        // ignore failures in timer ticks; they won't crash the app
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Location ping failed: ${e.toString()}')),
-          );
-        }
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
       }
-    });
+
+      if (permission != LocationPermission.denied &&
+          permission != LocationPermission.deniedForever) {
+        final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium,
+          timeLimit: const Duration(seconds: 5),
+        );
+        lat = pos.latitude;
+        lng = pos.longitude;
+        accuracyM = pos.accuracy.toInt();
+      }
+
+      final body = PunchInOutRequestBody(
+        capturedAt: DateTime.now().toUtc().toIso8601String(),
+        lat: lat, lng: lng, accuracyM: accuracyM,
+        deviceId: '', deviceModel: '',
+      );
+
+      if (mounted) {
+        context.read<LocationPingBloc>().add(
+          FetchLocationPing(body: body, id: userId),
+        );
+      }
+    } catch (e) {
+      debugPrint('Location ping failed: $e');
+    }
   }
 
 
-  void _startPingTimer(String userId) {
-    // Cancel existing timer if any
-    _pingTimer?.cancel();
-
-    _pingTimer = Timer.periodic(
-      const Duration(minutes: 1),
-          (_) async {
-        try {
-          double? lat;
-          double? lng;
-          int? accuracyM;
-
-          LocationPermission permission =
-          await Geolocator.checkPermission();
-
-          if (permission == LocationPermission.denied) {
-            permission = await Geolocator.requestPermission();
-          }
-
-          if (permission != LocationPermission.denied &&
-              permission != LocationPermission.deniedForever) {
-            final pos = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.best,
-            );
-            lat = pos.latitude;
-            lng = pos.longitude;
-            accuracyM = pos.accuracy.toInt();
-          }
-
-          final body = PunchInOutRequestBody(
-            capturedAt: DateTime.now().toUtc().toIso8601String(),
-            lat: lat,
-            lng: lng,
-            accuracyM: accuracyM,
-            deviceId: '',
-            deviceModel: '',
-          );
-
-          /// ✅ Dispatch Bloc event (THIS IS THE KEY CHANGE)
-          context.read<LocationPingBloc>().add(
-            FetchLocationPing(
-              body: body,
-              id: userId,
-            ),
-          );
-        } catch (e) {
-          // Silent failure: timer should never crash UI
-          debugPrint('Location ping failed: $e');
-        }
-      },
-    );
-  }
-
-
-  void _stopPingTimer() {
-    _pingTimer?.cancel();
-    _pingTimer = null;
-  }
+  //
+  // void _startPingTimer(String userId) {
+  //   // Cancel existing timer if any
+  //   _pingTimer?.cancel();
+  //
+  //   _pingTimer = Timer.periodic(
+  //     const Duration(minutes: 1),
+  //         (_) async {
+  //       try {
+  //         double? lat;
+  //         double? lng;
+  //         int? accuracyM;
+  //
+  //         LocationPermission permission =
+  //         await Geolocator.checkPermission();
+  //
+  //         if (permission == LocationPermission.denied) {
+  //           permission = await Geolocator.requestPermission();
+  //         }
+  //
+  //         if (permission != LocationPermission.denied &&
+  //             permission != LocationPermission.deniedForever) {
+  //           final pos = await Geolocator.getCurrentPosition(
+  //             desiredAccuracy: LocationAccuracy.best,
+  //           );
+  //           lat = pos.latitude;
+  //           lng = pos.longitude;
+  //           accuracyM = pos.accuracy.toInt();
+  //         }
+  //
+  //         final body = PunchInOutRequestBody(
+  //           capturedAt: DateTime.now().toUtc().toIso8601String(),
+  //           lat: lat,
+  //           lng: lng,
+  //           accuracyM: accuracyM,
+  //           deviceId: '',
+  //           deviceModel: '',
+  //         );
+  //
+  //         /// ✅ Dispatch Bloc event (THIS IS THE KEY CHANGE)
+  //         context.read<LocationPingBloc>().add(
+  //           FetchLocationPing(
+  //             body: body,
+  //             id: userId,
+  //           ),
+  //         );
+  //       } catch (e) {
+  //         // Silent failure: timer should never crash UI
+  //         debugPrint('Location ping failed: $e');
+  //       }
+  //     },
+  //   );
+  // }
+  //
+  //
+  // void _stopPingTimer() {
+  //   _pingTimer?.cancel();
+  //   _pingTimer = null;
+  // }
 }
