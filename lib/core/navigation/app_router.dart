@@ -13,6 +13,7 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../presentation/catalog/catalog_main.dart';
+import '../../presentation/catalog/catalogue_entry.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
 import '../../presentation/screens/attendance/attendance_history_screen.dart';
 import '../../presentation/screens/attendance/executive_tracking.dart';
@@ -217,6 +218,21 @@ class AppRouter {
               BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
             ],
             child: const PendingUsersScreen(),
+          );
+        },
+      ),
+
+
+      GoRoute(
+        path: '/catalogueEntry',
+        name: 'catalogueEntry',
+        builder: (context, state) {
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+
+            ],
+            child: const CatalogueEntryPage(),
           );
         },
       ),

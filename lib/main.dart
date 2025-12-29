@@ -58,8 +58,8 @@ Future<void> main() async {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        // eventAction: ForegroundTaskEventAction.repeat(60000), // ✅ 1 minute
-        eventAction: ForegroundTaskEventAction.repeat(180000), // ✅ 1 minute
+        eventAction: ForegroundTaskEventAction.repeat(60000), // ✅ 1 minute
+        // eventAction: ForegroundTaskEventAction.repeat(180000), // ✅ 1 minute
         allowWakeLock: true, // ✅ Keep CPU awake even when screen is locked
         allowWifiLock: true, // ✅ Keep WiFi awake for network requests
         autoRunOnBoot: false,

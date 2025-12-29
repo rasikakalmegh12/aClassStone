@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
@@ -292,6 +293,15 @@ class _CataloguePageState extends State<CataloguePage>
             onPressed: _openFilters,
           ),
         ],
+      ),
+
+      floatingActionButton: FloatingActionButton(onPressed: () {
+
+        context.pushNamed("catalogueEntry");
+      },
+        backgroundColor: primary,
+        child: const Icon(Icons.add),
+
       ),
       body: FadeTransition(
         opacity: _fade,
@@ -646,10 +656,10 @@ class _CataloguePageState extends State<CataloguePage>
                       2: FlexColumnWidth(1),
                     },
                     children: [
-                      TableRow(children: [
-                        Padding(padding: const EdgeInsets.all(8), child: Text('Feature', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Padding(padding: const EdgeInsets.all(8), child: Text('Executive', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Padding(padding: const EdgeInsets.all(8), child: Text('Admin', style: TextStyle(fontWeight: FontWeight.bold))),
+                      const TableRow(children: [
+                        Padding(padding: EdgeInsets.all(8), child: Text('Feature', style: TextStyle(fontWeight: FontWeight.bold))),
+                        Padding(padding: EdgeInsets.all(8), child: Text('Executive', style: TextStyle(fontWeight: FontWeight.bold))),
+                        Padding(padding: EdgeInsets.all(8), child: Text('Admin', style: TextStyle(fontWeight: FontWeight.bold))),
                       ]),
                       _featureRow('Catalogue', true, true),
                       _featureRow('Filters', true, true),
