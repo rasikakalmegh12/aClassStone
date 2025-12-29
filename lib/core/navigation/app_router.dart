@@ -13,10 +13,10 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../presentation/catalog/catalog_main.dart';
-import '../../presentation/common.dart';
+import '../../presentation/screens/profile/profile_screen.dart';
 import '../../presentation/screens/attendance/attendance_history_screen.dart';
 import '../../presentation/screens/attendance/executive_tracking.dart';
-import '../../presentation/screens/auth/profile_screen.dart';
+
 import '../../presentation/screens/dashboard/admin_dashboard.dart';
 import '../../presentation/screens/dashboard/admin_dashboard_screen.dart';
 import '../../presentation/screens/dashboard/executive_dashboard.dart';

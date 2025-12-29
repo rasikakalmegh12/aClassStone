@@ -72,7 +72,7 @@ class _AttendanceHistoryViewState extends State<AttendanceHistoryView> {
         preferredSize: const Size.fromHeight(56),
         child: CoolAppCard(
           title: "Attendance History",
-          backgroundColor: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.primaryGold: AppColors.primaryTealDark,
+          backgroundColor: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryTealDark,
           action: IconButton(
             icon: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
 
@@ -224,10 +224,10 @@ class _StatCardState extends State<StatCard> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: widget.color.withOpacity(0.12)),
+        border: Border.all(color: widget.color.withOpacity(0.10)),
         boxShadow: [
           BoxShadow(
-            color: widget.color.withOpacity(0.06),
+            color: widget.color.withOpacity(0.3),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -246,7 +246,7 @@ class _StatCardState extends State<StatCard> {
               color: widget.color,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           _titleRow(),
 
 

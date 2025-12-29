@@ -51,7 +51,7 @@ class AppColors {
   static const Color warning = Color(0xFFF59E0B);
   static const Color info = Color(0xFF3B82F6);
 
-  // Background Gradients
+  // Neutral gradients (existing)
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -90,6 +90,24 @@ class AppColors {
   // Additional text colors for consistency
   static const Color textOnPrimary = white;
   static const Color textOnSecondary = white;
+
+  // -------------------------
+  // SuperAdmin palette (new)
+  // A designated color set for Super Admin screens. These are additive and do
+  // not replace existing app colors. Use these in Super Admin UI only.
+  // -------------------------
+  static const Color superAdminPrimary = Color(0xFF0B3566); // deep indigo-blue
+  static const Color superAdminPrimaryDark = Color(0xFF07243F);
+  static const Color superAdminPrimaryLight = Color(0xFF516679);
+  static const Color superAdminLight = Color(0xFFBCD7FF);
+  static const Color superAdminAccent = Color(0xFFFFB627); // warm gold accent
+  static const Color superAdminCard = Color(0xFFF4F8FF);
+
+  static const LinearGradient superAdminGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [superAdminPrimary, superAdminPrimaryDark],
+  );
 }
 
 /// Color Scheme Extensions

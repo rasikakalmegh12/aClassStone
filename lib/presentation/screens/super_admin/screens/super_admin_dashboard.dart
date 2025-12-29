@@ -9,6 +9,7 @@ import 'package:apclassstone/core/services/connectivity_service.dart';
 import 'package:apclassstone/core/services/repository_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
@@ -51,6 +52,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
   void initState() {
     super.initState();
 
+    // Ensure status bar icons are readable on dark gradient
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      statusBarColor: Colors.transparent,
+    ));
+
     // Initialize connectivity monitoring
     _connectivityService = ConnectivityService.instance;
     _isOnline = _connectivityService.isOnline;
@@ -67,13 +75,11 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       }
     });
 
-    // SessionManager.isLoggedIn().then((isLoggedIn) {
-      if (kDebugMode) {
-        print("login status: ${SessionManager.isLoggedIn()}");
-        print("access token: ${SessionManager.getAccessToken()}");
-      }
+    if (kDebugMode) {
+      print("login status: ${SessionManager.isLoggedIn()}");
+      print("access token: ${SessionManager.getAccessToken()}");
+    }
 
-    // });
     // Load pending registrations and dashboard data
     _refreshData();
   }
@@ -87,6 +93,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    final double topPadding = MediaQuery.of(context).padding.top;
+
     return MultiBlocListener(
       listeners: [
         BlocListener<ApproveRegistrationBloc, ApproveRegistrationState>(
@@ -128,8 +136,19 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
           ),
           child: SafeArea(
+            top: false,
             child: Column(
               children: [
+                // Color the status bar (time/notification) area so it matches the header
+                if (topPadding > 0)
+                  Container(
+                    height: topPadding,
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.superAdminGradient,
+                    ),
+                  ),
+                // Render the actual header under the status area
+                _buildHeader(),
                 // Connectivity Status Bar
                 if (!_isOnline)
                   Container(
@@ -158,7 +177,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                       ],
                     ),
                   ),
-                _buildHeader(),
+
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(AppConstants.defaultPadding),
@@ -185,28 +204,14 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        gradient:
-
-        // AppColors.secondaryGradient,
-        const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            // Color(0xFF020617), // near black
-            Color(0xFF1E293B), // slate
-            Color(0xFF334155),
-
-            // AppColors.primaryTealDark,
-            // AppColors.primaryTealLight,
-          ],
-        ),
+        gradient: AppColors.superAdminGradient,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha((0.1 * 255).toInt()),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: AppColors.superAdminPrimary.withAlpha((0.12 * 255).toInt()),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -217,17 +222,17 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                  colors: [AppColors.superAdminAccent, AppColors.primaryGold],
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withAlpha((0.3 * 255).toInt()),
-                    blurRadius: 8,
+                    color: AppColors.primaryGold.withAlpha((0.25 * 255).toInt()),
+                    blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
                 ],
@@ -238,7 +243,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,16 +253,16 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.white,
                       letterSpacing: -0.3,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     'System Management Dashboard',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white.withAlpha((0.8 * 255).toInt()),
+                      color: AppColors.white.withAlpha((0.85 * 255).toInt()),
                       fontWeight: FontWeight.w400,
                     ),
                   ),
@@ -265,13 +270,13 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               ),
             ),
             Container(
-              width: 36,
-              height: 36,
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: Colors.white.withAlpha((0.15 * 255).toInt()),
-                borderRadius: BorderRadius.circular(18),
+                color: Colors.white.withAlpha((0.12 * 255).toInt()),
+                borderRadius: BorderRadius.circular(19),
                 border: Border.all(
-                  color: Colors.white.withAlpha((0.2 * 255).toInt()),
+                  color: Colors.white.withAlpha((0.14 * 255).toInt()),
                   width: 1,
                 ),
               ),
@@ -284,58 +289,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            // Offline punches indicator
-            // FutureBuilder<int>(
-            //   future: AppBlocProvider.punchRepository.getAllLocalPunches().then((list) => list.where((p) => p.status != 'success').length),
-            //   builder: (context, snapshot) {
-            //     final count = snapshot.data ?? 0;
-            //     return GestureDetector(
-            //       onTap: () async {
-            //         final punches = await AppBlocProvider.punchRepository.getAllLocalPunches();
-            //         if (!mounted) return;
-            //         showModalBottomSheet(
-            //           context: context,
-            //           builder: (context) => _buildPunchesModal(punches),
-            //         );
-            //       },
-            //       child: Stack(
-            //         alignment: Alignment.topRight,
-            //         children: [
-            //           Container(
-            //             width: 36,
-            //             height: 36,
-            //             decoration: BoxDecoration(
-            //               color: Colors.white.withAlpha((0.12 * 255).toInt()),
-            //               borderRadius: BorderRadius.circular(18),
-            //             ),
-            //             child: const Icon(Icons.history, color: Colors.white, size: 16),
-            //           ),
-            //           if (count > 0)
-            //             Positioned(
-            //               right: 0,
-            //               top: 0,
-            //               child: Container(
-            //                 padding: const EdgeInsets.all(4),
-            //                 decoration: BoxDecoration(
-            //                   color: Colors.red,
-            //                   borderRadius: BorderRadius.circular(10),
-            //                 ),
-            //                 child: Text(
-            //                   count.toString(),
-            //                   style: const TextStyle(color: Colors.white, fontSize: 10),
-            //                 ),
-            //               ),
-            //             ),
-            //         ],
-            //       ),
-            //     );
-            //   },
-            // ),
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.5, end: 0);
+    ).animate().fadeIn(duration: 700.ms).slideY(begin: -0.5, end: 0);
   }
 
   Widget _buildStatsGrid() {
@@ -358,8 +315,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   });
                 },
                 child: _statCard(
-                  color1: const Color(0xFF6366F1),
-                  color2: const Color(0xFF8B5CF6),
+                  // Use a super-admin friendly blue -> light-blue gradient to match header
+                  color1: AppColors.superAdminPrimary,
+                  color2: AppColors.superAdminLight,
                   icon: Icons.people_alt_rounded,
                   label: 'Total Users',
                   value: totalUsers,
@@ -387,8 +345,9 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   });
                 },
                 child: _statCard(
-                  color1: const Color(0xFFF59E0B),
-                  color2: const Color(0xFFEF4444),
+                  // Use a warm gold gradient that complements the superadmin header accent
+                  color1: AppColors.superAdminAccent,
+                  color2: AppColors.primaryGoldLight,
                   icon: Icons.hourglass_top_rounded,
                   label: 'Pending Users',
                   value: pending,
@@ -401,7 +360,6 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       ],
     ).animate().fadeIn(duration: 600.ms).slideY(begin: 0.2, end: 0);
   }
-
 
   Widget _buildAllUsersBody(AllUsersState state) {
     if (state is AllUsersLoading) {
@@ -545,7 +503,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       margin: const EdgeInsets.symmetric(vertical: 4),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color1.withOpacity(0.92), color2.withOpacity(0.92)],
+          // use withAlpha instead of withOpacity to avoid analyzer precision warnings
+          colors: [color1.withAlpha((0.92 * 255).toInt()), color2.withAlpha((0.92 * 255).toInt())],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -588,7 +547,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   )
                       : Text(
                     '$value',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -1882,33 +1841,33 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                     ),
                     child: state is LogoutLoading
                         ? const SizedBox(
-                      height: 44,
-                      child: Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        ),
-                      ),
-                    )
+                            height: 44,
+                            child: Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                            ),
+                          )
                         : TextButton(
-                      onPressed: () {
-                        context.read<LogoutBloc>().add(
-                            FetchLogout(refreshToken: SessionManager.getRefreshToken().toString())
-                        );
-                      },
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
+                            onPressed: () {
+                              context.read<LogoutBloc>().add(
+                                    FetchLogout(refreshToken: SessionManager.getRefreshToken().toString()),
+                                  );
+                            },
+                            child: const Text(
+                              'Logout',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
                   );
                 },
               ),
@@ -1951,7 +1910,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.superAdminCard,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1964,12 +1923,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'QUICK ACTIONS',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
+              color: AppColors.superAdminPrimaryDark,
               letterSpacing: 0.8,
             ),
           ),
@@ -2036,7 +1995,6 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0);
   }
 
-
   Widget _buildQuickActionButton({
     required String label,
     required IconData icon,
@@ -2055,15 +2013,15 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             Icon(
               icon,
               size: 24,
-              color: AppColors.primaryTeal,
+              color: AppColors.superAdminPrimary,
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: AppColors.superAdminPrimaryDark,
               ),
               textAlign: TextAlign.center,
             ),

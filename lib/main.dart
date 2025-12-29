@@ -58,7 +58,8 @@ Future<void> main() async {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(60000), // ✅ 1 minute
+        // eventAction: ForegroundTaskEventAction.repeat(60000), // ✅ 1 minute
+        eventAction: ForegroundTaskEventAction.repeat(180000), // ✅ 1 minute
         allowWakeLock: true, // ✅ Keep CPU awake even when screen is locked
         allowWifiLock: true, // ✅ Keep WiFi awake for network requests
         autoRunOnBoot: false,
@@ -157,7 +158,7 @@ class MyApp extends StatelessWidget {
         onSurface: AppColors.textPrimary,
       ),
       // textTheme: TextStyleTextTheme(),
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.primaryGold,
         foregroundColor: AppColors.white,
         elevation: 0,
@@ -177,7 +178,7 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppConstants.borderRadius),
           ),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -190,7 +191,7 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -199,7 +200,7 @@ class MyApp extends StatelessWidget {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primaryGold,
-          textStyle: TextStyle(
+          textStyle: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -286,7 +287,7 @@ class MyApp extends StatelessWidget {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.grey800,
-        contentTextStyle: TextStyle(
+        contentTextStyle: const TextStyle(
           color: AppColors.white,
           fontSize: 14,
         ),

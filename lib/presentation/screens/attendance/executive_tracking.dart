@@ -7,6 +7,7 @@ import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 
 import '../../../api/models/response/ExecutiveTrackingByDaysResponse.dart';
 import '../../../bloc/attendance/attendance_bloc.dart';
@@ -28,6 +29,8 @@ class ExecutiveTracking extends StatefulWidget {
 }
 
 class _ExecutiveTrackingState extends State<ExecutiveTracking> {
+  static const int _arrowSize = 60; // unified size for all route arrows
+
   GoogleMapController? _mapController;
   final Set<Marker> _markers = {};
   final Set<Polyline> _polylines = {};
@@ -37,9 +40,14 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
   bool _isMapReady = false;
   List<LocationStays>? _pendingStays;
 
+  // keep last successful API response to avoid blank UI during interval loads
+  ExecutiveTrackingByDaysResponse? _lastResponse;
+  bool _hasLoadedOnce = false; // used to keep rendering map even if state not Loaded yet
+  bool _hasFittedCameraOnce = false; // ensure _updateCamera runs only once, on first data load
+
   // cache for arrow bitmaps keyed by rounded angle
   final Map<int, BitmapDescriptor> _arrowBitmapCache = {};
-
+  BitmapDescriptor? _pinBitmap;
   // 🇮🇳 India default
   static const LatLng indiaLatLng = LatLng(20.5937, 78.9629);
 
@@ -56,7 +64,7 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
     );
 
     // start polling every 1 minute, subsequent loads without loader
-    _pollTimer = Timer.periodic(const Duration(minutes: 1), (_) {
+    _pollTimer = Timer.periodic(const Duration(minutes: 3), (_) {
       context.read<ExecutiveTrackingBloc>().add(
         FetchExecutiveTracking(
           date: widget.date,
@@ -75,25 +83,53 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
   }
 
   // ================= MAP CREATED =================
-  void _onMapCreated(GoogleMapController controller) {
+  Future<void> _onMapCreated(GoogleMapController controller) async {
     _mapController = controller;
     _isMapReady = true;
-
+    await _loadPinBitmap();
     // If API already returned, plot now
     if (_pendingStays != null) {
       _setMarkers(_pendingStays);
     }
   }
 
+  // 3) new helper to load asset into BitmapDescriptor
+  Future<void> _loadPinBitmap() async {
+    try {
+      // choose a sensible size for the rasterized asset
+      final config = createLocalImageConfiguration(context, size: const Size(24, 24));
+      final bmp = await BitmapDescriptor.asset(config, 'assets/images/pin-map.png');
+      setState(() {
+        _pinBitmap = bmp;
+      });
+    } catch (e) {
+      // silently fail and fallback to default marker; optionally log
+      // debugPrint('Failed to load pin-map asset: $e');
+    }
+  }
+
+  String _formatDateTimeToIST(String? value) {
+    if (value == null || value.isEmpty) return '--';
+    try {
+      // parse ISO (assumed UTC), convert to IST (+5:30) and format
+      final dtUtc = DateTime.parse(value).toUtc();
+      final dtIst = dtUtc.add(const Duration(hours: 5, minutes: 30));
+      return DateFormat('dd/MM/yy hh:mm a').format(dtIst);
+    } catch (e) {
+      // fallback to previous behavior
+      final parts = value.split(' ');
+      return parts.length >= 2 ? '${parts[0]}\n${parts[1]}' : value;
+    }
+  }
   // ================= MARKERS & POLYLINES =================
   void _setMarkers(List<LocationStays>? stays) async {
-    setState(() {
-      _markers.clear();
-      _polylines.clear();
+    // If no stays, keep existing markers/polylines so map doesn't go blank
+    if (stays == null || stays.isEmpty) {
+      return;
+    }
 
-      if (stays == null || stays.isEmpty) return;
-
-    });
+    _markers.clear();
+    _polylines.clear();
 
     // build points and markers outside setState for async arrow creation
     List<LatLng> points = [];
@@ -109,9 +145,10 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
           Marker(
             markerId: MarkerId('${stay.sessionId}_$i'),
             position: pos,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+              icon: _pinBitmap ?? BitmapDescriptor.defaultMarker,
             infoWindow: InfoWindow(
-              title: "Ping ${i + 1} • ${(stay.stayDurationSeconds ?? 0) ~/ 60} min",
+              // title: "Ping ${i + 1} • ${(stay.stayDurationSeconds ?? 0) ~/ 60} min",
+              title: "${_formatDateTimeToIST(stay.stayLastPingAt)} • ${(stay.stayDurationSeconds ?? 0) ~/ 60} min",
             ),
           ),
         );
@@ -152,7 +189,8 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
         }
       }
 
-      final centerBmp = await _createArrowBitmapDescriptor(centerRotation, size: 64);
+      // Center direction arrow uses the same size as segment arrows
+      final centerBmp = await _createArrowBitmapDescriptor(centerRotation, size: _arrowSize);
       final centerArrow = Marker(
         markerId: const MarkerId('center_arrow'),
         position: centerPos,
@@ -173,9 +211,16 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
       });
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _updateCamera(stays);
-    });
+    // Only auto-fit camera once, on the very first successful data load
+    // when the map is ready. Subsequent interval updates will not move
+    // the camera, so the user can freely pan/zoom.
+    if (_isMapReady && !_hasFittedCameraOnce) {
+      _hasFittedCameraOnce = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        print('map update called (first load)');
+        _updateCamera(stays);
+      });
+    }
   }
 
   // create small rotated arrow markers along the path to show direction
@@ -213,22 +258,24 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
   }
 
   // draws a small arrow bitmap rotated by rotationDegrees and returns BitmapDescriptor
-  Future<BitmapDescriptor> _createArrowBitmapDescriptor(double rotationDegrees, {int size = 48}) async {
+  Future<BitmapDescriptor> _createArrowBitmapDescriptor(double rotationDegrees, {int size = _arrowSize}) async {
     // round rotation to integer to reuse cache
     final recorder = ui.PictureRecorder();
     final canvas = ui.Canvas(recorder);
     final paint = ui.Paint()..color = const ui.Color(0xFFEF4444);
 
-    final center = size / 3;
+    final center = size / 2;
 
     canvas.translate(center, center);
     canvas.rotate((rotationDegrees) * math.pi / 180);
 
     // draw a simple arrow (triangle) pointing up from center
     final path = ui.Path();
-    path.moveTo(0, - (size * 0.18));
-    path.lineTo(size * 0.12, size * 0.12);
-    path.lineTo(-size * 0.12, size * 0.12);
+    // scale the arrow triangle relative to the requested size so
+    // when we bump size up the arrow visibly grows
+    path.moveTo(0, -(size * 0.22));
+    path.lineTo(size * 0.14, size * 0.10);
+    path.lineTo(-size * 0.14, size * 0.10);
     path.close();
 
     canvas.drawPath(path, paint);
@@ -236,15 +283,16 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
     // optional shaft
     final shaftPaint = ui.Paint()
       ..color = const ui.Color(0xFFEF4444)
-      ..strokeWidth = size * 0.05
+      ..strokeWidth = size * 0.06
       ..strokeCap = ui.StrokeCap.round;
-    canvas.drawLine(ui.Offset(0, size * 0.12), ui.Offset(0, size * 0.28), shaftPaint);
+    canvas.drawLine(ui.Offset(0, size * 0.12), ui.Offset(0, size * 0.30), shaftPaint);
 
     final picture = recorder.endRecording();
     final img = await picture.toImage(size, size);
     final byteData = await img.toByteData(format: ui.ImageByteFormat.png);
     final bytes = byteData!.buffer.asUint8List();
     return BitmapDescriptor.fromBytes(bytes);
+
   }
 
   // compute bearing between two LatLng points (degrees)
@@ -315,7 +363,7 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
     );
 
     _mapController!.animateCamera(
-      CameraUpdate.newLatLngBounds(bounds, 80),
+      CameraUpdate.newLatLngBounds(bounds, 20),
     );
   }
 
@@ -335,7 +383,7 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
         ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
-            gradient:SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.primaryGradient:  const LinearGradient(
+            gradient:SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminGradient:  const LinearGradient(
               colors: [Color(0xFF4A6CF7), Color(0xFF6E8BFF)],
             ),
           ),
@@ -344,7 +392,9 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
       body: BlocConsumer<ExecutiveTrackingBloc, ExecutiveTrackingState>(
         listener: (context, state) {
           if (state is ExecutiveTrackingLoaded) {
-            _pendingStays = state.response?.data?.locationStays;
+            _lastResponse = state.response;
+            _pendingStays = state.response.data?.locationStays;
+            _hasLoadedOnce = true;
 
             if (_isMapReady) {
               _setMarkers(_pendingStays);
@@ -352,19 +402,20 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
           }
         },
         builder: (context, state) {
-          if (state is ExecutiveTrackingLoading) {
-            // show loader only on first load when showLoader true
-            if (state.showLoader) {
-              return const Center(child: CircularProgressIndicator());
-            }
+          // show loader only on first load when showLoader true; after we've
+          // loaded once, keep showing existing UI even if a new interval load is running
+          if (!_hasLoadedOnce && state is ExecutiveTrackingLoading && state.showLoader) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (state is ExecutiveTrackingError) {
             return Center(child: Text(state.message));
           }
 
-          if (state is ExecutiveTrackingLoaded) {
-            final data = state.response?.data;
+          // After first successful load, always render using _lastResponse to
+          // avoid blank UI between interval states.
+          if (_hasLoadedOnce && _lastResponse != null) {
+            final data = _lastResponse!.data;
 
             return Column(
               children: [
@@ -469,7 +520,7 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
                                         Icon(
                                           Icons.work_outline,
                                           color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
-                                              ? AppColors.primaryGold
+                                              ? AppColors.superAdminPrimary
                                               : const Color(0xFF4A6CF7),
                                         ),
                                         const SizedBox(width: 12),
@@ -515,7 +566,8 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
             );
           }
 
-          return const SizedBox();
+          // Before first load completes, show nothing (or could show a small loader)
+          return const SizedBox.shrink();
         },
       ),
     );
@@ -533,7 +585,7 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
       children: [
         Row(
           children: [
-            Icon(icon, color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.primaryGold: const Color(0xFF4A6CF7), size: 18),
+            Icon(icon, color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: const Color(0xFF4A6CF7), size: 18),
             const SizedBox(width: 4),
             Text(title,
                 style: const TextStyle(fontSize: 11, color: Colors.grey)),
