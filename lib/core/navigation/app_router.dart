@@ -12,6 +12,7 @@ import 'package:go_router/go_router.dart';
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
+import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
@@ -242,6 +243,17 @@ class AppRouter {
               BlocProvider<GetNaturalMaterialBloc>(create: (context) => GetNaturalMaterialBloc(),),
               BlocProvider<GetHandicraftsBloc>(create: (context) => GetHandicraftsBloc(),),
 
+
+
+              BlocProvider<PostColorsBloc>(create: (context) => PostColorsBloc(),),
+              BlocProvider<PostFinishesBloc>(create: (context) => PostFinishesBloc(),),
+              BlocProvider<PostTexturesBloc>(create: (context) => PostTexturesBloc(),),
+              BlocProvider<PostNaturalColorsBloc>(create: (context) => PostNaturalColorsBloc(),),
+              BlocProvider<PostOriginsBloc>(create: (context) => PostOriginsBloc(),),
+              BlocProvider<PostStateCountriesBloc>(create: (context) => PostStateCountriesBloc(),),
+              BlocProvider<PostProcessingNaturesBloc>(create: (context) => PostProcessingNaturesBloc(),),
+              BlocProvider<PostNaturalMaterialsBloc>(create: (context) => PostNaturalMaterialsBloc(),),
+              BlocProvider<PostHandicraftsTypesBloc>(create: (context) => PostHandicraftsTypesBloc(),),
             ],
             child: const CatalogueEntryPage(),
           );

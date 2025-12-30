@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
+import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_event.dart';
+import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_state.dart';
+import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -11,6 +15,7 @@ import 'package:path_provider/path_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
 import '../widgets/app_bar.dart';
+import '../widgets/dropdown_widget.dart';
 
 class CatalogueEntryPage extends StatefulWidget {
   const CatalogueEntryPage({super.key});
@@ -47,6 +52,9 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   String? _addingSectionTitle;
   final TextEditingController _newOptionController = TextEditingController();
 
+  // For State/Country type selection
+  String? _selectedStateCountryType; // 'State' or 'Country'
+
   // For custom color picker
   Color _pickerColor = const Color(0xFF2196F3);
   final TextEditingController _colorNameController = TextEditingController();
@@ -61,6 +69,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   List<String> finishes = [];
   List<String> textures = [];
   List<String> handicrafts = [];
+
+  // Store full data objects for dropdowns (with id and name)
+  List<DropdownOption> productTypeOptions = [];
+  List<DropdownOption> utilityOptions = [];
+
+  // Selected dropdown values
+  String? selectedProductTypeId;
+  String? selectedUtilityId;
 
   // Color options with hex codes
   final Map<String, Color> colourMap = {
@@ -316,64 +332,91 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   const SizedBox(height: 20),
                   _buildBasicInfoSection(),
                   const SizedBox(height: 20),
-                  // Product Type with BlocBuilder
+                  // Product Type with Dropdown
                   BlocBuilder<GetProductTypeBloc, GetProductTypeState>(
                     builder: (context, state) {
                       if (state is GetProductTypeLoaded) {
-                        // Populate productTypes from API response
                         if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          productTypes = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
+                          productTypeOptions = state.response.data!
+                              .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                              .map((item) => DropdownOption(
+                                    id: item.id!,
+                                    name: item.name!,
+                                    code: item.code,
+                                  ))
                               .toList();
                         }
-                        return _buildFilterSection('Product Type', productTypes, _selectedProductTypes);
+                        return CustomDropdownSection(
+                          title: 'Product Type',
+                          options: productTypeOptions,
+                          selectedId: selectedProductTypeId,
+                          onChanged: (id, name) {
+                            setState(() {
+                              selectedProductTypeId = id;
+                            });
+                          },
+                          icon: Icons.category,
+                        );
                       } else if (state is GetProductTypeLoading && state.showLoader) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
+                        return _buildLoadingContainer();
                       } else if (state is GetProductTypeError) {
-                        return Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Text(
-                            'Error loading product types: ${state.message}',
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        );
+                        return _buildErrorContainer('product types', state.message);
                       }
-                      // Initial state - show empty or default
-                      return _buildFilterSection('Product Type', productTypes, _selectedProductTypes);
+                      return CustomDropdownSection(
+                        title: 'Product Type',
+                        options: productTypeOptions,
+                        selectedId: selectedProductTypeId,
+                        onChanged: (id, name) {
+                          setState(() {
+                            selectedProductTypeId = id;
+                          });
+                        },
+                        icon: Icons.category,
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
-                  // Utility / Application with BlocBuilder
+                  // Utility / Application with Dropdown
                   BlocBuilder<GetUtilitiesBloc, GetUtilitiesState>(
                     builder: (context, state) {
                       if (state is GetUtilitiesLoaded) {
                         if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          utilities = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
+                          utilityOptions = state.response.data!
+                              .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                              .map((item) => DropdownOption(
+                                    id: item.id!,
+                                    name: item.name!,
+                                    code: item.code,
+                                  ))
                               .toList();
                         }
-                        return _buildFilterSection('Utility / Application', utilities, _selectedUtilities);
+                        return CustomDropdownSection(
+                          title: 'Utility / Application',
+                          options: utilityOptions,
+                          selectedId: selectedUtilityId,
+                          onChanged: (id, name) {
+                            setState(() {
+                              selectedUtilityId = id;
+                            });
+                          },
+                          icon: Icons.apps,
+                        );
                       } else if (state is GetUtilitiesLoading && state.showLoader) {
                         return _buildLoadingContainer();
                       } else if (state is GetUtilitiesError) {
                         return _buildErrorContainer('utilities', state.message);
                       }
-                      return _buildFilterSection('Utility / Application', utilities, _selectedUtilities);
+                      return CustomDropdownSection(
+                        title: 'Utility / Application',
+                        options: utilityOptions,
+                        selectedId: selectedUtilityId,
+                        onChanged: (id, name) {
+                          setState(() {
+                            selectedUtilityId = id;
+                          });
+                        },
+                        icon: Icons.apps,
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
@@ -401,7 +444,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  // State / Country with BlocBuilder
+                  // State / Country with BlocBuilder and Type Selection
                   BlocBuilder<GetStateCountriesBloc, GetStateCountriesState>(
                     builder: (context, state) {
                       if (state is GetStateCountriesLoaded) {
@@ -411,13 +454,13 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                               .map((item) => item.name!)
                               .toList();
                         }
-                        return _buildFilterSection('State / Country', states, _selectedStates);
+                        return _buildStateCountryFilterSection(states, _selectedStates);
                       } else if (state is GetStateCountriesLoading && state.showLoader) {
                         return _buildLoadingContainer();
                       } else if (state is GetStateCountriesError) {
                         return _buildErrorContainer('states/countries', state.message);
                       }
-                      return _buildFilterSection('State / Country', states, _selectedStates);
+                      return _buildStateCountryFilterSection(states, _selectedStates);
                     },
                   ),
                   const SizedBox(height: 16),
@@ -991,19 +1034,285 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
      return;
    }
 
-   setState(() {
-     options.add(newOption);
-     _addingSectionTitle = null;
-     _newOptionController.clear();
-   });
-
-   ScaffoldMessenger.of(context).showSnackBar(
-     SnackBar(
-       content: Text('✅ Added "$newOption" to $sectionTitle'),
-       backgroundColor: AppColors.success,
-       duration: const Duration(seconds: 2),
-     ),
+   // Create request body
+   final requestBody = PostCatalogueCommonRequestBody(
+     name: newOption,
+     code: newOption.toUpperCase().replaceAll(' ', '_'),
+     sortOrder: 0,
+     isActive: true,
    );
+
+   // Determine which POST API to call based on section title
+   switch (sectionTitle) {
+     case 'Utility / Application':
+       // TODO: Add postUtilities API to ApiIntegration
+       ScaffoldMessenger.of(context).showSnackBar(
+         const SnackBar(
+           content: Text('Utility POST API not implemented yet. Contact admin.'),
+           backgroundColor: AppColors.warning,
+         ),
+       );
+       break;
+
+     case 'Origin':
+       context.read<PostOriginsBloc>().add(SubmitPostOrigins(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostOriginsState();
+       break;
+
+     case 'State / Country':
+       context.read<PostStateCountriesBloc>().add(SubmitPostStateCountries(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostStateCountriesState();
+       break;
+
+     case 'Nature of Material Processing':
+       context.read<PostProcessingNaturesBloc>().add(SubmitPostProcessingNatures(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostProcessingNaturesState();
+       break;
+
+     case 'Material Naturality':
+       context.read<PostNaturalMaterialsBloc>().add(SubmitPostNaturalMaterials(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostNaturalMaterialsState();
+       break;
+
+     case 'Finish':
+       context.read<PostFinishesBloc>().add(SubmitPostFinishes(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostFinishesState();
+       break;
+
+     case 'Texture / Pattern':
+       context.read<PostTexturesBloc>().add(SubmitPostTextures(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostTexturesState();
+       break;
+
+     case 'Handicraft Type':
+       context.read<PostHandicraftsTypesBloc>().add(SubmitPostHandicraftsTypes(
+         requestBody: requestBody,
+         showLoader: true,
+       ));
+       _listenToPostHandicraftsTypesState();
+       break;
+
+     case 'Product Type':
+       // TODO: Add postProductType API if needed
+       ScaffoldMessenger.of(context).showSnackBar(
+         const SnackBar(
+           content: Text('Product Type POST API not implemented yet. Contact admin.'),
+           backgroundColor: AppColors.warning,
+         ),
+       );
+       break;
+
+     default:
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('POST API not available for: $sectionTitle'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+   }
+ }
+
+ // Listener methods for each POST API
+ void _listenToPostOriginsState() {
+   final subscription = context.read<PostOriginsBloc>().stream.listen((state) {
+     if (state is PostOriginsSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "Origin added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       // Refresh the GET API
+       context.read<GetOriginsBloc>().add(FetchGetOrigins());
+     } else if (state is PostOriginsError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ void _listenToPostStateCountriesState() {
+   final subscription = context.read<PostStateCountriesBloc>().stream.listen((state) {
+     if (state is PostStateCountriesSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+         _selectedStateCountryType = null; // Reset type selection
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "State/Country added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       context.read<GetStateCountriesBloc>().add(FetchGetStateCountries());
+     } else if (state is PostStateCountriesError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ void _listenToPostProcessingNaturesState() {
+   final subscription = context.read<PostProcessingNaturesBloc>().stream.listen((state) {
+     if (state is PostProcessingNaturesSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "Processing nature added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       context.read<GetProcessingNatureBloc>().add(FetchGetProcessingNature());
+     } else if (state is PostProcessingNaturesError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ void _listenToPostNaturalMaterialsState() {
+   final subscription = context.read<PostNaturalMaterialsBloc>().stream.listen((state) {
+     if (state is PostNaturalMaterialsSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "Material naturality added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       context.read<GetNaturalMaterialBloc>().add(FetchGetNaturalMaterial());
+     } else if (state is PostNaturalMaterialsError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ void _listenToPostFinishesState() {
+   final subscription = context.read<PostFinishesBloc>().stream.listen((state) {
+     if (state is PostFinishesSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "Finish added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       context.read<GetFinishesBloc>().add(FetchGetFinishes());
+     } else if (state is PostFinishesError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ void _listenToPostTexturesState() {
+   final subscription = context.read<PostTexturesBloc>().stream.listen((state) {
+     if (state is PostTexturesSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "Texture added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       context.read<GetTexturesBloc>().add(FetchGetTextures());
+     } else if (state is PostTexturesError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ void _listenToPostHandicraftsTypesState() {
+   final subscription = context.read<PostHandicraftsTypesBloc>().stream.listen((state) {
+     if (state is PostHandicraftsTypesSuccess) {
+       setState(() {
+         _addingSectionTitle = null;
+         _newOptionController.clear();
+       });
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('✅ ${state.response.message ?? "Handicraft type added successfully"}'),
+           backgroundColor: AppColors.success,
+         ),
+       );
+       context.read<GetHandicraftsBloc>().add(FetchGetHandicrafts());
+     } else if (state is PostHandicraftsTypesError) {
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
  }
 
  void _showCustomColorPicker(String sectionTitle) {
@@ -1440,4 +1749,363 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       ),
     );
   }
+
+  // Custom filter section for State/Country with type selection
+  Widget _buildStateCountryFilterSection(
+    List<String> options,
+    List<String> selectedOptions,
+  ) {
+    const title = 'State / Country';
+    final isAddingToThisSection = _addingSectionTitle == title;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.tune, color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue, size: 20),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              if (selectedOptions.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color:SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue ,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${selectedOptions.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+             // Add button
+             InkWell(
+               onTap: () {
+                 setState(() {
+                   if (isAddingToThisSection) {
+                     _addingSectionTitle = null;
+                     _newOptionController.clear();
+                     _selectedStateCountryType = null;
+                   } else {
+                     _addingSectionTitle = title;
+                     _newOptionController.clear();
+                     _selectedStateCountryType = null;
+                   }
+                 });
+               },
+               borderRadius: BorderRadius.circular(8),
+               child: Container(
+                 padding: const EdgeInsets.all(6),
+                 decoration: BoxDecoration(
+                   color: isAddingToThisSection
+                       ? AppColors.error.withAlpha(20)
+                       : SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary.withAlpha(20): AppColors.primaryDeepBlue.withAlpha(20),
+                   borderRadius: BorderRadius.circular(8),
+                 ),
+                 child: Icon(
+                   isAddingToThisSection ? Icons.close : Icons.add,
+                   color: isAddingToThisSection
+                       ? AppColors.error
+                       : SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue,
+                   size: 20,
+                 ),
+               ),
+             ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+         // Show type selection and text field if this section is in add mode
+         if (isAddingToThisSection) ...[
+           // Type selection buttons
+           Row(
+             children: [
+               Expanded(
+                 child: InkWell(
+                   onTap: () {
+                     setState(() {
+                       _selectedStateCountryType = 'State';
+                     });
+                   },
+                   child: Container(
+                     padding: const EdgeInsets.symmetric(vertical: 10),
+                     decoration: BoxDecoration(
+                       color: _selectedStateCountryType == 'State'
+                           ? (SessionManager.getUserRole().toString().toLowerCase() =="superadmin"
+                               ? AppColors.superAdminPrimary
+                               : AppColors.primaryDeepBlue)
+                           : Colors.grey.shade200,
+                       borderRadius: BorderRadius.circular(10),
+                     ),
+                     child: Row(
+                       mainAxisAlignment: MainAxisAlignment.center,
+                       children: [
+                         Icon(
+                           Icons.location_city,
+                           color: _selectedStateCountryType == 'State'
+                               ? Colors.white
+                               : Colors.grey.shade600,
+                           size: 18,
+                         ),
+                         const SizedBox(width: 6),
+                         Text(
+                           'State',
+                           style: TextStyle(
+                             color: _selectedStateCountryType == 'State'
+                                 ? Colors.white
+                                 : Colors.grey.shade600,
+                             fontWeight: _selectedStateCountryType == 'State'
+                                 ? FontWeight.bold
+                                 : FontWeight.normal,
+                             fontSize: 14,
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                 ),
+               ),
+               const SizedBox(width: 10),
+               Expanded(
+                 child: InkWell(
+                   onTap: () {
+                     setState(() {
+                       _selectedStateCountryType = 'Country';
+                     });
+                   },
+                   child: Container(
+                     padding: const EdgeInsets.symmetric(vertical: 10),
+                     decoration: BoxDecoration(
+                       color: _selectedStateCountryType == 'Country'
+                           ? (SessionManager.getUserRole().toString().toLowerCase() =="superadmin"
+                               ? AppColors.superAdminPrimary
+                               : AppColors.primaryDeepBlue)
+                           : Colors.grey.shade200,
+                       borderRadius: BorderRadius.circular(10),
+                     ),
+                     child: Row(
+                       mainAxisAlignment: MainAxisAlignment.center,
+                       children: [
+                         Icon(
+                           Icons.public,
+                           color: _selectedStateCountryType == 'Country'
+                               ? Colors.white
+                               : Colors.grey.shade600,
+                           size: 18,
+                         ),
+                         const SizedBox(width: 6),
+                         Text(
+                           'Country',
+                           style: TextStyle(
+                             color: _selectedStateCountryType == 'Country'
+                                 ? Colors.white
+                                 : Colors.grey.shade600,
+                             fontWeight: _selectedStateCountryType == 'Country'
+                                 ? FontWeight.bold
+                                 : FontWeight.normal,
+                             fontSize: 14,
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                 ),
+               ),
+             ],
+           ),
+           const SizedBox(height: 12),
+
+           // Show text field only if type is selected
+           if (_selectedStateCountryType != null) ...[
+             Row(
+               children: [
+                 Expanded(
+                   child: Container(
+                     height: 40,
+                     decoration: BoxDecoration(
+                       borderRadius: BorderRadius.circular(20),
+                     ),
+                     child: TextField(
+                       controller: _newOptionController,
+                       autofocus: true,
+                       decoration: InputDecoration(
+                         hintText: 'Enter ${_selectedStateCountryType?.toLowerCase()} name...',
+                         hintStyle: TextStyle(
+                           color: Colors.grey.shade400,
+                           fontSize: 14,
+                         ),
+                         border: InputBorder.none,
+                         contentPadding: const EdgeInsets.symmetric(
+                           horizontal: 16,
+                           vertical: 10,
+                         ),
+                         prefixIcon: Icon(
+                           _selectedStateCountryType == 'State'
+                               ? Icons.location_city
+                               : Icons.public,
+                           size: 18,
+                           color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin"
+                               ? AppColors.superAdminPrimary
+                               : AppColors.primaryDeepBlue,
+                         ),
+                       ),
+                       style: const TextStyle(fontSize: 14),
+                       onSubmitted: (value) => _saveStateCountryOption(options),
+                     ),
+                   ),
+                 ),
+                 const SizedBox(width: 8),
+                 // Save button
+                 InkWell(
+                   onTap: () => _saveStateCountryOption(options),
+                   borderRadius: BorderRadius.circular(20),
+                   child: Container(
+                     height: 40,
+                     padding: const EdgeInsets.symmetric(horizontal: 16),
+                     decoration: BoxDecoration(
+                       gradient: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminGradient: AppColors.primaryGradient,
+                       borderRadius: BorderRadius.circular(20),
+                       boxShadow: [
+                         BoxShadow(
+                           color:SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary.withAlpha(50): AppColors.primaryDeepBlue.withAlpha(50),
+                           blurRadius: 8,
+                           offset: const Offset(0, 2),
+                         ),
+                       ],
+                     ),
+                     child: const Row(
+                       mainAxisSize: MainAxisSize.min,
+                       children: [
+                         Icon(Icons.check, color: Colors.white, size: 18),
+                         SizedBox(width: 4),
+                         Text(
+                           'Save',
+                           style: TextStyle(
+                             color: Colors.white,
+                             fontSize: 14,
+                             fontWeight: FontWeight.w600,
+                           ),
+                         ),
+                       ],
+                     ),
+                   ),
+                 ),
+               ],
+             ),
+             const SizedBox(height: 12),
+           ],
+         ],
+
+          Wrap(
+            spacing: 5,
+            runSpacing: 2,
+            children: options.map((option) {
+              final isSelected = selectedOptions.contains(option);
+              return FilterChip(
+                labelPadding: const EdgeInsets.symmetric(horizontal: 2,),
+                label: Text(option),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    if (selected) {
+                      selectedOptions.add(option);
+                    } else {
+                      selectedOptions.remove(option);
+                    }
+                  });
+                },
+                selectedColor: AppColors.success.withAlpha(50),
+                checkmarkColor: AppColors.success,
+                labelStyle: TextStyle(
+                  color: isSelected ? AppColors.success : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+                side: BorderSide(
+                  color: isSelected
+                      ? AppColors.success
+                      : Colors.grey.withAlpha(100),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+ void _saveStateCountryOption(List<String> options) {
+   final newOption = _newOptionController.text.trim();
+
+   if (_selectedStateCountryType == null) {
+     ScaffoldMessenger.of(context).showSnackBar(
+       const SnackBar(
+         content: Text('Please select State or Country first'),
+         backgroundColor: AppColors.warning,
+       ),
+     );
+     return;
+   }
+
+   if (newOption.isEmpty) {
+     ScaffoldMessenger.of(context).showSnackBar(
+       const SnackBar(
+         content: Text('Please enter a state/country name'),
+         backgroundColor: AppColors.error,
+       ),
+     );
+     return;
+   }
+
+   if (options.contains(newOption)) {
+     ScaffoldMessenger.of(context).showSnackBar(
+       SnackBar(
+         content: Text('$_selectedStateCountryType "$newOption" already exists'),
+         backgroundColor: AppColors.warning,
+       ),
+     );
+     return;
+   }
+
+   // Create request body with type field
+   final requestBody = PostCatalogueCommonRequestBody(
+     name: newOption,
+     code: newOption.toUpperCase().replaceAll(' ', '_'),
+     type: _selectedStateCountryType, // 'State' or 'Country'
+     sortOrder: 0,
+     isActive: true,
+   );
+
+   // Call the POST API
+   context.read<PostStateCountriesBloc>().add(SubmitPostStateCountries(
+     requestBody: requestBody,
+     showLoader: true,
+   ));
+   _listenToPostStateCountriesState();
+ }
 }

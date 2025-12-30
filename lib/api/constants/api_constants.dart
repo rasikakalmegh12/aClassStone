@@ -76,6 +76,10 @@ class ApiConstants {
 
 
 
+  static const String postProductEntry= "${baseUrl}marketing/admin/catalogue/products";
+
+
+
   // Common Headers
   static const Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',

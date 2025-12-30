@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
+import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
@@ -19,6 +20,7 @@ import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.d
 import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostCatalogueCommonResponseBody.dart';
+import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
@@ -2261,6 +2263,43 @@ class ApiIntegration {
     } catch (e) {
       if (kDebugMode) print('❌ postHandicraftsTypes error: $e');
       return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<ProductEntryResponseBody> postProductEntry(ProductEntryRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postProductEntry);
+      if (kDebugMode) print('📤 Sending postProductEntry request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postProductEntry status: ${response.statusCode}');
+        print('📥 postProductEntry body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return ProductEntryResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return ProductEntryResponseBody.fromJson(jsonResponse);
+        //   ProductEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Insert Product failed',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postProductEntry error: $e');
+      return ProductEntryResponseBody(status: false, message: e.toString());
     }
   }
 
