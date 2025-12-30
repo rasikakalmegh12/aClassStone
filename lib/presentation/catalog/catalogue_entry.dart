@@ -1,5 +1,9 @@
 import 'dart:io';
+import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
+import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
+import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -47,17 +51,16 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   Color _pickerColor = const Color(0xFF2196F3);
   final TextEditingController _colorNameController = TextEditingController();
 
-  // Filter options
-  final List<String> productTypes = [
-    'Marble', 'Granite', 'Feldspar', 'Sandstone', 'Composite Slabs',
-    'Indian Quartzite', 'Imported Quartzite', 'Imported Marble',
-    'Imported Granite', 'Manmade Naturals', 'Handicrafts'
-  ];
-
-  final List<String> utilities = [
-    'Kitchen Countertop', 'Other Countertops', 'Flooring', 'Staircase',
-    'Bathroom', 'Outdoor Cladding', 'Wall Cladding'
-  ];
+  // Filter options - populated from API
+  List<String> productTypes = [];
+  List<String> utilities = [];
+  List<String> origins = [];
+  List<String> states = [];
+  List<String> processing = [];
+  List<String> naturality = [];
+  List<String> finishes = [];
+  List<String> textures = [];
+  List<String> handicrafts = [];
 
   // Color options with hex codes
   final Map<String, Color> colourMap = {
@@ -83,30 +86,28 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     'Brown', 'Silver', 'Grey', 'Green', 'Yellow', 'Orange', 'Purple', 'Cream'
   ];
 
-  final List<String> origins = ['North India', 'South India', 'Out of India'];
-
-  final List<String> states = [
-    'Rajasthan', 'Madhya Pradesh', 'Karnataka', 'Tamil Nadu',
-    'Italy', 'Iran', 'Brazil', 'Africa'
-  ];
-
   final List<String> priceRanges = [
     '0–50', '50–100', '100–200', '200–1000', 'Above 1000'
   ];
 
-  final List<String> processing = ['Fresh (No Cracks)', 'Fresh with Cracks (Processed)'];
-  final List<String> naturality = ['Natural', 'Converted'];
 
-  final List<String> finishes = [
-    'Polish', 'Lapatora', 'Leather', 'Honed', 'Brushed', 'Flamed'
-  ];
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    context.read<GetProductTypeBloc>().add(FetchGetProductType());
+    context.read<GetUtilitiesBloc>().add(FetchGetUtilities());
+    context.read<GetColorsBloc>().add(FetchGetColors());
+    context.read<GetFinishesBloc>().add(FetchGetFinishes());
+    context.read<GetTexturesBloc>().add(FetchGetTextures());
+    context.read<GetNaturalColorsBloc>().add(FetchGetNaturalColors());
+    context.read<GetOriginsBloc>().add(FetchGetOrigins());
+    context.read<GetStateCountriesBloc>().add(FetchGetStateCountries());
+    context.read<GetProcessingNatureBloc>().add(FetchGetProcessingNature());
+    context.read<GetNaturalMaterialBloc>().add(FetchGetNaturalMaterial());
+    context.read<GetHandicraftsBloc>().add(FetchGetHandicrafts());
+  }
 
-  final List<String> textures = [
-    'Grains', 'Lining', 'Coin', 'Biscuits', 'Plain', 'Fish',
-    'Eyes', 'Strip', 'Quartz patterns'
-  ];
-
-  final List<String> handicrafts = ['Ganesh Murti', 'Other handicraft types'];
 
   @override
   void dispose() {
@@ -315,30 +316,213 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   const SizedBox(height: 20),
                   _buildBasicInfoSection(),
                   const SizedBox(height: 20),
-                  _buildFilterSection('Product Type', productTypes, _selectedProductTypes),
+                  // Product Type with BlocBuilder
+                  BlocBuilder<GetProductTypeBloc, GetProductTypeState>(
+                    builder: (context, state) {
+                      if (state is GetProductTypeLoaded) {
+                        // Populate productTypes from API response
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          productTypes = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Product Type', productTypes, _selectedProductTypes);
+                      } else if (state is GetProductTypeLoading && state.showLoader) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      } else if (state is GetProductTypeError) {
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            'Error loading product types: ${state.message}',
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        );
+                      }
+                      // Initial state - show empty or default
+                      return _buildFilterSection('Product Type', productTypes, _selectedProductTypes);
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildFilterSection('Utility / Application', utilities, _selectedUtilities),
+                  // Utility / Application with BlocBuilder
+                  BlocBuilder<GetUtilitiesBloc, GetUtilitiesState>(
+                    builder: (context, state) {
+                      if (state is GetUtilitiesLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          utilities = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Utility / Application', utilities, _selectedUtilities);
+                      } else if (state is GetUtilitiesLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetUtilitiesError) {
+                        return _buildErrorContainer('utilities', state.message);
+                      }
+                      return _buildFilterSection('Utility / Application', utilities, _selectedUtilities);
+                    },
+                  ),
                   const SizedBox(height: 16),
                   _buildColorPickerSection('Colour', _selectedColours),
                   const SizedBox(height: 16),
                   _buildColorPickerSection('Natural Colour', _selectedNaturalColours),
                   const SizedBox(height: 16),
-                  _buildFilterSection('Origin', origins, _selectedOrigins),
+                  // Origin with BlocBuilder
+                  BlocBuilder<GetOriginsBloc, GetOriginsState>(
+                    builder: (context, state) {
+                      if (state is GetOriginsLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          origins = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Origin', origins, _selectedOrigins);
+                      } else if (state is GetOriginsLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetOriginsError) {
+                        return _buildErrorContainer('origins', state.message);
+                      }
+                      return _buildFilterSection('Origin', origins, _selectedOrigins);
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildFilterSection('State / Country', states, _selectedStates),
+                  // State / Country with BlocBuilder
+                  BlocBuilder<GetStateCountriesBloc, GetStateCountriesState>(
+                    builder: (context, state) {
+                      if (state is GetStateCountriesLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          states = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('State / Country', states, _selectedStates);
+                      } else if (state is GetStateCountriesLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetStateCountriesError) {
+                        return _buildErrorContainer('states/countries', state.message);
+                      }
+                      return _buildFilterSection('State / Country', states, _selectedStates);
+                    },
+                  ),
                   const SizedBox(height: 16),
                   _buildFilterSection('Price Range (Per Sqft)', priceRanges, _selectedPriceRanges),
                   const SizedBox(height: 16),
-                  _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing),
+                  // Nature of Material Processing with BlocBuilder
+                  BlocBuilder<GetProcessingNatureBloc, GetProcessingNatureState>(
+                    builder: (context, state) {
+                      if (state is GetProcessingNatureLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          processing = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
+                      } else if (state is GetProcessingNatureLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetProcessingNatureError) {
+                        return _buildErrorContainer('processing nature', state.message);
+                      }
+                      return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildFilterSection('Material Naturality', naturality, _selectedNaturality),
+                  // Material Naturality with BlocBuilder
+                  BlocBuilder<GetNaturalMaterialBloc, GetNaturalMaterialState>(
+                    builder: (context, state) {
+                      if (state is GetNaturalMaterialLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          naturality = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
+                      } else if (state is GetNaturalMaterialLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetNaturalMaterialError) {
+                        return _buildErrorContainer('material naturality', state.message);
+                      }
+                      return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildFilterSection('Finish', finishes, _selectedFinishes),
+                  // Finish with BlocBuilder
+                  BlocBuilder<GetFinishesBloc, GetFinishesState>(
+                    builder: (context, state) {
+                      if (state is GetFinishesLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          finishes = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Finish', finishes, _selectedFinishes);
+                      } else if (state is GetFinishesLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetFinishesError) {
+                        return _buildErrorContainer('finishes', state.message);
+                      }
+                      return _buildFilterSection('Finish', finishes, _selectedFinishes);
+                    },
+                  ),
                   const SizedBox(height: 16),
-                  _buildFilterSection('Texture / Pattern', textures, _selectedTextures),
+                  // Texture / Pattern with BlocBuilder
+                  BlocBuilder<GetTexturesBloc, GetTexturesState>(
+                    builder: (context, state) {
+                      if (state is GetTexturesLoaded) {
+                        if (state.response.data != null && state.response.data!.isNotEmpty) {
+                          textures = state.response.data!
+                              .where((item) => item.name != null && item.name!.isNotEmpty)
+                              .map((item) => item.name!)
+                              .toList();
+                        }
+                        return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
+                      } else if (state is GetTexturesLoading && state.showLoader) {
+                        return _buildLoadingContainer();
+                      } else if (state is GetTexturesError) {
+                        return _buildErrorContainer('textures', state.message);
+                      }
+                      return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
+                    },
+                  ),
                   const SizedBox(height: 16),
                   if (_selectedProductTypes.contains('Handicrafts'))
-                    _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts),
+                    // Handicraft Type with BlocBuilder
+                    BlocBuilder<GetHandicraftsBloc, GetHandicraftsState>(
+                      builder: (context, state) {
+                        if (state is GetHandicraftsLoaded) {
+                          if (state.response.data != null && state.response.data!.isNotEmpty) {
+                            handicrafts = state.response.data!
+                                .where((item) => item.name != null && item.name!.isNotEmpty)
+                                .map((item) => item.name!)
+                                .toList();
+                          }
+                          return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
+                        } else if (state is GetHandicraftsLoading && state.showLoader) {
+                          return _buildLoadingContainer();
+                        } else if (state is GetHandicraftsError) {
+                          return _buildErrorContainer('handicrafts', state.message);
+                        }
+                        return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
+                      },
+                    ),
                   const SizedBox(height: 100), // Space for submit button
                 ],
               ),
@@ -595,7 +779,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
    final isAddingToThisSection = _addingSectionTitle == title;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -673,7 +857,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
          // Show add option text field if this section is in add mode
          if (isAddingToThisSection) ...[
@@ -748,8 +932,8 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
          ],
 
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: 5,
+            runSpacing: 2,
             children: options.map((option) {
               final isSelected = selectedOptions.contains(option);
               return FilterChip(
@@ -903,7 +1087,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                            ),
                            const SizedBox(height: 4),
                            Text(
-                             '#${_pickerColor.value.toRadixString(16).substring(2).toUpperCase()}',
+                             '#${_pickerColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}',
                              style: const TextStyle(
                                fontWeight: FontWeight.bold,
                                fontSize: 18,
@@ -1017,7 +1201,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
            ),
            const SizedBox(width: 12),
            Expanded(
-             child: Text('✅ Added "$colorName" (#${_pickerColor.value.toRadixString(16).substring(2).toUpperCase()})'),
+             child: Text('✅ Added "$colorName" (#${_pickerColor.toARGB32().toRadixString(16).substring(2).toUpperCase()})'),
            ),
          ],
        ),
@@ -1200,8 +1384,60 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       ),
     );
   }
+
+  // Helper method for loading container
+  Widget _buildLoadingContainer() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+  }
+
+  // Helper method for error container
+  Widget _buildErrorContainer(String filterName, String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Error loading $filterName',
+            style: const TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ],
+      ),
+    );
+  }
 }
-
-
-
-

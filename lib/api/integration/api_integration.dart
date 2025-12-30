@@ -2,13 +2,23 @@ import 'dart:convert';
 import 'dart:async';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveTrackingByDaysResponse.dart';
+import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetNaturalColorResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetOriginsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetProcessingNaturesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
+import 'package:apclassstone/api/models/response/PostCatalogueCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
@@ -21,6 +31,9 @@ import '../../data/models/cached_response.dart';
 import '../constants/api_constants.dart';
 import '../models/request/GetProfileRequestBody.dart';
 import '../models/request/RegistrationRequestBody.dart';
+import '../models/response/GetColorsResponseBody.dart';
+import '../models/response/GetProductTypeResponseBody.dart';
+import '../models/response/GetUtilitiesTypeResponseBody.dart';
 import '../models/response/PendingRegistrationResponseBody.dart';
 import '../models/response/RegistrationResponseBody.dart';
 import '../models/request/PunchInOutRequestBody.dart';
@@ -815,7 +828,7 @@ class ApiIntegration {
       );
     }
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error login: ${e.toString()}';
+      final errorMsg = 'Network error executiveTrackingByDays: ${e.toString()}';
       print('❌ $errorMsg');
       return ExecutiveTrackingByDaysResponse(
         status: false,
@@ -830,6 +843,669 @@ class ApiIntegration {
       );
     }
   }
+
+
+  static Future<GetProductTypeResponseBody> getProductType() async {
+    try {
+    final url = Uri.parse(ApiConstants.getProductType);
+
+    print('📤 Sending getProductType request to: $url');
+
+    print('headers getProductType: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getProductType: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getProductType: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetProductTypeResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getProductType successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetProductTypeResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getProductType  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getProductType: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetProductTypeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetProductTypeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetUtilitiesTypeResponseBody> getUtilities() async {
+    try {
+    final url = Uri.parse(ApiConstants.getUtilities);
+
+    print('📤 Sending getUtilities request to: $url');
+
+    print('headers getUtilities: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getUtilities: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getUtilities: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetUtilitiesTypeResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getUtilities successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetUtilitiesTypeResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getUtilities  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getUtilities : ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetUtilitiesTypeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetUtilitiesTypeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetColorsResponseBody> getColors() async {
+    try {
+    final url = Uri.parse(ApiConstants.getColors);
+
+    print('📤 Sending getColors request to: $url');
+
+    print('headers getColors: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getColors: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getColors: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetColorsResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getColors successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetColorsResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getColors  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getColors: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetColorsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetColorsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetFinishesResponseBody> getFinishes() async {
+    try {
+    final url = Uri.parse(ApiConstants.getFinishes);
+
+    print('📤 Sending getFinishes request to: $url');
+
+    print('headers getFinishes: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getFinishes: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getFinishes: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetFinishesResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getFinishes successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetFinishesResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getFinishes  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getFinishes: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetFinishesResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetFinishesResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetTextureResponseBody> getTextures() async {
+    try {
+    final url = Uri.parse(ApiConstants.getTextures);
+
+    print('📤 Sending getTextures request to: $url');
+
+    print('headers getTextures: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getTextures: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getTextures: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetTextureResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getTextures successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetTextureResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getTextures  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getTextures: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetTextureResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetTextureResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetNaturalColorResponseBody> getNaturalColours() async {
+    try {
+    final url = Uri.parse(ApiConstants.getNaturalColors);
+
+    print('📤 Sending getNaturalColors request to: $url');
+
+    print('headers getNaturalColors: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getNaturalColors: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getNaturalColors: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetNaturalColorResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getNaturalColors successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetNaturalColorResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getNaturalColors  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getNaturalColors: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetNaturalColorResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetNaturalColorResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetOriginsResponseBody> getOrigins() async {
+    try {
+    final url = Uri.parse(ApiConstants.getOrigins);
+
+    print('📤 Sending getOrigins request to: $url');
+
+    print('headers getOrigins: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getOrigins: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getOrigins: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetOriginsResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getOrigins successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetOriginsResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getOrigins  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getOrigins: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetOriginsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetOriginsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetStateCountriesResponseBody> getStateCountries() async {
+    try {
+    final url = Uri.parse(ApiConstants.getStateCountries);
+
+    print('📤 Sending getStateCountries request to: $url');
+
+    print('headers getStateCountries: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    if (kDebugMode) {
+      print('📥 Response status getStateCountries: ${response.statusCode}');
+    }
+    if (kDebugMode) {
+      print('Response body getStateCountries: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetStateCountriesResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getStateCountries successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetStateCountriesResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getStateCountries  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getStateCountries: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetStateCountriesResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetStateCountriesResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetProcessingNaturesResponseBody> getProcessingNature() async {
+    try {
+    final url = Uri.parse(ApiConstants.getProcessingNatures);
+
+    print('📤 Sending getProcessingNatures request to: $url');
+
+    print('headers getProcessingNatures: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getProcessingNatures: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getProcessingNatures: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetProcessingNaturesResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getProcessingNatures successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetProcessingNaturesResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getProcessingNatures  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getProcessingNatures: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetProcessingNaturesResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetProcessingNaturesResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetMaterialNatureResponseBody> getNaturalMaterial() async {
+    try {
+    final url = Uri.parse(ApiConstants.getNaturalMaterials);
+
+    print('📤 Sending getNaturalMaterials request to: $url');
+
+    print('headers getNaturalMaterials: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getNaturalMaterials: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getNaturalMaterials: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetMaterialNatureResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getNaturalMaterials successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetMaterialNatureResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getNaturalMaterials  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getNaturalMaterials: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetMaterialNatureResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetMaterialNatureResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<GetHandicraftsResponseBody> getHandicraftsTypes() async {
+    try {
+    final url = Uri.parse(ApiConstants.getHandicraftsTypes);
+
+    print('📤 Sending getHandicraftsTypes request to: $url');
+
+    print('headers getHandicraftsTypes: ${ApiConstants.headerWithToken()}');
+
+    final response = await ApiClient.send(() {
+      return http.get(
+        url,
+        headers: ApiConstants.headerWithToken(),
+
+      ).timeout(_timeout);
+    });
+
+    print('📥 Response status getHandicraftsTypes: ${response.statusCode}');
+    if (kDebugMode) {
+      print('Response body getHandicraftsTypes: ${response.body}');
+    }
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetHandicraftsResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('✅ getHandicraftsTypes successful: ${result.message}');
+      }
+      return result;
+    } else {
+      final jsonResponse = jsonDecode(response.body);
+      final result = GetHandicraftsResponseBody.fromJson(jsonResponse);
+      if (kDebugMode) {
+        print('❌ getHandicraftsTypes  failed with status ${response.statusCode}');
+      }
+      return result;
+
+      //   GetProductTypeResponseBody(
+      //   status: false,
+      //   message: 'Executive Tracking failed. Status: ${result.message}',
+      //   statusCode: response.statusCode,
+      // );
+    }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error getHandicraftsTypes: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetHandicraftsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return GetHandicraftsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
 
 
 
@@ -1263,6 +1939,332 @@ class ApiIntegration {
       );
     }
   }
+
+
+  static Future<PostCatalogueCommonResponseBody> postColors(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postColors);
+      if (kDebugMode) print('📤 Sending postColors request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postColors status: ${response.statusCode}');
+        print('📥 postColors body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Colors failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postColors error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postFinishes(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postFinishes);
+      if (kDebugMode) print('📤 Sending postFinishes request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postFinishes status: ${response.statusCode}');
+        print('📥 postFinishes body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Finishes failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postFinishes error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postTextures(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postTextures);
+      if (kDebugMode) print('📤 Sending postTextures request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postTextures status: ${response.statusCode}');
+        print('📥 postTextures body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Texture failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postTextures error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postNaturalColors(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postNaturalColors);
+      if (kDebugMode) print('📤 Sending postNaturalColors request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postNaturalColors status: ${response.statusCode}');
+        print('📥 postNaturalColors body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Colors failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postNaturalColors error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postOrigins(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postOrigins);
+      if (kDebugMode) print('📤 Sending postOrigins request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postOrigins status: ${response.statusCode}');
+        print('📥 postOrigins body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Origin failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postOrigins error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postStateCountries(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postStateCountries);
+      if (kDebugMode) print('📤 Sending postStateCountries request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postStateCountries status: ${response.statusCode}');
+        print('📥 postStateCountries body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert State Countries failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postStateCountries error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postProcessingNatures(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postProcessingNatures);
+      if (kDebugMode) print('📤 Sending postProcessingNatures request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postProcessingNatures status: ${response.statusCode}');
+        print('📥 postProcessingNatures body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert postProcessing Natures failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postProcessingNatures error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postNaturalMaterials(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postNaturalMaterials);
+      if (kDebugMode) print('📤 Sending postColors request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postNaturalMaterials status: ${response.statusCode}');
+        print('📥 postNaturalMaterials body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Natural Materials failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postNaturalMaterials error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
+  static Future<PostCatalogueCommonResponseBody> postHandicraftsTypes(PostCatalogueCommonRequestBody body) async {
+    try {
+      final url = Uri.parse(ApiConstants.postHandicraftsTypes);
+      if (kDebugMode) print('📤 Sending postHandicraftsTypes request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(body.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postHandicraftsTypes status: ${response.statusCode}');
+        print('📥 postHandicraftsTypes body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostCatalogueCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Insert Handicrafts failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postHandicraftsTypes error: $e');
+      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+    }
+  }
+
+
 
 
 }

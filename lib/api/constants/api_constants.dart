@@ -46,6 +46,36 @@ class ApiConstants {
   static const String executiveAttendance = "${baseUrl}marketing/admin/executives/attendance/day";
 
 
+
+
+
+  //      Catalogues Apis
+
+  static const String getProductType = "${baseUrl}marketing/admin/catalogue/options/product-types";
+  static const String getUtilities = "${baseUrl}marketing/admin/catalogue/options/utilities";
+  static const String getColors = "${baseUrl}marketing/admin/catalogue/options/colours";
+  static const String getFinishes = "${baseUrl}marketing/admin/catalogue/options/finishes";
+  static const String getTextures = "${baseUrl}marketing/admin/catalogue/options/textures";
+  static const String getNaturalColors = "${baseUrl}marketing/admin/catalogue/options/natural-colours";
+  static const String getOrigins = "${baseUrl}marketing/admin/catalogue/options/origins";
+  static const String getStateCountries = "${baseUrl}marketing/admin/catalogue/options/state-countries";
+  static const String getProcessingNatures = "${baseUrl}marketing/admin/catalogue/options/processing-natures";
+  static const String getNaturalMaterials = "${baseUrl}marketing/admin/catalogue/options/material-naturalities";
+  static const String getHandicraftsTypes = "${baseUrl}marketing/admin/catalogue/options/handicraft-types";
+
+
+  static const String postColors = "${baseUrl}marketing/admin/catalogue/options/colours";
+  static const String postFinishes = "${baseUrl}marketing/admin/catalogue/options/finishes";
+  static const String postTextures = "${baseUrl}marketing/admin/catalogue/options/textures";
+  static const String postNaturalColors = "${baseUrl}marketing/admin/catalogue/options/natural-colours";
+  static const String postOrigins = "${baseUrl}marketing/admin/catalogue/options/origins";
+  static const String postStateCountries = "${baseUrl}marketing/admin/catalogue/options/state-countries";
+  static const String postProcessingNatures = "${baseUrl}marketing/admin/catalogue/options/processing-natures";
+  static const String postNaturalMaterials = "${baseUrl}marketing/admin/catalogue/options/material-naturalities";
+  static const String postHandicraftsTypes = "${baseUrl}marketing/admin/catalogue/options/handicraft-types";
+
+
+
   // Common Headers
   static const Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',

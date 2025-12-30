@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
+import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
@@ -229,7 +230,17 @@ class AppRouter {
         builder: (context, state) {
           return MultiBlocProvider(
             providers: [
-              BlocProvider<PendingBloc>(create: (context) => PendingBloc(),),
+              BlocProvider<GetProductTypeBloc>(create: (context) => GetProductTypeBloc(),),
+              BlocProvider<GetUtilitiesBloc>(create: (context) => GetUtilitiesBloc(),),
+              BlocProvider<GetColorsBloc>(create: (context) => GetColorsBloc(),),
+              BlocProvider<GetFinishesBloc>(create: (context) => GetFinishesBloc(),),
+              BlocProvider<GetTexturesBloc>(create: (context) => GetTexturesBloc(),),
+              BlocProvider<GetNaturalColorsBloc>(create: (context) => GetNaturalColorsBloc(),),
+              BlocProvider<GetOriginsBloc>(create: (context) => GetOriginsBloc(),),
+              BlocProvider<GetStateCountriesBloc>(create: (context) => GetStateCountriesBloc(),),
+              BlocProvider<GetProcessingNatureBloc>(create: (context) => GetProcessingNatureBloc(),),
+              BlocProvider<GetNaturalMaterialBloc>(create: (context) => GetNaturalMaterialBloc(),),
+              BlocProvider<GetHandicraftsBloc>(create: (context) => GetHandicraftsBloc(),),
 
             ],
             child: const CatalogueEntryPage(),
