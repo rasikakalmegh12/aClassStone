@@ -1,4 +1,5 @@
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
+import 'dart:io';
 
 import '../../../api/models/request/PostCatalogueCommonRequestBody.dart';
 
@@ -102,3 +103,20 @@ class FetchProductEntry extends ProductEntryEvent {
   FetchProductEntry({required this.requestBody, this.showLoader = false});
 }
 
+// ========================= Catalogue Image Entry Event =========================
+abstract class CatalogueImageEntryEvent {}
+class UploadCatalogueImage extends CatalogueImageEntryEvent {
+  final String productId;
+  final File imageFile;
+  final bool setAsPrimary;
+  final int sortOrder;
+  final bool showLoader;
+
+  UploadCatalogueImage({
+    required this.productId,
+    required this.imageFile,
+    this.setAsPrimary = false,
+    this.sortOrder = 0,
+    this.showLoader = false,
+  });
+}

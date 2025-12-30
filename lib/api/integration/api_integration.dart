@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
@@ -7,6 +8,7 @@ import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
+import 'package:apclassstone/api/models/response/CatalogueImageEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveTrackingByDaysResponse.dart';
 import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
@@ -2303,9 +2305,84 @@ class ApiIntegration {
     }
   }
 
+  /// Post Image Entry - Upload product image with multipart form data
+  ///
+  /// Parameters:
+  /// - [productId]: The product ID to associate the image with
+  /// - [imageFile]: The image file to upload
+  /// - [setAsPrimary]: Whether to set as primary image (default: false)
+  /// - [sortOrder]: Sort order for the image (default: 0)
+  ///
+  /// Returns [CatalogueImageEntryResponseBody] with uploaded image details
+  static Future<CatalogueImageEntryResponseBody> postImageEntry({
+    required String productId,
+    required File imageFile,
+    bool setAsPrimary = false,
+    int sortOrder = 0,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.postImageEntry}/$productId/images');
+      if (kDebugMode) print('📤 Sending postImageEntry request to: $url');
 
+      // Create multipart request
+      var request = http.MultipartRequest('POST', url);
 
+      // Add headers (token authentication)
+      final headers = ApiConstants.headerWithToken();
+      request.headers.addAll({
+        'Authorization': headers['Authorization'] ?? '',
+      });
 
+      // Add the image file
+      var multipartFile = await http.MultipartFile.fromPath(
+        'File',
+        imageFile.path,
+        // contentType is automatically detected from file extension
+      );
+      request.files.add(multipartFile);
+
+      // Add form fields
+      request.fields['SetAsPrimary'] = setAsPrimary.toString();
+      request.fields['SortOrder'] = sortOrder.toString();
+
+      if (kDebugMode) {
+        print('📤 Upload details:');
+        print('   - File: ${imageFile.path}');
+        print('   - Size: ${await imageFile.length()} bytes');
+        print('   - SetAsPrimary: $setAsPrimary');
+        print('   - SortOrder: $sortOrder');
+      }
+
+      // Send request
+      final streamedResponse = await request.send().timeout(_timeout);
+
+      // Get response
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('📥 postImageEntry status: ${response.statusCode}');
+        print('📥 postImageEntry body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return CatalogueImageEntryResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return CatalogueImageEntryResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Image upload failed',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postImageEntry error: $e');
+      return CatalogueImageEntryResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
 }
 //     try {
 //       await Future.delayed(const Duration(seconds: 1));

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
@@ -6,6 +7,7 @@ import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogu
 import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_event.dart';
 import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_state.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
+import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,6 +18,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
 import '../widgets/app_bar.dart';
 import '../widgets/dropdown_widget.dart';
+import '../widgets/custom_loader.dart';
 
 class CatalogueEntryPage extends StatefulWidget {
   const CatalogueEntryPage({super.key});
@@ -33,6 +36,12 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productCodeController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _pricePerSqFtController = TextEditingController();
+
+  // Section visibility
+  bool _showSection1 = true;
+  bool _showSection2 = false;
+  String? _savedProductId; // Store product ID from successful section 1 submission
 
   // Multi-select filters
   final List<String> _selectedProductTypes = [];
@@ -130,6 +139,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     _productNameController.dispose();
     _productCodeController.dispose();
     _descriptionController.dispose();
+    _pricePerSqFtController.dispose();
     _newOptionController.dispose();
     _colorNameController.dispose();
     super.dispose();
@@ -155,9 +165,19 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       if (pickedFile != null) {
         final compressedFile = await _compressImage(File(pickedFile.path));
         if (compressedFile != null) {
+          // Add to local list first
           setState(() {
             _images.add(compressedFile);
           });
+
+          // If we have a product ID (Section 2), upload immediately
+          if (_savedProductId != null && _savedProductId!.isNotEmpty) {
+            _uploadImageToServer(
+              compressedFile,
+              setAsPrimary: _images.length == 1, // First image is primary
+              sortOrder: _images.length - 1,
+            );
+          }
         }
       }
     } catch (e) {
@@ -192,6 +212,85 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     setState(() {
       _images.removeAt(index);
     });
+  }
+
+  // Upload image to server via CatalogueImageEntryBloc
+  void _uploadImageToServer(File imageFile, {required bool setAsPrimary, required int sortOrder}) {
+    if (_savedProductId == null || _savedProductId!.isEmpty) {
+      if (kDebugMode) print('⚠️ No product ID available, skipping image upload');
+      return;
+    }
+
+    // Dispatch event to upload image
+    context.read<CatalogueImageEntryBloc>().add(UploadCatalogueImage(
+      productId: _savedProductId!,
+      imageFile: imageFile,
+      setAsPrimary: true,
+      sortOrder: 0,
+      showLoader: true,
+    ));
+
+    // Listen to upload state
+    _listenToCatalogueImageEntryState(imageFile);
+  }
+
+  // Listener for CatalogueImageEntryBloc state changes
+  void _listenToCatalogueImageEntryState(File uploadedFile) {
+    final subscription = context.read<CatalogueImageEntryBloc>().stream.listen((state) {
+      if (state is CatalogueImageEntryLoading && state.showLoader) {
+        // Show loading indicator
+        showCustomProgressDialog(context, title: 'Uploading Image...');
+        if (kDebugMode) print('📤 Uploading image...');
+      } else if (state is CatalogueImageEntrySuccess) {
+        dismissCustomProgressDialog(context);
+        if(state.response.statusCode==200|| state.response.statusCode==201){
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ ${state.response.message ?? "Image uploaded successfully"}'),
+              backgroundColor: AppColors.success,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        else{
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ ${state.response.message ?? "Image uploaded failed"}'),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+        // Show success message
+
+
+        if (kDebugMode) {
+          print('✅ Image uploaded: ${state.response.data?.url}');
+          print('   Image ID: ${state.response.data?.imageId}');
+          print('   Is Primary: ${state.response.data?.isPrimary}');
+        }
+      } else if (state is CatalogueImageEntryError) {
+        dismissCustomProgressDialog(context);
+        // Show error and remove from local list
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ${state.message}'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+
+        // Remove failed image from list
+        setState(() {
+          _images.remove(uploadedFile);
+        });
+
+        if (kDebugMode) print('❌ Image upload failed: ${state.message}');
+      }
+    });
+
+    // Auto-cancel subscription after 30 seconds
+    Future.delayed(const Duration(seconds: 30), () => subscription.cancel());
   }
 
   void _showImageSourceDialog() {
@@ -267,58 +366,18 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     );
   }
 
-  void _submitForm() {
-    // Validate
-    if (_productNameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter product name')),
-      );
-      return;
-    }
-
-    if (_images.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one image')),
-      );
-      return;
-    }
-
-    // Show success and data (for now, will connect to API later)
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Catalogue Entry'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Product: ${_productNameController.text}'),
-              Text('Images: ${_images.length}'),
-              Text('Product Types: ${_selectedProductTypes.join(", ")}'),
-              Text('Utilities: ${_selectedUtilities.join(", ")}'),
-              const Text('\n✅ Ready for API submission'),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
-        // pass headerColor to the custom app bar
-        child: CoolAppCard(title: "Catalogue Product Entry",
-          backgroundColor: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryTealDark,),
+        child: CoolAppCard(
+          title: _showSection1 ? "Product Entry - Step 1" : "Product Entry - Step 2",
+          backgroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+              ? AppColors.superAdminPrimary
+              : AppColors.primaryTealDark,
+        ),
       ),
       body: Column(
         children: [
@@ -328,252 +387,209 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildImageUploadSection(),
-                  const SizedBox(height: 20),
-                  _buildBasicInfoSection(),
-                  const SizedBox(height: 20),
-                  // Product Type with Dropdown
-                  BlocBuilder<GetProductTypeBloc, GetProductTypeState>(
-                    builder: (context, state) {
-                      if (state is GetProductTypeLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          productTypeOptions = state.response.data!
-                              .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
-                              .map((item) => DropdownOption(
-                                    id: item.id!,
-                                    name: item.name!,
-                                    code: item.code,
-                                  ))
-                              .toList();
-                        }
-                        return CustomDropdownSection(
-                          title: 'Product Type',
-                          options: productTypeOptions,
-                          selectedId: selectedProductTypeId,
-                          onChanged: (id, name) {
-                            setState(() {
-                              selectedProductTypeId = id;
-                            });
-                          },
-                          icon: Icons.category,
-                        );
-                      } else if (state is GetProductTypeLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetProductTypeError) {
-                        return _buildErrorContainer('product types', state.message);
-                      }
-                      return CustomDropdownSection(
-                        title: 'Product Type',
-                        options: productTypeOptions,
-                        selectedId: selectedProductTypeId,
-                        onChanged: (id, name) {
-                          setState(() {
-                            selectedProductTypeId = id;
-                          });
-                        },
-                        icon: Icons.category,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Utility / Application with Dropdown
-                  BlocBuilder<GetUtilitiesBloc, GetUtilitiesState>(
-                    builder: (context, state) {
-                      if (state is GetUtilitiesLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          utilityOptions = state.response.data!
-                              .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
-                              .map((item) => DropdownOption(
-                                    id: item.id!,
-                                    name: item.name!,
-                                    code: item.code,
-                                  ))
-                              .toList();
-                        }
-                        return CustomDropdownSection(
-                          title: 'Utility / Application',
-                          options: utilityOptions,
-                          selectedId: selectedUtilityId,
-                          onChanged: (id, name) {
-                            setState(() {
-                              selectedUtilityId = id;
-                            });
-                          },
-                          icon: Icons.apps,
-                        );
-                      } else if (state is GetUtilitiesLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetUtilitiesError) {
-                        return _buildErrorContainer('utilities', state.message);
-                      }
-                      return CustomDropdownSection(
-                        title: 'Utility / Application',
-                        options: utilityOptions,
-                        selectedId: selectedUtilityId,
-                        onChanged: (id, name) {
-                          setState(() {
-                            selectedUtilityId = id;
-                          });
-                        },
-                        icon: Icons.apps,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildColorPickerSection('Colour', _selectedColours),
-                  const SizedBox(height: 16),
-                  _buildColorPickerSection('Natural Colour', _selectedNaturalColours),
-                  const SizedBox(height: 16),
-                  // Origin with BlocBuilder
-                  BlocBuilder<GetOriginsBloc, GetOriginsState>(
-                    builder: (context, state) {
-                      if (state is GetOriginsLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          origins = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
-                              .toList();
-                        }
-                        return _buildFilterSection('Origin', origins, _selectedOrigins);
-                      } else if (state is GetOriginsLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetOriginsError) {
-                        return _buildErrorContainer('origins', state.message);
-                      }
-                      return _buildFilterSection('Origin', origins, _selectedOrigins);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // State / Country with BlocBuilder and Type Selection
-                  BlocBuilder<GetStateCountriesBloc, GetStateCountriesState>(
-                    builder: (context, state) {
-                      if (state is GetStateCountriesLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          states = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
-                              .toList();
-                        }
-                        return _buildStateCountryFilterSection(states, _selectedStates);
-                      } else if (state is GetStateCountriesLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetStateCountriesError) {
-                        return _buildErrorContainer('states/countries', state.message);
-                      }
-                      return _buildStateCountryFilterSection(states, _selectedStates);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _buildFilterSection('Price Range (Per Sqft)', priceRanges, _selectedPriceRanges),
-                  const SizedBox(height: 16),
-                  // Nature of Material Processing with BlocBuilder
-                  BlocBuilder<GetProcessingNatureBloc, GetProcessingNatureState>(
-                    builder: (context, state) {
-                      if (state is GetProcessingNatureLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          processing = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
-                              .toList();
-                        }
-                        return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
-                      } else if (state is GetProcessingNatureLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetProcessingNatureError) {
-                        return _buildErrorContainer('processing nature', state.message);
-                      }
-                      return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Material Naturality with BlocBuilder
-                  BlocBuilder<GetNaturalMaterialBloc, GetNaturalMaterialState>(
-                    builder: (context, state) {
-                      if (state is GetNaturalMaterialLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          naturality = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
-                              .toList();
-                        }
-                        return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
-                      } else if (state is GetNaturalMaterialLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetNaturalMaterialError) {
-                        return _buildErrorContainer('material naturality', state.message);
-                      }
-                      return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Finish with BlocBuilder
-                  BlocBuilder<GetFinishesBloc, GetFinishesState>(
-                    builder: (context, state) {
-                      if (state is GetFinishesLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          finishes = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
-                              .toList();
-                        }
-                        return _buildFilterSection('Finish', finishes, _selectedFinishes);
-                      } else if (state is GetFinishesLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetFinishesError) {
-                        return _buildErrorContainer('finishes', state.message);
-                      }
-                      return _buildFilterSection('Finish', finishes, _selectedFinishes);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  // Texture / Pattern with BlocBuilder
-                  BlocBuilder<GetTexturesBloc, GetTexturesState>(
-                    builder: (context, state) {
-                      if (state is GetTexturesLoaded) {
-                        if (state.response.data != null && state.response.data!.isNotEmpty) {
-                          textures = state.response.data!
-                              .where((item) => item.name != null && item.name!.isNotEmpty)
-                              .map((item) => item.name!)
-                              .toList();
-                        }
-                        return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
-                      } else if (state is GetTexturesLoading && state.showLoader) {
-                        return _buildLoadingContainer();
-                      } else if (state is GetTexturesError) {
-                        return _buildErrorContainer('textures', state.message);
-                      }
-                      return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  if (_selectedProductTypes.contains('Handicrafts'))
-                    // Handicraft Type with BlocBuilder
-                    BlocBuilder<GetHandicraftsBloc, GetHandicraftsState>(
-                      builder: (context, state) {
-                        if (state is GetHandicraftsLoaded) {
-                          if (state.response.data != null && state.response.data!.isNotEmpty) {
-                            handicrafts = state.response.data!
-                                .where((item) => item.name != null && item.name!.isNotEmpty)
-                                .map((item) => item.name!)
-                                .toList();
-                          }
-                          return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
-                        } else if (state is GetHandicraftsLoading && state.showLoader) {
-                          return _buildLoadingContainer();
-                        } else if (state is GetHandicraftsError) {
-                          return _buildErrorContainer('handicrafts', state.message);
-                        }
-                        return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
-                      },
-                    ),
-                  const SizedBox(height: 100), // Space for submit button
+                  // Section 1: Basic Product Information
+                  if (_showSection1) ...[
+                    _buildSection1(),
+                  ],
+
+                  // Section 2: Additional Details
+                  if (_showSection2) ...[
+                    _buildSection2(),
+                  ],
                 ],
               ),
             ),
           ),
-          _buildSubmitButton(),
         ],
       ),
+    );
+  }
+
+  // Section 1: Basic Product Information
+  Widget _buildSection1() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Progress Indicator
+        _buildProgressIndicator(1),
+        const SizedBox(height: 24),
+
+        // Basic Information Card
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                        ? AppColors.superAdminPrimary
+                        : AppColors.primaryDeepBlue,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Basic Product Information',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Fill in the essential details to create your product',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+              ),
+              const SizedBox(height: 24),
+
+              // Product Name
+              TextField(
+                controller: _productNameController,
+                decoration: InputDecoration(
+                  labelText: 'Product Name *',
+                  hintText: 'Enter product name',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.inventory_2_outlined),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Product Code
+              TextField(
+                controller: _productCodeController,
+                decoration: InputDecoration(
+                  labelText: 'Product Code*',
+                  hintText: 'Auto-generated if empty',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.qr_code),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Description
+              TextField(
+                controller: _descriptionController,
+                maxLines: 3,
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  hintText: 'Enter product description',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.description_outlined),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Product Type Dropdown
+              BlocBuilder<GetProductTypeBloc, GetProductTypeState>(
+                builder: (context, state) {
+                  if (state is GetProductTypeLoaded) {
+                    if (state.response.data != null && state.response.data!.isNotEmpty) {
+                      productTypeOptions = state.response.data!
+                          .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                          .map((item) => DropdownOption(
+                                id: item.id!,
+                                name: item.name!,
+                                code: item.code,
+                              ))
+                          .toList();
+                    }
+                    return CustomDropdownSection(
+                      title: 'Product Type *',
+                      options: productTypeOptions,
+                      selectedId: selectedProductTypeId,
+                      onChanged: (id, name) {
+                        setState(() {
+                          selectedProductTypeId = id;
+                        });
+                      },
+                      icon: Icons.category,
+                    );
+                  } else if (state is GetProductTypeLoading && state.showLoader) {
+                    return _buildLoadingContainer();
+                  } else if (state is GetProductTypeError) {
+                    return _buildErrorContainer('product types', state.message);
+                  }
+                  return CustomDropdownSection(
+                    title: 'Product Type *',
+                    options: productTypeOptions,
+                    selectedId: selectedProductTypeId,
+                    onChanged: (id, name) {
+                      setState(() {
+                        selectedProductTypeId = id;
+                      });
+                    },
+                    icon: Icons.category,
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Price Per Sq Ft
+              TextField(
+                controller: _pricePerSqFtController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Price Per Sq Ft *',
+                  hintText: 'Enter price per square feet',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.currency_rupee),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  suffixText: '₹/sq ft',
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Submit Button for Section 1
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _submitSection1,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                        ? AppColors.superAdminPrimary
+                        : AppColors.primaryDeepBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 2,
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Continue to Add More Details',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -751,68 +767,432 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     );
   }
 
-  Widget _buildBasicInfoSection() {
+  // Section 2: Additional Details (Images and Filters)
+  Widget _buildSection2() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Progress Indicator
+        _buildProgressIndicator(2),
+        const SizedBox(height: 24),
+
+        // Back Button
+        TextButton.icon(
+          onPressed: () {
+            setState(() {
+              _showSection1 = true;
+              _showSection2 = false;
+            });
+          },
+          icon: const Icon(Icons.arrow_back),
+          label: const Text('Back to Basic Information'),
+          style: TextButton.styleFrom(
+            foregroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                ? AppColors.superAdminPrimary
+                : AppColors.primaryDeepBlue,
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        _buildImageUploadSection(),
+        const SizedBox(height: 20),
+
+        // Utility / Application with Dropdown
+        BlocBuilder<GetUtilitiesBloc, GetUtilitiesState>(
+          builder: (context, state) {
+            if (state is GetUtilitiesLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                utilityOptions = state.response.data!
+                    .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                    .map((item) => DropdownOption(
+                          id: item.id!,
+                          name: item.name!,
+                          code: item.code,
+                        ))
+                    .toList();
+              }
+              return CustomDropdownSection(
+                title: 'Utility / Application',
+                options: utilityOptions,
+                selectedId: selectedUtilityId,
+                onChanged: (id, name) {
+                  setState(() {
+                    selectedUtilityId = id;
+                  });
+                },
+                icon: Icons.apps,
+              );
+            } else if (state is GetUtilitiesLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetUtilitiesError) {
+              return _buildErrorContainer('utilities', state.message);
+            }
+            return CustomDropdownSection(
+              title: 'Utility / Application',
+              options: utilityOptions,
+              selectedId: selectedUtilityId,
+              onChanged: (id, name) {
+                setState(() {
+                  selectedUtilityId = id;
+                });
+              },
+              icon: Icons.apps,
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+        _buildColorPickerSection('Colour', _selectedColours),
+        const SizedBox(height: 16),
+        _buildColorPickerSection('Natural Colour', _selectedNaturalColours),
+        const SizedBox(height: 16),
+        // Origin with BlocBuilder
+        BlocBuilder<GetOriginsBloc, GetOriginsState>(
+          builder: (context, state) {
+            if (state is GetOriginsLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                origins = state.response.data!
+                    .where((item) => item.name != null && item.name!.isNotEmpty)
+                    .map((item) => item.name!)
+                    .toList();
+              }
+              return _buildFilterSection('Origin', origins, _selectedOrigins);
+            } else if (state is GetOriginsLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetOriginsError) {
+              return _buildErrorContainer('origins', state.message);
+            }
+            return _buildFilterSection('Origin', origins, _selectedOrigins);
+          },
+        ),
+        const SizedBox(height: 16),
+        // State / Country with BlocBuilder and Type Selection
+        BlocBuilder<GetStateCountriesBloc, GetStateCountriesState>(
+          builder: (context, state) {
+            if (state is GetStateCountriesLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                states = state.response.data!
+                    .where((item) => item.name != null && item.name!.isNotEmpty)
+                    .map((item) => item.name!)
+                    .toList();
+              }
+              return _buildStateCountryFilterSection(states, _selectedStates);
+            } else if (state is GetStateCountriesLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetStateCountriesError) {
+              return _buildErrorContainer('states/countries', state.message);
+            }
+            return _buildStateCountryFilterSection(states, _selectedStates);
+          },
+        ),
+        const SizedBox(height: 16),
+        // Nature of Material Processing with BlocBuilder
+        BlocBuilder<GetProcessingNatureBloc, GetProcessingNatureState>(
+          builder: (context, state) {
+            if (state is GetProcessingNatureLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                processing = state.response.data!
+                    .where((item) => item.name != null && item.name!.isNotEmpty)
+                    .map((item) => item.name!)
+                    .toList();
+              }
+              return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
+            } else if (state is GetProcessingNatureLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetProcessingNatureError) {
+              return _buildErrorContainer('processing nature', state.message);
+            }
+            return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
+          },
+        ),
+        const SizedBox(height: 16),
+        // Material Naturality with BlocBuilder
+        BlocBuilder<GetNaturalMaterialBloc, GetNaturalMaterialState>(
+          builder: (context, state) {
+            if (state is GetNaturalMaterialLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                naturality = state.response.data!
+                    .where((item) => item.name != null && item.name!.isNotEmpty)
+                    .map((item) => item.name!)
+                    .toList();
+              }
+              return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
+            } else if (state is GetNaturalMaterialLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetNaturalMaterialError) {
+              return _buildErrorContainer('material naturality', state.message);
+            }
+            return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
+          },
+        ),
+        const SizedBox(height: 16),
+        // Finish with BlocBuilder
+        BlocBuilder<GetFinishesBloc, GetFinishesState>(
+          builder: (context, state) {
+            if (state is GetFinishesLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                finishes = state.response.data!
+                    .where((item) => item.name != null && item.name!.isNotEmpty)
+                    .map((item) => item.name!)
+                    .toList();
+              }
+              return _buildFilterSection('Finish', finishes, _selectedFinishes);
+            } else if (state is GetFinishesLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetFinishesError) {
+              return _buildErrorContainer('finishes', state.message);
+            }
+            return _buildFilterSection('Finish', finishes, _selectedFinishes);
+          },
+        ),
+        const SizedBox(height: 16),
+        // Texture / Pattern with BlocBuilder
+        BlocBuilder<GetTexturesBloc, GetTexturesState>(
+          builder: (context, state) {
+            if (state is GetTexturesLoaded) {
+              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                textures = state.response.data!
+                    .where((item) => item.name != null && item.name!.isNotEmpty)
+                    .map((item) => item.name!)
+                    .toList();
+              }
+              return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
+            } else if (state is GetTexturesLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetTexturesError) {
+              return _buildErrorContainer('textures', state.message);
+            }
+            return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
+          },
+        ),
+        const SizedBox(height: 16),
+        if (selectedProductTypeId != null)
+          // Handicraft Type with BlocBuilder
+          BlocBuilder<GetHandicraftsBloc, GetHandicraftsState>(
+            builder: (context, state) {
+              if (state is GetHandicraftsLoaded) {
+                if (state.response.data != null && state.response.data!.isNotEmpty) {
+                  handicrafts = state.response.data!
+                      .where((item) => item.name != null && item.name!.isNotEmpty)
+                      .map((item) => item.name!)
+                      .toList();
+                }
+                return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
+              } else if (state is GetHandicraftsLoading && state.showLoader) {
+                return _buildLoadingContainer();
+              } else if (state is GetHandicraftsError) {
+                return _buildErrorContainer('handicrafts', state.message);
+              }
+              return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
+            },
+          ),
+        const SizedBox(height: 24),
+
+        // Final Submit Button
+        _buildSubmitButton(),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  // Progress Indicator
+  Widget _buildProgressIndicator(int currentStep) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(10),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.edit_note, color:SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue),
-              const SizedBox(width: 8),
-              const Text(
-                'Basic Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _productNameController,
-            decoration: InputDecoration(
-              labelText: 'Product Name *',
-              hintText: 'Enter product name',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.inventory_2_outlined),
+          _buildStepIndicator(1, 'Basic Info', currentStep >= 1),
+          Expanded(
+            child: Container(
+              height: 2,
+              color: currentStep >= 2
+                  ? (SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                      ? AppColors.superAdminPrimary
+                      : AppColors.primaryDeepBlue)
+                  : Colors.grey.shade300,
             ),
           ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _productCodeController,
-            decoration: InputDecoration(
-              labelText: 'Product Code',
-              hintText: 'Auto-generated if empty',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.qr_code),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _descriptionController,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: 'Description',
-              hintText: 'Enter product description',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              prefixIcon: const Icon(Icons.description_outlined),
-            ),
-          ),
+          _buildStepIndicator(2, 'Details', currentStep >= 2),
         ],
       ),
     );
   }
+
+  Widget _buildStepIndicator(int step, String label, bool isActive) {
+    final color = SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+        ? AppColors.superAdminPrimary
+        : AppColors.primaryDeepBlue;
+
+    return Column(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: isActive ? color : Colors.grey.shade300,
+          ),
+          child: Center(
+            child: isActive
+                ? const Icon(Icons.check, color: Colors.white, size: 20)
+                : Text(
+                    '$step',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            color: isActive ? color : Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // Submit Section 1 - Call ProductEntryBloc API
+  void _submitSection1() {
+    // Validate
+    if (_productNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter product name'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (selectedProductTypeId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select product type'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    if (_pricePerSqFtController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter price per sq ft'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Validate price is a number
+    final price = int.tryParse(_pricePerSqFtController.text);
+    if (price == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid price'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Create request body
+    final requestBody = ProductEntryRequestBody(
+    productCode: _productCodeController.text.isEmpty
+        ? '${_productNameController.text.trim().replaceAll(RegExp(r'\s+'), '_')}_${(DateTime.now().millisecondsSinceEpoch % 9000 + 1000)}'
+        : _productCodeController.text,
+      name: _productNameController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
+      productTypeId: selectedProductTypeId,
+      pricePerSqft: price,
+      isActive: true,
+      sortOrder: 0,
+    );
+
+    // Call ProductEntryBloc API
+    context.read<ProductEntryBloc>().add(FetchProductEntry(
+      requestBody: requestBody,
+      showLoader: true,
+    ));
+
+    // Listen to ProductEntryBloc state
+    _listenToProductEntryState();
+  }
+
+  // Listener for ProductEntryBloc state changes
+  void _listenToProductEntryState() {
+    final subscription = context.read<ProductEntryBloc>().stream.listen((state) {
+      if (state is ProductEntryLoading && state.showLoader) {
+        // Show loading dialog
+        showCustomProgressDialog(context, title: 'Creating product...');
+      } else if (state is ProductEntrySuccess) {
+        // Dismiss loading dialog
+        dismissCustomProgressDialog(context);
+          if(state.response.statusCode==200 ||state.response.statusCode==201){
+            setState(() {
+              _savedProductId = state.response.data?.id ?? 'UNKNOWN';
+              _showSection1 = false;
+              _showSection2 = true;
+            });
+
+            // Show success message
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✅ ${state.response.message ?? "Product created successfully! Now add additional details."}'),
+                backgroundColor: AppColors.success,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+          else{
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('✅ ${state.response.message ?? "Product creation Failed!."}'),
+                backgroundColor: AppColors.error,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        // Save product ID from response
+
+      } else if (state is ProductEntryError) {
+        // Dismiss loading dialog
+        dismissCustomProgressDialog(context);
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ${state.message}'),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    });
+
+    // Auto-cancel subscription after 15 seconds
+    Future.delayed(const Duration(seconds: 15), () => subscription.cancel());
+  }
+
+
 
   Widget _buildFilterSection(
     String title,
@@ -1525,11 +1905,12 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(10),
             blurRadius: 10,
-            offset: const Offset(0, -4),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
@@ -1539,23 +1920,175 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
           width: double.infinity,
           height: 50,
           child: ElevatedButton(
-            onPressed: _submitForm,
+            onPressed: _submitSection2,
             style: ElevatedButton.styleFrom(
-              backgroundColor: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue,
+              backgroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                  ? AppColors.superAdminPrimary
+                  : AppColors.primaryDeepBlue,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              elevation: 0,
+              elevation: 2,
             ),
-            child: const Text(
-              'Submit Catalogue Entry',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, size: 24),
+                SizedBox(width: 8),
+                Text(
+                  'Complete Product Entry',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  // Submit Section 2 - Complete catalogue entry
+  void _submitSection2() {
+    // Validate images
+    if (_images.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add at least one product image'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Show success dialog
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: AppColors.success, size: 32),
+            SizedBox(width: 12),
+            Text('Product Entry Complete!'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Your product has been successfully added to the catalogue.',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSummaryRow('Product ID', _savedProductId ?? 'N/A'),
+                    const Divider(),
+                    _buildSummaryRow('Product Name', _productNameController.text),
+                    const Divider(),
+                    _buildSummaryRow('Product Code', _productCodeController.text.isEmpty ? 'Auto-generated' : _productCodeController.text),
+                    const Divider(),
+                    _buildSummaryRow('Price', '₹${_pricePerSqFtController.text}/sq ft'),
+                    const Divider(),
+                    _buildSummaryRow('Images', '${_images.length} uploaded'),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Reset form for new entry
+              _resetForm();
+            },
+            child: const Text('Add Another Product'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context); // Go back to previous screen
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                  ? AppColors.superAdminPrimary
+                  : AppColors.primaryDeepBlue,
+            ),
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 2,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _resetForm() {
+    setState(() {
+      // Reset controllers
+      _productNameController.clear();
+      _productCodeController.clear();
+      _descriptionController.clear();
+      _pricePerSqFtController.clear();
+
+      // Reset images
+      _images.clear();
+
+      // Reset selections
+      selectedProductTypeId = null;
+      selectedUtilityId = null;
+      _selectedColours.clear();
+      _selectedNaturalColours.clear();
+      _selectedOrigins.clear();
+      _selectedStates.clear();
+      _selectedProcessing.clear();
+      _selectedNaturality.clear();
+      _selectedFinishes.clear();
+      _selectedTextures.clear();
+      _selectedHandicrafts.clear();
+
+      // Reset sections
+      _showSection1 = true;
+      _showSection2 = false;
+      _savedProductId = null;
+    });
   }
 
   Widget _buildColorPickerSection(

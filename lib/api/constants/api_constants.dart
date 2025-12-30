@@ -77,6 +77,7 @@ class ApiConstants {
 
 
   static const String postProductEntry= "${baseUrl}marketing/admin/catalogue/products";
+  static const String postImageEntry= "${baseUrl}marketing/admin/catalogue/products";
 
 
 

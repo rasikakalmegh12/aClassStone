@@ -216,3 +216,28 @@ class ProductEntryBloc extends Bloc<ProductEntryEvent, ProductEntryState> {
   }
 }
 
+// ========================= Catalogue Image Entry BLoC =========================
+class CatalogueImageEntryBloc extends Bloc<CatalogueImageEntryEvent, CatalogueImageEntryState> {
+  CatalogueImageEntryBloc() : super(CatalogueImageEntryInitial()) {
+    on<UploadCatalogueImage>((UploadCatalogueImage event, Emitter<CatalogueImageEntryState> emit) async {
+      emit(CatalogueImageEntryLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.postImageEntry(
+          productId: event.productId,
+          imageFile: event.imageFile,
+          setAsPrimary: event.setAsPrimary,
+          sortOrder: event.sortOrder,
+        );
+
+        if (response.status == true) {
+          emit(CatalogueImageEntrySuccess(response: response));
+        } else {
+          emit(CatalogueImageEntryError(message: response.message ?? 'Failed to upload image'));
+        }
+      } catch (e) {
+        emit(CatalogueImageEntryError(message: 'Error: ${e.toString()}'));
+      }
+    });
+  }
+}

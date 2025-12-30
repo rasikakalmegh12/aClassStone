@@ -254,6 +254,8 @@ class AppRouter {
               BlocProvider<PostProcessingNaturesBloc>(create: (context) => PostProcessingNaturesBloc(),),
               BlocProvider<PostNaturalMaterialsBloc>(create: (context) => PostNaturalMaterialsBloc(),),
               BlocProvider<PostHandicraftsTypesBloc>(create: (context) => PostHandicraftsTypesBloc(),),
+              BlocProvider<ProductEntryBloc>(create: (context) => ProductEntryBloc(),),
+              BlocProvider<CatalogueImageEntryBloc>(create: (context) => CatalogueImageEntryBloc(),),
             ],
             child: const CatalogueEntryPage(),
           );
