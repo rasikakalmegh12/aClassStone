@@ -1,14 +1,16 @@
-import 'package:apclassstone/api/models/response/GetProductTypeResponseBody.dart';
-import 'package:apclassstone/api/models/response/GetUtilitiesTypeResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetColorsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
-import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetNaturalColorResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetOriginsResponseBody.dart';
-import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProcessingNaturesResponseBody.dart';
-import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
-import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetProductTypeResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetUtilitiesTypeResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetCatalogueProductResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetCatalogueProductDetailsResponseBody.dart';
 
 // ========================= Product Type States =========================
 abstract class GetProductTypeState {}
@@ -184,4 +186,40 @@ class GetHandicraftsLoaded extends GetHandicraftsState {
 class GetHandicraftsError extends GetHandicraftsState {
   final String message;
   GetHandicraftsError({required this.message});
+}
+
+// ========================= Get Catalogue Product List State =========================
+abstract class GetCatalogueProductListState {}
+class GetCatalogueProductListInitial extends GetCatalogueProductListState {}
+class GetCatalogueProductListLoading extends GetCatalogueProductListState {
+  final bool showLoader;
+  GetCatalogueProductListLoading({this.showLoader = false});
+}
+class GetCatalogueProductListLoaded extends GetCatalogueProductListState {
+  final GetCatalogueProductResponseBody response;
+  GetCatalogueProductListLoaded({required this.response});
+}
+class GetCatalogueProductListError extends GetCatalogueProductListState {
+  final String message;
+  GetCatalogueProductListError({required this.message});
+}
+
+// ======================== Get Catalogue Product Details State ========================
+abstract class GetCatalogueProductDetailsState {}
+
+class GetCatalogueProductDetailsInitial extends GetCatalogueProductDetailsState {}
+
+class GetCatalogueProductDetailsLoading extends GetCatalogueProductDetailsState {
+  final bool showLoader;
+  GetCatalogueProductDetailsLoading({this.showLoader = false});
+}
+
+class GetCatalogueProductDetailsLoaded extends GetCatalogueProductDetailsState {
+  final GetCatalogueProductDetailsResponseBody response;
+  GetCatalogueProductDetailsLoaded({required this.response});
+}
+
+class GetCatalogueProductDetailsError extends GetCatalogueProductDetailsState {
+  final String message;
+  GetCatalogueProductDetailsError({required this.message});
 }

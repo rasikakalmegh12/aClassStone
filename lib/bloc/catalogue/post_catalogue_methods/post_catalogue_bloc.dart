@@ -241,3 +241,28 @@ class CatalogueImageEntryBloc extends Bloc<CatalogueImageEntryEvent, CatalogueIm
     });
   }
 }
+
+// ========================= Put Catalogue Options Entry BLoC =========================
+class PutCatalogueOptionsEntryBloc extends Bloc<PutCatalogueOptionsEntryEvent, PutCatalogueOptionsEntryState> {
+  PutCatalogueOptionsEntryBloc() : super(PutCatalogueOptionsEntryInitial()) {
+    on<UpdateCatalogueOptions>((UpdateCatalogueOptions event, Emitter<PutCatalogueOptionsEntryState> emit) async {
+      emit(PutCatalogueOptionsEntryLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.putCatalogueOptionsEntry(
+          productId: event.productId,
+          requestBody: event.requestBody,
+        );
+
+        if (response.status == true) {
+          emit(PutCatalogueOptionsEntrySuccess(response: response));
+        } else {
+          emit(PutCatalogueOptionsEntryError(message: response.message ?? 'Failed to update product options'));
+        }
+      } catch (e) {
+        emit(PutCatalogueOptionsEntryError(message: 'Error: ${e.toString()}'));
+      }
+    });
+  }
+}
+

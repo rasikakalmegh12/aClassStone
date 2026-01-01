@@ -189,10 +189,10 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _buildAttendanceCard(),
-                      const SizedBox(height: 16),
-                      _buildTodaySummaryCard(),
-                      const SizedBox(height: 16),
-                      _buildActionFeedCard(),
+                      // const SizedBox(height: 16),
+                      // _buildTodaySummaryCard(),
+                      // const SizedBox(height: 16),
+                      // _buildActionFeedCard(),
                       const SizedBox(height: 16),
                       _buildQuickActionsCard(),
                       const SizedBox(height: 80), // Space for bottom nav
@@ -754,6 +754,21 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             children: [
               Expanded(
                 child: _buildQuickActionButton(
+                  label: 'Catalogue',
+                  icon: Icons.calendar_today_outlined,
+                  onTap: () {
+                    context.pushNamed("cataloguePage");
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(builder: (context) => const WorkPlansListScreen()),
+                    // );
+                  },
+                ),
+              ),
+
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
                   label: 'Log MOM',
                   icon: Icons.assignment_outlined,
                   onTap: () {
@@ -764,19 +779,8 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   },
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Work Plan',
-                  icon: Icons.calendar_today_outlined,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const WorkPlansListScreen()),
-                    );
-                  },
-                ),
-              ),
+
+
             ],
           ),
           const SizedBox(height: 12),

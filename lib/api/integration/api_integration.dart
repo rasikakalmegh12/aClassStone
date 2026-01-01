@@ -5,12 +5,15 @@ import 'dart:io';
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
+import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/CatalogueImageEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveTrackingByDaysResponse.dart';
+import 'package:apclassstone/api/models/response/GetCatalogueProductResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetCatalogueProductDetailsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
@@ -1511,7 +1514,97 @@ class ApiIntegration {
   }
 
 
+  /// Get Catalogue Product List - Fetch paginated product list
+  ///
+  /// Parameters:
+  /// - [page]: Page number (default: 1)
+  /// - [pageSize]: Number of items per page (default: 20)
+  ///
+  /// Returns [GetCatalogueProductResponseBody] with product list and pagination info
+  static Future<GetCatalogueProductResponseBody> getCatalogueProductList({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.baseUrl}marketing/catalogue/products?page=$page&pageSize=$pageSize');
+      if (kDebugMode) print('📤 Sending getCatalogueProductList request to: $url');
 
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 getCatalogueProductList status: ${response.statusCode}');
+        print('📥 getCatalogueProductList body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return GetCatalogueProductResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return GetCatalogueProductResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Failed to fetch products',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ getCatalogueProductList error: $e');
+      return GetCatalogueProductResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  /// Get Catalogue Product Details by ID
+  ///
+  /// Returns [GetCatalogueProductDetailsResponseBody] with detailed product information
+  static Future<GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails({
+    required String productId,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.getCatalogueProductDetails}/$productId');
+      if (kDebugMode) print('📤 Sending getCatalogueProductDetails request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 getCatalogueProductDetails status: ${response.statusCode}');
+        print('📥 getCatalogueProductDetails body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return GetCatalogueProductDetailsResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return GetCatalogueProductDetailsResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Failed to fetch product details',
+          statusCode: response.statusCode,
+          data: null,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ getCatalogueProductDetails error: $e');
+      return GetCatalogueProductDetailsResponseBody(
+        status: false,
+        message: e.toString(),
+        statusCode: 500,
+        data: null,
+      );
+    }
+  }
 
 
   ///-----------------PATCH METHOD --------------------------
@@ -2319,7 +2412,8 @@ class ApiIntegration {
     required File imageFile,
     bool setAsPrimary = false,
     int sortOrder = 0,
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse('${ApiConstants.postImageEntry}/$productId/images');
       if (kDebugMode) print('📤 Sending postImageEntry request to: $url');
@@ -2383,6 +2477,57 @@ class ApiIntegration {
       );
     }
   }
+
+  /// Put Catalogue Options Entry - Update product with selected options
+  ///
+  /// Parameters:
+  /// - [productId]: The product ID to update
+  /// - [requestBody]: Contains all selected option IDs (colors, finishes, etc.)
+  ///
+  /// Returns [ApiCommonResponseBody] with update status
+  static Future<ApiCommonResponseBody> putCatalogueOptionsEntry({
+    required String productId,
+    required PutCatalogueOptionEntryRequestBody requestBody,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.putCatalogueOptionsEntry}/$productId/options');
+      if (kDebugMode) print('📤 Sending putCatalogueOptionsEntry request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.put(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 putCatalogueOptionsEntry status: ${response.statusCode}');
+        print('📥 putCatalogueOptionsEntry request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 putCatalogueOptionsEntry body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Failed to update product options',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ putCatalogueOptionsEntry error: $e');
+      return ApiCommonResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+
 }
 //     try {
 //       await Future.delayed(const Duration(seconds: 1));

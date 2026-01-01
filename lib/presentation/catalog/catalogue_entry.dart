@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
 import '../widgets/app_bar.dart';
@@ -83,28 +84,39 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   List<DropdownOption> productTypeOptions = [];
   List<DropdownOption> utilityOptions = [];
 
+  // Maps to store option ID by name (for converting selected names to IDs)
+  Map<String, String> colorIdMap = {};
+  Map<String, String> naturalColorIdMap = {};
+  Map<String, String> finishIdMap = {};
+  Map<String, String> textureIdMap = {};
+  Map<String, String> originIdMap = {};
+  Map<String, String> stateCountryIdMap = {};
+  Map<String, String> processingNatureIdMap = {};
+  Map<String, String> materialNaturalityIdMap = {};
+  Map<String, String> handicraftIdMap = {};
+
   // Selected dropdown values
   String? selectedProductTypeId;
   String? selectedUtilityId;
 
-  // Color options with hex codes
-  final Map<String, Color> colourMap = {
-    'Black': const Color(0xFF000000),
-    'Blue': const Color(0xFF2196F3),
-    'Beige': const Color(0xFFF5F5DC),
-    'White': const Color(0xFFFFFFFF),
-    'Red': const Color(0xFFE53935),
-    'Pink': const Color(0xFFE91E63),
-    'Golden': const Color(0xFFFFD700),
-    'Brown': const Color(0xFF795548),
-    'Silver': const Color(0xFFC0C0C0),
-    'Grey': const Color(0xFF9E9E9E),
-    'Green': const Color(0xFF4CAF50),
-    'Yellow': const Color(0xFFFDD835),
-    'Orange': const Color(0xFFFF9800),
-    'Purple': const Color(0xFF9C27B0),
-    'Cream': const Color(0xFFFFFDD0),
-  };
+  // // Color options with hex codes
+  // final Map<String, Color> colourMap = {
+  //   'Black': const Color(0xFF000000),
+  //   'Blue': const Color(0xFF2196F3),
+  //   'Beige': const Color(0xFFF5F5DC),
+  //   'White': const Color(0xFFFFFFFF),
+  //   'Red': const Color(0xFFE53935),
+  //   'Pink': const Color(0xFFE91E63),
+  //   'Golden': const Color(0xFFFFD700),
+  //   'Brown': const Color(0xFF795548),
+  //   'Silver': const Color(0xFFC0C0C0),
+  //   'Grey': const Color(0xFF9E9E9E),
+  //   'Green': const Color(0xFF4CAF50),
+  //   'Yellow': const Color(0xFFFDD835),
+  //   'Orange': const Color(0xFFFF9800),
+  //   'Purple': const Color(0xFF9C27B0),
+  //   'Cream': const Color(0xFFFFFDD0),
+  // };
 
   final List<String> colours = [
     'Black', 'Blue', 'Beige', 'White', 'Red', 'Pink', 'Golden',
@@ -841,9 +853,69 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
           },
         ),
         const SizedBox(height: 16),
-        _buildColorPickerSection('Colour', _selectedColours),
+
+        // Colour with BlocBuilder
+        BlocBuilder<GetColorsBloc, GetColorsState>(
+          builder: (context, state) {
+            if (state is GetColorsLoaded) {
+              // Populate colorIdMap
+              if (state.response.data != null) {
+                colorIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    colorIdMap[item.name!] = item.id!;
+                  }
+                }
+              }
+              return _buildColorPickerSectionWithApi(
+                title: 'Colour',
+                colorData: state.response.data ?? [],
+                selectedOptions: _selectedColours,
+              );
+            } else if (state is GetColorsLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetColorsError) {
+              return _buildErrorContainer('colors', state.message);
+            }
+            return _buildColorPickerSectionWithApi(
+              title: 'Colour',
+              colorData: [],
+              selectedOptions: _selectedColours,
+            );
+          },
+        ),
         const SizedBox(height: 16),
-        _buildColorPickerSection('Natural Colour', _selectedNaturalColours),
+
+        // Natural Colour with BlocBuilder
+        BlocBuilder<GetNaturalColorsBloc, GetNaturalColorsState>(
+          builder: (context, state) {
+            if (state is GetNaturalColorsLoaded) {
+              // Populate naturalColorIdMap
+              if (state.response.data != null) {
+                naturalColorIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    naturalColorIdMap[item.name!] = item.id!;
+                  }
+                }
+              }
+              return _buildColorPickerSectionWithApi(
+                title: 'Natural Colour',
+                colorData: state.response.data ?? [],
+                selectedOptions: _selectedNaturalColours,
+              );
+            } else if (state is GetNaturalColorsLoading && state.showLoader) {
+              return _buildLoadingContainer();
+            } else if (state is GetNaturalColorsError) {
+              return _buildErrorContainer('natural colors', state.message);
+            }
+            return _buildColorPickerSectionWithApi(
+              title: 'Natural Colour',
+              colorData: [],
+              selectedOptions: _selectedNaturalColours,
+            );
+          },
+        ),
         const SizedBox(height: 16),
         // Origin with BlocBuilder
         BlocBuilder<GetOriginsBloc, GetOriginsState>(
@@ -854,6 +926,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     .where((item) => item.name != null && item.name!.isNotEmpty)
                     .map((item) => item.name!)
                     .toList();
+
+                // Populate originIdMap
+                originIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    originIdMap[item.name!] = item.id!;
+                  }
+                }
               }
               return _buildFilterSection('Origin', origins, _selectedOrigins);
             } else if (state is GetOriginsLoading && state.showLoader) {
@@ -874,6 +954,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     .where((item) => item.name != null && item.name!.isNotEmpty)
                     .map((item) => item.name!)
                     .toList();
+
+                // Populate stateCountryIdMap
+                stateCountryIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    stateCountryIdMap[item.name!] = item.id!;
+                  }
+                }
               }
               return _buildStateCountryFilterSection(states, _selectedStates);
             } else if (state is GetStateCountriesLoading && state.showLoader) {
@@ -894,6 +982,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     .where((item) => item.name != null && item.name!.isNotEmpty)
                     .map((item) => item.name!)
                     .toList();
+
+                // Populate processingNatureIdMap
+                processingNatureIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    processingNatureIdMap[item.name!] = item.id!;
+                  }
+                }
               }
               return _buildFilterSection('Nature of Material Processing', processing, _selectedProcessing);
             } else if (state is GetProcessingNatureLoading && state.showLoader) {
@@ -914,6 +1010,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     .where((item) => item.name != null && item.name!.isNotEmpty)
                     .map((item) => item.name!)
                     .toList();
+
+                // Populate materialNaturalityIdMap
+                materialNaturalityIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    materialNaturalityIdMap[item.name!] = item.id!;
+                  }
+                }
               }
               return _buildFilterSection('Material Naturality', naturality, _selectedNaturality);
             } else if (state is GetNaturalMaterialLoading && state.showLoader) {
@@ -934,6 +1038,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     .where((item) => item.name != null && item.name!.isNotEmpty)
                     .map((item) => item.name!)
                     .toList();
+
+                // Populate finishIdMap
+                finishIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    finishIdMap[item.name!] = item.id!;
+                  }
+                }
               }
               return _buildFilterSection('Finish', finishes, _selectedFinishes);
             } else if (state is GetFinishesLoading && state.showLoader) {
@@ -954,6 +1066,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     .where((item) => item.name != null && item.name!.isNotEmpty)
                     .map((item) => item.name!)
                     .toList();
+
+                // Populate textureIdMap
+                textureIdMap.clear();
+                for (var item in state.response.data!) {
+                  if (item.name != null && item.id != null) {
+                    textureIdMap[item.name!] = item.id!;
+                  }
+                }
               }
               return _buildFilterSection('Texture / Pattern', textures, _selectedTextures);
             } else if (state is GetTexturesLoading && state.showLoader) {
@@ -975,6 +1095,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                       .where((item) => item.name != null && item.name!.isNotEmpty)
                       .map((item) => item.name!)
                       .toList();
+
+                  // Populate handicraftIdMap
+                  handicraftIdMap.clear();
+                  for (var item in state.response.data!) {
+                    if (item.name != null && item.id != null) {
+                      handicraftIdMap[item.name!] = item.id!;
+                    }
+                  }
                 }
                 return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
               } else if (state is GetHandicraftsLoading && state.showLoader) {
@@ -1852,52 +1980,141 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
      return;
    }
 
-   if (colourMap.containsKey(colorName)) {
-     ScaffoldMessenger.of(context).showSnackBar(
-       SnackBar(
-         content: Text('Color "$colorName" already exists'),
-         backgroundColor: AppColors.warning,
-       ),
-     );
-     return;
+
+   // Create request body with hex color code
+   final colorHexCode = '0X${_pickerColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+   final requestBody = PostCatalogueCommonRequestBody(
+     name: colorName,
+     code: colorHexCode,
+     sortOrder: 0,
+     isActive: true,
+   );
+
+   // Call appropriate BLoC based on section title
+   if (sectionTitle == 'Colour') {
+     context.read<PostColorsBloc>().add(SubmitPostColors(
+       requestBody: requestBody,
+       showLoader: true,
+     ));
+     _listenToPostColorsState(colorName, colorHexCode);
+   } else if (sectionTitle == 'Natural Colour') {
+     context.read<PostNaturalColorsBloc>().add(SubmitPostNaturalColors(
+       requestBody: requestBody,
+       showLoader: true,
+     ));
+     _listenToPostNaturalColorsState(colorName, colorHexCode);
    }
 
-   setState(() {
-     colourMap[colorName] = _pickerColor;
-     colours.add(colorName);
-   });
-
+   // Close the dialog
    Navigator.pop(context);
+ }
 
-   ScaffoldMessenger.of(context).showSnackBar(
-     SnackBar(
-       content: Row(
-         children: [
-           Container(
-             width: 24,
-             height: 24,
-             decoration: BoxDecoration(
-               color: _pickerColor,
-               shape: BoxShape.circle,
-               border: Border.all(color: Colors.white, width: 2),
-               boxShadow: [
-                 BoxShadow(
-                   color: _pickerColor.withAlpha(100),
-                   blurRadius: 4,
+ // Listener for PostColorsBloc
+ void _listenToPostColorsState(String colorName, String colorHexCode) {
+   final subscription = context.read<PostColorsBloc>().stream.listen((state) {
+     if (state is PostColorsLoading && state.showLoader) {
+       showCustomProgressDialog(context, title: 'Saving color...');
+     } else if (state is PostColorsSuccess) {
+       dismissCustomProgressDialog(context);
+
+       // Show success message
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Row(
+             children: [
+               Container(
+                 width: 24,
+                 height: 24,
+                 decoration: BoxDecoration(
+                   color: _pickerColor,
+                   shape: BoxShape.circle,
+                   border: Border.all(color: Colors.white, width: 2),
+                   boxShadow: [
+                     BoxShadow(
+                       color: _pickerColor.withAlpha(100),
+                       blurRadius: 4,
+                     ),
+                   ],
                  ),
-               ],
-             ),
+               ),
+               const SizedBox(width: 12),
+               Expanded(
+                 child: Text('✅ ${state.response.message ?? "Color added successfully"} ($colorHexCode)'),
+               ),
+             ],
            ),
-           const SizedBox(width: 12),
-           Expanded(
-             child: Text('✅ Added "$colorName" (#${_pickerColor.toARGB32().toRadixString(16).substring(2).toUpperCase()})'),
+           backgroundColor: AppColors.success,
+           duration: const Duration(seconds: 3),
+         ),
+       );
+
+       // Refresh colors from API
+       context.read<GetColorsBloc>().add(FetchGetColors());
+     } else if (state is PostColorsError) {
+       dismissCustomProgressDialog(context);
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
+ }
+
+ // Listener for PostNaturalColorsBloc
+ void _listenToPostNaturalColorsState(String colorName, String colorHexCode) {
+   final subscription = context.read<PostNaturalColorsBloc>().stream.listen((state) {
+     if (state is PostNaturalColorsLoading && state.showLoader) {
+       showCustomProgressDialog(context, title: 'Saving natural color...');
+     } else if (state is PostNaturalColorsSuccess) {
+       dismissCustomProgressDialog(context);
+
+       // Show success message
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Row(
+             children: [
+               Container(
+                 width: 24,
+                 height: 24,
+                 decoration: BoxDecoration(
+                   color: _pickerColor,
+                   shape: BoxShape.circle,
+                   border: Border.all(color: Colors.white, width: 2),
+                   boxShadow: [
+                     BoxShadow(
+                       color: _pickerColor.withAlpha(100),
+                       blurRadius: 4,
+                     ),
+                   ],
+                 ),
+               ),
+               const SizedBox(width: 12),
+               Expanded(
+                 child: Text('✅ ${state.response.message ?? "Natural color added successfully"} ($colorHexCode)'),
+               ),
+             ],
            ),
-         ],
-       ),
-       backgroundColor: AppColors.success,
-       duration: const Duration(seconds: 3),
-     ),
-   );
+           backgroundColor: AppColors.success,
+           duration: const Duration(seconds: 3),
+         ),
+       );
+
+       // Refresh natural colors from API
+       context.read<GetNaturalColorsBloc>().add(FetchGetNaturalColors());
+     } else if (state is PostNaturalColorsError) {
+       dismissCustomProgressDialog(context);
+       ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+           content: Text('❌ ${state.message}'),
+           backgroundColor: AppColors.error,
+         ),
+       );
+     }
+   });
+   Future.delayed(const Duration(seconds: 10), () => subscription.cancel());
  }
 
   Widget _buildSubmitButton() {
@@ -1961,7 +2178,106 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       return;
     }
 
-    // Show success dialog
+    // Convert selected option names to IDs
+    List<String> colorIds = _selectedColours.map((name) => colorIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> naturalColorIds = _selectedNaturalColours.map((name) => naturalColorIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> finishIds = _selectedFinishes.map((name) => finishIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> textureIds = _selectedTextures.map((name) => textureIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> originIds = _selectedOrigins.map((name) => originIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> stateCountryIds = _selectedStates.map((name) => stateCountryIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> processingNatureIds = _selectedProcessing.map((name) => processingNatureIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> materialNaturalityIds = _selectedNaturality.map((name) => materialNaturalityIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> handicraftIds = _selectedHandicrafts.map((name) => handicraftIdMap[name] ?? '').where((id) => id.isNotEmpty).toList();
+    List<String> utilityIds = selectedUtilityId != null ? [selectedUtilityId!] : [];
+
+    // Debug logging
+    if (kDebugMode) {
+      print('🔍 Selected Options to IDs Conversion:');
+      print('   Colors: ${_selectedColours.length} selected -> ${colorIds.length} IDs');
+      print('   Natural Colors: ${_selectedNaturalColours.length} selected -> ${naturalColorIds.length} IDs');
+      print('   Finishes: ${_selectedFinishes.length} selected -> ${finishIds.length} IDs');
+      print('   Textures: ${_selectedTextures.length} selected -> ${textureIds.length} IDs');
+      print('   Origins: ${_selectedOrigins.length} selected -> ${originIds.length} IDs');
+      print('   State/Country: ${_selectedStates.length} selected -> ${stateCountryIds.length} IDs');
+      print('   Processing: ${_selectedProcessing.length} selected -> ${processingNatureIds.length} IDs');
+      print('   Naturality: ${_selectedNaturality.length} selected -> ${materialNaturalityIds.length} IDs');
+      print('   Handicrafts: ${_selectedHandicrafts.length} selected -> ${handicraftIds.length} IDs');
+      print('   Utilities: ${selectedUtilityId != null ? 1 : 0} selected -> ${utilityIds.length} IDs');
+    }
+
+    // Create request body - API requires empty arrays, not null
+    final requestBody = PutCatalogueOptionEntryRequestBody(
+      colourOptionIds: colorIds,
+      naturalColourOptionIds: naturalColorIds,
+      finishOptionIds: finishIds,
+      textureOptionIds: textureIds,
+      originOptionIds: originIds,
+      stateCountryOptionIds: stateCountryIds,
+      processingNatureOptionIds: processingNatureIds,
+      materialNaturalityOptionIds: materialNaturalityIds,
+      handicraftTypeOptionIds: handicraftIds,
+      utilityIds: utilityIds,
+      synonyms: [], // Empty array for synonyms
+    );
+
+    // Call PutCatalogueOptionsEntryBloc
+    if (_savedProductId != null && _savedProductId!.isNotEmpty) {
+      context.read<PutCatalogueOptionsEntryBloc>().add(UpdateCatalogueOptions(
+        productId: _savedProductId!,
+        requestBody: requestBody,
+        showLoader: true,
+      ));
+
+      // Listen to state
+      _listenToPutCatalogueOptionsEntryState();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('❌ Product ID not found. Please try again.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
+  }
+
+  // Listener for PutCatalogueOptionsEntryBloc
+  void _listenToPutCatalogueOptionsEntryState() {
+    final subscription = context.read<PutCatalogueOptionsEntryBloc>().stream.listen((state) {
+      if (state is PutCatalogueOptionsEntryLoading && state.showLoader) {
+        showCustomProgressDialog(context, title: 'Completing product entry...');
+      } else if (state is PutCatalogueOptionsEntrySuccess) {
+        dismissCustomProgressDialog(context);
+        if(state.response.statusCode==200 || state.response.statusCode==201){
+          // Show success dialog
+          _showSuccessDialog();
+        }
+        else{
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ ${state.response.message}'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+
+
+
+      } else if (state is PutCatalogueOptionsEntryError) {
+        dismissCustomProgressDialog(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ ${state.message}'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    });
+    Future.delayed(const Duration(seconds: 15), () => subscription.cancel());
+  }
+
+  // Show success dialog after completing product entry
+  void _showSuccessDialog() {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -1969,7 +2285,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
           children: [
             Icon(Icons.check_circle, color: AppColors.success, size: 32),
             SizedBox(width: 12),
-            Text('Product Entry Complete!'),
+            Text('Product Entry Complete!',overflow: TextOverflow.ellipsis,softWrap: true,),
           ],
         ),
         content: SingleChildScrollView(
@@ -2032,6 +2348,8 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     );
   }
 
+  // Old _submitSection2 implementation removed - now uses BLoC
+
   Widget _buildSummaryRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -2091,10 +2409,12 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     });
   }
 
-  Widget _buildColorPickerSection(
-    String title,
-    List<String> selectedOptions,
-  ) {
+  // Build color picker section using API color data
+  Widget _buildColorPickerSectionWithApi({
+    required String title,
+    required List<dynamic> colorData,
+    required List<String> selectedOptions,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -2113,7 +2433,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
         children: [
           Row(
             children: [
-              Icon(Icons.color_lens, color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue, size: 20),
+              Icon(Icons.color_lens, color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin" ? AppColors.superAdminPrimary : AppColors.primaryDeepBlue, size: 20),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -2129,7 +2449,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
-                    color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue,
+                    color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin" ? AppColors.superAdminPrimary : AppColors.primaryDeepBlue,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -2148,12 +2468,12 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary.withAlpha(20): AppColors.primaryDeepBlue.withAlpha(20),
+                    color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin" ? AppColors.superAdminPrimary.withAlpha(20) : AppColors.primaryDeepBlue.withAlpha(20),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.add,
-                    color: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryDeepBlue,
+                    color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin" ? AppColors.superAdminPrimary : AppColors.primaryDeepBlue,
                     size: 20,
                   ),
                 ),
@@ -2161,71 +2481,110 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 8,
-            runSpacing: 12,
-            children: colourMap.keys.map((colourName) {
-              final isSelected = selectedOptions.contains(colourName);
-              final colourValue = colourMap[colourName]!;
-
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    if (isSelected) {
-                      selectedOptions.remove(colourName);
-                    } else {
-                      selectedOptions.add(colourName);
-                    }
-                  });
-                },
-                child: Tooltip(
-                  message: colourName,
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: colourValue,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected
-                            ? (SessionManager.getUserRole().toString().toLowerCase() =="superadmin"
-                                ? AppColors.superAdminPrimary
-                                : AppColors.primaryDeepBlue)
-                            : Colors.grey.shade300,
-                        width: isSelected ? 3 : 2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: isSelected
-                              ? colourValue.withAlpha(100)
-                              : Colors.black.withAlpha(20),
-                          blurRadius: isSelected ? 8 : 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+          colorData.isEmpty
+              ? Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Text(
+                      'No colors available. Add a new color using the + button.',
+                      style: TextStyle(color: Colors.grey.shade600),
+                      textAlign: TextAlign.center,
                     ),
-                    child: isSelected
-                        ? const Icon(
-                            Icons.check,
-                            color: Colors.white,
-                            size: 20,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black45,
-                                blurRadius: 4,
+                  ),
+                )
+              : Wrap(
+                  spacing: 8,
+                  runSpacing: 12,
+                  children: colorData.where((colorItem) {
+                    // Filter out colors with invalid hex codes
+                    final colorCode = colorItem.code ?? '';
+                    if (colorCode.isEmpty) return false;
+
+                    try {
+                      final hexString = colorCode.replaceAll('0X', '0x').replaceAll('0x', '');
+                      // Test if it's a valid hex color (should be 6 or 8 characters)
+                      if (hexString.length != 6 && hexString.length != 8) return false;
+                      int.parse(hexString, radix: 16); // This will throw if invalid
+                      return true;
+                    } catch (e) {
+                      if (kDebugMode) print('⚠️ Skipping invalid color code $colorCode: $e');
+                      return false; // Skip this color
+                    }
+                  }).map((colorItem) {
+                    final colorName = colorItem.name ?? '';
+                    final colorCode = colorItem.code ?? '';
+                    final isSelected = selectedOptions.contains(colorName);
+
+                    // Parse hex color code (format: "0XFF9C27B0" or "0xff9c27b0")
+                    Color colorValue;
+                    try {
+                      final hexString = colorCode.replaceAll('0X', '0x').replaceAll('0x', '');
+                      colorValue = Color(int.parse('0xff$hexString'));
+                    } catch (e) {
+                      // This should never happen since we filtered above, but just in case
+                      colorValue = Colors.grey;
+                      if (kDebugMode) print('⚠️ Unexpected error parsing $colorCode: $e');
+                    }
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (isSelected) {
+                            selectedOptions.remove(colorName);
+                          } else {
+                            selectedOptions.add(colorName);
+                          }
+                        });
+                      },
+                      child: Tooltip(
+                        message: colorName,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: colorValue,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? (SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                                      ? AppColors.superAdminPrimary
+                                      : AppColors.primaryDeepBlue)
+                                  : Colors.grey.shade300,
+                              width: isSelected ? 3 : 2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isSelected
+                                    ? colorValue.withAlpha(100)
+                                    : Colors.black.withAlpha(20),
+                                blurRadius: isSelected ? 8 : 4,
+                                offset: const Offset(0, 2),
                               ),
                             ],
-                          )
-                        : null,
-                  ),
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: 20,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black45,
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                )
+                              : null,
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
-              );
-            }).toList(),
-          ),
         ],
       ),
     );
   }
+
 
   // Helper method for loading container
   Widget _buildLoadingContainer() {

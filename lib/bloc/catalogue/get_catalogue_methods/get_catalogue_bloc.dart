@@ -257,4 +257,53 @@ class GetHandicraftsBloc extends Bloc<GetHandicraftsEvent, GetHandicraftsState> 
   }
 }
 
+// ========================= Get Catalogue Product List BLoC =========================
+class GetCatalogueProductListBloc extends Bloc<GetCatalogueProductListEvent, GetCatalogueProductListState> {
+  GetCatalogueProductListBloc() : super(GetCatalogueProductListInitial()) {
+    on<FetchGetCatalogueProductList>((FetchGetCatalogueProductList event, Emitter<GetCatalogueProductListState> emit) async {
+      emit(GetCatalogueProductListLoading(showLoader: event.showLoader));
 
+      try {
+        final response = await ApiIntegration.getCatalogueProductList(
+          page: event.page,
+          pageSize: event.pageSize,
+        );
+
+        if (response.status == true) {
+          emit(GetCatalogueProductListLoaded(response: response));
+        } else {
+          emit(GetCatalogueProductListError(message: response.message ?? 'Failed to fetch products'));
+        }
+      } catch (e) {
+        emit(GetCatalogueProductListError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+  }
+}
+
+// ======================== Get Catalogue Product Details BLoC ========================
+class GetCatalogueProductDetailsBloc extends Bloc<GetCatalogueProductDetailsEvent, GetCatalogueProductDetailsState> {
+  GetCatalogueProductDetailsBloc() : super(GetCatalogueProductDetailsInitial()) {
+    on<FetchGetCatalogueProductDetails>((FetchGetCatalogueProductDetails event, Emitter<GetCatalogueProductDetailsState> emit) async {
+      emit(GetCatalogueProductDetailsLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.getCatalogueProductDetails(
+          productId: event.productId,
+        );
+
+        if (response.status == true) {
+          emit(GetCatalogueProductDetailsLoaded(response: response));
+        } else {
+          emit(GetCatalogueProductDetailsError(message: response.message ?? 'Failed to fetch product details'));
+        }
+      } catch (e) {
+        emit(GetCatalogueProductDetailsError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+  }
+}

@@ -9,6 +9,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
 import 'bloc/auth/auth_bloc.dart';
 import 'bloc/auth/auth_state.dart';
+import 'bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import 'bloc/dashboard/dashboard_bloc.dart';
 import 'bloc/registration/registration_bloc.dart';
 import 'core/constants/app_colors.dart';
@@ -87,6 +88,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MultiBlocProvider(
           providers: [
+            BlocProvider<GetCatalogueProductDetailsBloc>(create: (context) => GetCatalogueProductDetailsBloc(),),
             BlocProvider(
               create: (context) => AppBlocProvider.authBloc,),
             BlocProvider(

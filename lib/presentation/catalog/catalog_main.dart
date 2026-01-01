@@ -1,185 +1,33 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
+import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
+import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
-import '../widgets/image_carousel.dart';
-import 'price_calculator.dart';
+import '../../api/models/response/GetCatalogueProductDetailsResponseBody.dart';
 
 /// ==========================
-/// MODELS
+/// SIMPLE PRODUCT MODEL (for list view only)
 /// ==========================
 
-class MiningDetails {
-  final String mineName;
-  final String ownerName;
-  final String location;
-  final String contact;
-
-  MiningDetails({
-    required this.mineName,
-    required this.ownerName,
-    required this.location,
-    required this.contact,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'mineName': mineName,
-        'ownerName': ownerName,
-        'location': location,
-        'contact': contact,
-      };
-
-  factory MiningDetails.fromJson(Map<String, dynamic> j) => MiningDetails(
-        mineName: j['mineName'] ?? '',
-        ownerName: j['ownerName'] ?? '',
-        location: j['location'] ?? '',
-        contact: j['contact'] ?? '',
-      );
-}
-
-class SocialLinks {
-  final String website;
-  final String instagram;
-  final String youtube;
-
-  SocialLinks({
-    required this.website,
-    required this.instagram,
-    required this.youtube,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'website': website,
-        'instagram': instagram,
-        'youtube': youtube,
-      };
-
-  factory SocialLinks.fromJson(Map<String, dynamic> j) => SocialLinks(
-        website: j['website'] ?? '',
-        instagram: j['instagram'] ?? '',
-        youtube: j['youtube'] ?? '',
-      );
-}
-
-class Product {
+class SimpleProduct {
   final String id;
   final String productCode;
   final String name;
-  final String description;
-  final List<String> images;
+  final double pricePerSqft;
+  final String productTypeName;
+  final String? primaryImageUrl;
 
-  // Additional attributes per spec
-  final List<String> synonyms;
-  final String materialPointers; // material liners & pointers (text)
-  final String? handcraftItemName; // if handicraft
-  final Map<String, double>? traderGradePrice; // optional trader measurement pricing
-
-  /// Filters
-  final List<String> types;
-  final List<String> utilities;
-  final List<String> colors;
-  final List<String> naturalColors;
-  final String origin;
-  final String stateOrCountry;
-  final String processingNature;
-  final String materialNaturality;
-  final List<String> finishes;
-  final List<String> textures;
-
-  /// Availability
-  final String sizes;
-  final String thickness;
-
-  /// Pricing
-  final Map<String, double> gradePrice;
-
-  /// Admin only
-  final MiningDetails? miningDetails;
-
-  final SocialLinks socialLinks;
-
-  Product({
+  SimpleProduct({
     required this.id,
     required this.productCode,
     required this.name,
-    required this.description,
-    required this.images,
-    this.synonyms = const [],
-    this.materialPointers = '',
-    this.handcraftItemName,
-    this.traderGradePrice,
-    required this.types,
-    required this.utilities,
-    required this.colors,
-    required this.naturalColors,
-    required this.origin,
-    required this.stateOrCountry,
-    required this.processingNature,
-    required this.materialNaturality,
-    required this.finishes,
-    required this.textures,
-    required this.sizes,
-    required this.thickness,
-    required this.gradePrice,
-    this.miningDetails,
-    required this.socialLinks,
+    required this.pricePerSqft,
+    required this.productTypeName,
+    this.primaryImageUrl,
   });
-
-  Map<String, dynamic> toJson() => {
-        'id': id,
-        'productCode': productCode,
-        'name': name,
-        'description': description,
-        'images': images,
-        'synonyms': synonyms,
-        'materialPointers': materialPointers,
-        'handcraftItemName': handcraftItemName,
-        'traderGradePrice': traderGradePrice,
-        'types': types,
-        'utilities': utilities,
-        'colors': colors,
-        'naturalColors': naturalColors,
-        'origin': origin,
-        'stateOrCountry': stateOrCountry,
-        'processingNature': processingNature,
-        'materialNaturality': materialNaturality,
-        'finishes': finishes,
-        'textures': textures,
-        'sizes': sizes,
-        'thickness': thickness,
-        'gradePrice': gradePrice,
-        'miningDetails': miningDetails?.toJson(),
-        'socialLinks': socialLinks.toJson(),
-      };
-
-  factory Product.fromJson(Map<String, dynamic> j) => Product(
-        id: j['id'] ?? '',
-        productCode: j['productCode'] ?? '',
-        name: j['name'] ?? '',
-        description: j['description'] ?? '',
-        images: (j['images'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        synonyms: (j['synonyms'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        materialPointers: j['materialPointers'] ?? '',
-        handcraftItemName: j['handcraftItemName'],
-        traderGradePrice: (j['traderGradePrice'] as Map<String, dynamic>?)?.map((k, v) => MapEntry(k, (v as num).toDouble())),
-        types: (j['types'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        utilities: (j['utilities'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        colors: (j['colors'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        naturalColors: (j['naturalColors'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        origin: j['origin'] ?? '',
-        stateOrCountry: j['stateOrCountry'] ?? '',
-        processingNature: j['processingNature'] ?? '',
-        materialNaturality: j['materialNaturality'] ?? '',
-        finishes: (j['finishes'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        textures: (j['textures'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        sizes: j['sizes'] ?? '',
-        thickness: j['thickness'] ?? '',
-        gradePrice: (j['gradePrice'] as Map<String, dynamic>?)?.map((k, v) => MapEntry(k, (v as num).toDouble())) ?? {},
-        miningDetails: j['miningDetails'] != null ? MiningDetails.fromJson(Map<String, dynamic>.from(j['miningDetails'])) : null,
-        socialLinks: SocialLinks.fromJson(Map<String, dynamic>.from(j['socialLinks'] ?? {})),
-      );
 }
 
 /// ==========================
@@ -201,7 +49,7 @@ class _CataloguePageState extends State<CataloguePage>
 
   String _search = '';
   Map<String, List<String>> _filters = {};
-  List<Product> _products = [];
+  List<SimpleProduct> _products = [];
 
   String get role => SessionManager.getUserRoleForPermissions();
   bool get isAdmin => role == 'admin' || role == 'superadmin';
@@ -220,38 +68,42 @@ class _CataloguePageState extends State<CataloguePage>
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
-    _loadProducts();
+
+    // Load products from API using BLoC
+    context.read<GetCatalogueProductListBloc>().add(FetchGetCatalogueProductList(
+      page: 1,
+      pageSize: 20,
+      showLoader: true,
+    ));
   }
 
-  Future<void> _loadProducts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString('catalog_products');
-    if (stored != null && stored.isNotEmpty) {
-      try {
-        final list = jsonDecode(stored) as List<dynamic>;
-        _products = list.map((e) => Product.fromJson(Map<String, dynamic>.from(e))).toList();
-        setState(() {});
-        return;
-      } catch (e) {
-        // fallback to defaults
-      }
-    }
-    _products = _mockProducts();
-    setState(() {});
+  /// Handle pull-to-refresh
+  Future<void> _handleRefresh() async {
+    // Trigger BLoC to fetch fresh data without showing loader
+    context.read<GetCatalogueProductListBloc>().add(
+      FetchGetCatalogueProductList(page: 1, pageSize: 20, showLoader: false),
+    );
+
+    // Wait for the API call to complete
+    await Future.delayed(const Duration(milliseconds: 800));
   }
 
-  Future<void> _persistProducts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encoded = jsonEncode(_products.map((p) => p.toJson()).toList());
-    await prefs.setString('catalog_products', encoded);
-  }
+  // Removed old _loadProducts method - now using BLoC
 
-  Future<void> _saveLead(Map<String, dynamic> lead) async {
-    final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString('leads') ?? '[]';
-    final list = (jsonDecode(stored) as List<dynamic>).toList();
-    list.add(lead);
-    await prefs.setString('leads', jsonEncode(list));
+  /// Convert API Items to SimpleProduct model
+  SimpleProduct _convertApiItemToSimpleProduct(dynamic item) {
+    final hasValidImage = item.primaryImageUrl != null &&
+                          item.primaryImageUrl.toString().isNotEmpty &&
+                          item.primaryImageUrl.toString() != 'null';
+
+    return SimpleProduct(
+      id: item.id ?? '',
+      productCode: item.productCode ?? '',
+      name: item.name ?? 'Unnamed Product',
+      pricePerSqft: (item.pricePerSqft ?? 0).toDouble(),
+      productTypeName: item.productTypeName ?? 'Stone',
+      primaryImageUrl: hasValidImage ? item.primaryImageUrl.toString() : null,
+    );
   }
 
   @override
@@ -266,7 +118,6 @@ class _CataloguePageState extends State<CataloguePage>
 
   @override
   Widget build(BuildContext context) {
-    final products = _applyFilters(_products);
     final width = MediaQuery.of(context).size.width;
 
     int columns;
@@ -277,6 +128,7 @@ class _CataloguePageState extends State<CataloguePage>
     } else {
       columns = 4;        // large screens
     }
+
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
@@ -295,33 +147,117 @@ class _CataloguePageState extends State<CataloguePage>
         ],
       ),
 
-      floatingActionButton: FloatingActionButton(onPressed: () {
-
-        context.pushNamed("catalogueEntry");
-      },
+      floatingActionButton:  SessionManager.getUserRole().toString().toLowerCase() =="superadmin" || SessionManager.getUserRole().toString().toLowerCase() =="admin"  ?FloatingActionButton(
+        onPressed: () {
+          context.pushNamed("catalogueEntry");
+        },
         backgroundColor: primary,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add,color: AppColors.white,),
+      ):null,
 
-      ),
-      body: FadeTransition(
-        opacity: _fade,
-        child: Column(
-          children: [
-            _searchBar(),
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: products.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: columns,
-                  childAspectRatio: 0.38,
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 10,),
-                itemBuilder: (_, i) => _productCard(products[i]),
+      body: BlocBuilder<GetCatalogueProductListBloc, GetCatalogueProductListState>(
+        builder: (context, state) {
+          if (state is GetCatalogueProductListLoading && state.showLoader) {
+            return Center(
+              child: CircularProgressIndicator(color: primary),
+            );
+          }
+
+          if (state is GetCatalogueProductListError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading products',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    state.message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<GetCatalogueProductListBloc>().add(
+                        FetchGetCatalogueProductList(page: 1, pageSize: 20, showLoader: true),
+                      );
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                    style: ElevatedButton.styleFrom(backgroundColor: primary),
+                  ),
+                ],
               ),
+            );
+          }
+
+          if (state is GetCatalogueProductListLoaded) {
+            // Convert API response to SimpleProduct models
+            final apiProducts = state.response.data?.items ?? [];
+
+            if (apiProducts.isNotEmpty) {
+              _products = apiProducts.map((item) => _convertApiItemToSimpleProduct(item)).toList();
+            } else {
+              _products = []; // Empty list if no products
+            }
+          }
+
+          final products = _applyFilters(_products);
+
+          return FadeTransition(
+            opacity: _fade,
+            child: Column(
+              children: [
+                _searchBar(),
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _handleRefresh,
+                    color: primary,
+                    backgroundColor: Colors.white,
+                    child: products.isEmpty
+                        ? ListView(
+                            // Use ListView to enable pull-to-refresh even when empty
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height - 200,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.inventory_2_outlined, size: 64, color: Colors.grey[400]),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'No products found',
+                                        style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        : GridView.builder(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: products.length,
+                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: columns,
+                              childAspectRatio: 0.65,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                            itemBuilder: (_, i) => _productCard(products[i]),
+                          ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -341,28 +277,102 @@ class _CataloguePageState extends State<CataloguePage>
       ),
     );
   }
-  Widget _productCard(Product p) {
+  Widget _productCard(SimpleProduct p) {
     return GestureDetector(
       onTap: () => _openDetails(p),
       child: Card(
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        elevation: 3,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// IMAGE
-            AspectRatio(
-              aspectRatio: 0.72,
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-                child: ImageCarousel.builder(
-                  itemCount: p.images.length,
-                  itemBuilder: (_, i) => Image.network(
-                    p.images[i],
-                    fit: BoxFit.cover,
+            /// IMAGE with overlay badge
+            Stack(
+              children: [
+                AspectRatio(
+                  aspectRatio: 1.2,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: p.primaryImageUrl == null
+                        ? Container(
+                            color: Colors.grey[200],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.broken_image_outlined,
+                                  size: 64,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'No Image',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : Image.network(
+                            p.primaryImageUrl!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey[200],
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.broken_image_outlined,
+                                    size: 64,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Image Error',
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                   ),
                 ),
-              ),
+                // Product Type Badge
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: primary,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.3),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      p.productTypeName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             /// CONTENT
@@ -371,45 +381,55 @@ class _CataloguePageState extends State<CataloguePage>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /// NAME
+                  /// PRODUCT NAME
                   Text(
                     p.name,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                      fontSize: 15,
+                      height: 1.2,
                     ),
                   ),
 
-                  const SizedBox(height: 6),
-
-                  /// TAGS
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: -8,
-                    children: [
-                      _infoChip(p.types.first),
-                      _infoChip(p.origin),
-                      _infoChip(p.finishes.first),
-                    ],
-                  ),
-
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
 
                   /// PRICE + CTA
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        "₹${p.gradePrice['A']} / sqft",
-                        style: TextStyle(
-                          color: dark,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '₹${p.pricePerSqft.toInt()}',
+                            style: TextStyle(
+                              color: primary,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            'per sqft',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      Icon(Icons.arrow_forward_ios, size: 14, color: primary),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: light,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.white),
+
+                      ),
                     ],
                   ),
                 ],
@@ -421,31 +441,17 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _infoChip(String text) {
-    return Chip(
-      label: Text(text, style: const TextStyle(fontSize: 11)),
-      // Use helper to construct color with opacity without accessing deprecated getters
-      backgroundColor: _colorWithOpacity(light, 0.25),
-      visualDensity: VisualDensity.compact,
-    );
-  }
 
-  // Helper to create a color with specified opacity without using deprecated
-  // Color component getters (use bit-manipulation which is stable).
-  Color _colorWithOpacity(Color c, double opacity) {
-    // The .r/.g/.b accessors are in 0..1 range (double) for the current SDK.
-    // Convert to 0..255 ints and clamp to valid byte range.
-    int toByte(double v) {
-      final val = (v * 255).round();
-      if (val < 0) return 0;
-      if (val > 255) return 255;
-      return val;
-    }
 
-    final r = toByte(c.r);
-    final g = toByte(c.g);
-    final b = toByte(c.b);
-    return Color.fromRGBO(r, g, b, opacity);
+
+
+  List<SimpleProduct> _applyFilters(List<SimpleProduct> products) {
+    // Simple search filter - just filter by name since SimpleProduct doesn't have all fields
+    return products.where((p) =>
+      p.name.toLowerCase().contains(_search.toLowerCase()) ||
+      p.productCode.toLowerCase().contains(_search.toLowerCase()) ||
+      p.productTypeName.toLowerCase().contains(_search.toLowerCase())
+    ).toList();
   }
 
 
@@ -453,232 +459,352 @@ class _CataloguePageState extends State<CataloguePage>
   /// DETAILS PAGE
   /// ==========================
 
-  void _openDetails(Product p) {
+  void _openDetails(SimpleProduct p) {
+    // Get the BLoC instance before showing bottom sheet
+    final detailsBloc = context.read<GetCatalogueProductDetailsBloc>();
+
+    // Trigger BLoC to fetch product details
+    detailsBloc.add(
+      FetchGetCatalogueProductDetails(productId: p.id, showLoader: true),
+    );
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        expand: false,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-            // Avoid withOpacity; use fromRGBO to specify an alpha value
-            boxShadow: [BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.08), blurRadius: 10)],
-          ),
-          padding: const EdgeInsets.all(16),
-          child: ListView(
-            controller: scrollController,
+      builder: (bottomSheetContext) => BlocProvider<GetCatalogueProductDetailsBloc>.value(
+        value: detailsBloc,
+        child: BlocBuilder<GetCatalogueProductDetailsBloc, GetCatalogueProductDetailsState>(
+          builder: (context, state) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.85,
+              expand: false,
+              builder: (context, scrollController) => Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                  boxShadow: [BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.08), blurRadius: 10)],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: _buildDetailsContent(state, scrollController, p),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailsContent(GetCatalogueProductDetailsState state, ScrollController scrollController, SimpleProduct simpleProduct) {
+    if (state is GetCatalogueProductDetailsLoading && state.showLoader) {
+      return Center(
+        child: CircularProgressIndicator(color: primary),
+      );
+    }
+
+    if (state is GetCatalogueProductDetailsError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+            const SizedBox(height: 16),
+            Text(
+              'Error loading product details',
+              style: TextStyle(fontSize: 18, color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              state.message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.close),
+              label: const Text('Close'),
+              style: ElevatedButton.styleFrom(backgroundColor: primary),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (state is GetCatalogueProductDetailsLoaded) {
+      final data = state.response.data;
+      if (data == null) {
+        return Center(
+          child: Text('No product details available', style: TextStyle(color: Colors.grey[600])),
+        );
+      }
+
+      return ListView(
+        controller: scrollController,
+        children: [
+          // Header: Name + Code + Close
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header: Name + Code + Close
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(p.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 4),
-                        Text('Code: ${p.productCode}', style: TextStyle(color: Colors.grey[700])),
-                      ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      data.name ?? 'Unnamed Product',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: Icon(Icons.close, color: Colors.grey[700]),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 12),
-
-              // Image carousel
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  height: 220,
-                  child: ImageCarousel.builder(
-                    itemCount: p.images.length,
-                    itemBuilder: (_, i) => Image.network(p.images[i], fit: BoxFit.cover),
-                    autoPlay: true,
-                    enableInfiniteScroll: true,
-                    viewportFraction: 1.0,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Specifications section
-              Text('Product Specifications', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: dark)),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                color: Colors.grey[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      _specRow('Type', p.types.join(', ')),
-                      const Divider(),
-                      _specRow('Utility', p.utilities.join(', ')),
-                      const Divider(),
-                      _specRow('Colour / Natural Colour', '${p.colors.join(', ')} / ${p.naturalColors.join(', ')}'),
-                      const Divider(),
-                      _specRow('Finish / Texture', '${p.finishes.join(', ')} / ${p.textures.join(', ')}'),
-                      const Divider(),
-                      _specRow('Sizes / Thickness', '${p.sizes} / ${p.thickness}'),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Additional attributes (synonyms, material pointers, handicraft name)
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                color: Colors.grey[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (p.synonyms.isNotEmpty) ...[
-                        const Text('Synonyms', style: TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        Wrap(spacing: 8, runSpacing: 6, children: p.synonyms.map((s) => Chip(label: Text(s))).toList()),
-                        const Divider(),
-                      ],
-
-                      if (p.materialPointers.isNotEmpty) ...[
-                        const Text('Material Pointers', style: TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        Text(p.materialPointers, style: TextStyle(color: Colors.grey[800])),
-                        const Divider(),
-                      ],
-
-                      if (p.handcraftItemName != null && p.handcraftItemName!.isNotEmpty) ...[
-                        const Text('Handicraft Item', style: TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        Text(p.handcraftItemName ?? '', style: TextStyle(color: Colors.grey[800])),
-                        const Divider(),
-                      ],
-
-                      if (p.traderGradePrice != null && p.traderGradePrice!.isNotEmpty) ...[
-                        const Text('Trader Measurement Pricing', style: TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 6),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: p.traderGradePrice!.entries.map((e) => Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            child: Text('${e.key}: ₹${e.value.toStringAsFixed(2)} per unit', style: TextStyle(color: Colors.grey[800])),
-                          )).toList(),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Admin-only section (mining details)
-              if (isAdmin && p.miningDetails != null) ...[
-                Text('Admin - Mining Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: dark)),
-                const SizedBox(height: 8),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  color: Colors.grey[50],
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _specRow('Mine', p.miningDetails!.mineName),
-                        const Divider(),
-                        _specRow('Owner', p.miningDetails!.ownerName),
-                        const Divider(),
-                        _specRow('Location', p.miningDetails!.location),
-                        const Divider(),
-                        _specRow('Contact', p.miningDetails!.contact),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-
-              // Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.calculate_outlined),
-                      label: const Text('Price Calculator'),
-                      style: ElevatedButton.styleFrom(backgroundColor: primary),
-                      onPressed: () => _priceCalculator(p),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  if (isAdmin) ...[
-                    ElevatedButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('Edit'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.grey[200]),
-                      onPressed: () => _editProduct(p),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Code: ${data.productCode ?? 'N/A'}',
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
                   ],
-                ],
+                ),
               ),
+              IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: Icon(Icons.close, color: Colors.grey[700]),
+              ),
+            ],
+          ),
 
-              const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
-              // Features matrix table
-              Text('Feature Access', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: dark)),
-              const SizedBox(height: 8),
-              Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                color: Colors.grey[50],
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Table(
-                    columnWidths: const {
-                      0: FlexColumnWidth(2),
-                      1: FlexColumnWidth(1),
-                      2: FlexColumnWidth(1),
-                    },
+          // Image carousel/single image
+          _buildImageSection(data),
+
+          const SizedBox(height: 16),
+
+          // Price
+          if (data.pricePerSqft != null)
+            Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: primary.withValues(alpha: 0.1),
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Price',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      '₹${data.pricePerSqft} / sqft',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 10),
+
+          // Description
+          if (data.description != null && data.description!.isNotEmpty)
+            _buildInfoRow('Description', data.description!),
+
+          // Synonyms
+          if (data.synonyms.isNotEmpty)
+            _buildInfoRow('Synonyms', data.synonyms.join(', ')),
+
+          // Product Type
+          if (data.productTypeName != null)
+            _buildInfoRow('Product Type', data.productTypeName!),
+
+          // Utilities
+          if (data.utilities.isNotEmpty)
+            _buildInfoRow('Utilities', data.utilities.map((u) => u.name ?? '').join(', ')),
+
+          // Colors
+          if (data.colours.isNotEmpty)
+            _buildInfoRow('Colors', data.colours.map((c) => c.name ?? '').join(', ')),
+
+          // Natural Colors
+          if (data.naturalColours.isNotEmpty)
+            _buildInfoRow('Natural Colors', data.naturalColours.map((c) => c.name ?? '').join(', ')),
+
+          // Finishes
+          if (data.finishes.isNotEmpty)
+            _buildInfoRow('Finishes', data.finishes.map((f) => f.name ?? '').join(', ')),
+
+          // Textures
+          if (data.textures.isNotEmpty)
+            _buildInfoRow('Textures', data.textures.map((t) => t.name ?? '').join(', ')),
+
+          // Origins
+          if (data.origins.isNotEmpty)
+            _buildInfoRow('Origins', data.origins.map((o) => o.name ?? '').join(', ')),
+
+          // State/Countries
+          if (data.stateCountries.isNotEmpty)
+            _buildInfoRow('State/Countries', data.stateCountries.map((s) => s.name ?? '').join(', ')),
+
+          // Processing Natures
+          if (data.processingNatures.isNotEmpty)
+            _buildInfoRow('Processing Nature', data.processingNatures.map((p) => p.name ?? '').join(', ')),
+
+          // Material Naturalities
+          if (data.materialNaturalities.isNotEmpty)
+            _buildInfoRow('Material Naturality', data.materialNaturalities.map((m) => m.name ?? '').join(', ')),
+
+          // Handicraft Types
+          if (data.handicraftTypes.isNotEmpty)
+            _buildInfoRow('Handicraft Types', data.handicraftTypes.map((h) => h.name ?? '').join(', ')),
+
+          const SizedBox(height: 20),
+
+          // Close Button
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      );
+    }
+
+    // Initial or unknown state
+    return Center(
+      child: Text('Loading...', style: TextStyle(color: Colors.grey[600])),
+    );
+  }
+
+  Widget _buildImageSection(Data data) {
+    // Build complete image list: primaryImageUrl first, then imageUrls
+    final List<String> allImages = [];
+
+    // Add primary image first if it exists
+    if (data.primaryImageUrl != null &&
+        data.primaryImageUrl!.isNotEmpty &&
+        data.primaryImageUrl != 'null') {
+      allImages.add(data.primaryImageUrl!);
+    }
+
+    // Add other images from imageUrls (excluding duplicates)
+    for (var imageUrl in data.imageUrls) {
+      if (imageUrl.isNotEmpty &&
+          imageUrl != 'null' &&
+          !allImages.contains(imageUrl)) {
+        allImages.add(imageUrl);
+      }
+    }
+
+    // If no images available, show placeholder
+    if (allImages.isEmpty) {
+      return Container(
+        height: 220,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text(
+              'No Images Available',
+              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show single image or image carousel
+    return SizedBox(
+      height: 220,
+      child: Stack(
+        children: [
+          PageView.builder(
+            itemCount: allImages.length,
+            itemBuilder: (context, index) => ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                allImages[index],
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[200],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const TableRow(children: [
-                        Padding(padding: EdgeInsets.all(8), child: Text('Feature', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Padding(padding: EdgeInsets.all(8), child: Text('Executive', style: TextStyle(fontWeight: FontWeight.bold))),
-                        Padding(padding: EdgeInsets.all(8), child: Text('Admin', style: TextStyle(fontWeight: FontWeight.bold))),
-                      ]),
-                      _featureRow('Catalogue', true, true),
-                      _featureRow('Filters', true, true),
-                      _featureRow('Price Calculator', true, false),
-                      _featureRow('Mining Details', false, true),
-                      _featureRow('Product Edit', false, true),
+                      Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Image Load Error',
+                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
               ),
+            ),
+          ),
+          // Show image counter if multiple images
+          if (allImages.length > 1)
+            Positioned(
+              bottom: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '${allImages.length} images',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
 
-              const SizedBox(height: 20),
 
-              // Close / Done
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done', style: TextStyle(fontWeight: FontWeight.bold)),
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Card(
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Colors.grey[50],
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 140,
+                child: Text(
+                  '$label:',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color: Colors.grey[800],
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ],
@@ -688,68 +814,6 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _specRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(width: 130, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600))),
-          Expanded(child: Text(value, style: TextStyle(color: Colors.grey[800]))),
-        ],
-      ),
-    );
-  }
-
-  TableRow _featureRow(String feature, bool exec, bool admin) {
-    return TableRow(children: [
-      Padding(padding: const EdgeInsets.all(8), child: Text(feature)),
-      Padding(padding: const EdgeInsets.all(8), child: Center(child: exec ? const Icon(Icons.check, color: Colors.green) : const SizedBox())),
-      Padding(padding: const EdgeInsets.all(8), child: Center(child: admin ? const Icon(Icons.check, color: Colors.green) : const SizedBox())),
-    ]);
-  }
-
-
-  /// ==========================
-  /// PRICE CALCULATOR
-  /// ==========================
-
-  void _priceCalculator(Product p) async {
-    // Open the reusable PriceCalculator dialog. It returns a PriceCalculationResult on Save.
-    final PriceCalculationResult? result = await showDialog<PriceCalculationResult>(
-      context: context,
-      builder: (context) => PriceCalculator(productId: p.id, gradePrices: p.gradePrice),
-    );
-
-    if (result == null) return; // user cancelled
-
-    // Build a mock lead/quote payload (ready to send to backend)
-    final leadPayload = {
-      'executiveId': SessionManager.getUserId()?.toString() ?? '',
-      'productId': result.productId,
-      'grade': result.grade,
-      'measurementType': result.measurementType,
-      'unit': result.unit,
-      'pricePerUnit': result.pricePerUnit,
-      'quantity': result.quantity,
-      'weight': result.weight,
-      'transportCharge': result.transportCharge,
-      'tax': result.tax,
-      'taxPercent': result.taxPercent,
-      'misc': result.misc,
-      'total': result.total,
-      'timestamp': DateTime.now().toIso8601String(),
-    };
-
-    // TODO: send leadPayload to backend. For now, mock save and show confirmation.
-    print('Mock Lead saved: ${leadPayload}');
-    try {
-      await _saveLead(leadPayload);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quote saved locally: ₹${result.total.toStringAsFixed(2)}')));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Quote saved (in-memory): ₹${result.total.toStringAsFixed(2)}')));
-    }
-  }
 
   /// ==========================
   /// FILTERS
@@ -799,177 +863,29 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  /// ==========================
-  /// DATA
-  /// ==========================
-
-  List<Product> _applyFilters(List<Product> list) {
-    var res = list.where((p) => p.name.toLowerCase().contains(_search.toLowerCase())).toList();
-
-    // Apply each filter group
-    _filters.forEach((key, values) {
-      if (values.isEmpty) return;
-      if (key == 'Type') {
-        res = res.where((p) => p.types.any((t) => values.contains(t))).toList();
-      } else if (key == 'Finish') {
-        res = res.where((p) => p.finishes.any((f) => values.contains(f))).toList();
-      } else if (key == 'Origin') {
-        res = res.where((p) => values.contains(p.origin)).toList();
-      } else if (key == 'Natural Colour') {
-        res = res.where((p) => p.naturalColors.any((c) => values.contains(c))).toList();
-      } else if (key == 'Price Range') {
-        res = res.where((p) {
-          final price = p.gradePrice['A'] ?? 0.0;
-          for (final v in values) {
-            if (v == '0-50' && price >=0 && price <50) return true;
-            if (v == '50-100' && price >=50 && price <100) return true;
-            if (v == '100-200' && price >=100 && price <200) return true;
-            if (v == '200-1000' && price >=200 && price <1000) return true;
-            if (v == '1000+' && price >=1000) return true;
-          }
-          return false;
-        }).toList();
-      } else if (key == 'Handicraft') {
-        res = res.where((p) => p.handcraftItemName != null && p.handcraftItemName!.isNotEmpty && values.contains(p.handcraftItemName)).toList();
-      }
-    });
-
-    return res;
-  }
-
-  List<Product> _mockProducts() => [
-    Product(
-      id: "1",
-      productCode: "MAR-001",
-      name: "Makrana White Marble",
-      description: "Premium white marble",
-      images: ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c"],
-      synonyms: ['Makrana','White Makrana'],
-      materialPointers: 'Best used for flooring and countertops; avoid acid cleaners.',
-      handcraftItemName: null,
-      traderGradePrice: {'A': 260.0},
-      types: ["Marble"],
-      utilities: ["Flooring", "Kitchen"],
-      colors: ["White"],
-      naturalColors: ["White"],
-      origin: "North India",
-      stateOrCountry: "Rajasthan",
-      processingNature: "Fresh",
-      materialNaturality: "Natural",
-      finishes: ["Polish"],
-      textures: ["Plain"],
-      sizes: "Random slabs",
-      thickness: "18mm",
-      gradePrice: {"A": 250},
-      miningDetails: MiningDetails(
-        mineName: "Makrana Mine",
-        ownerName: "Govt",
-        location: "Rajasthan",
-        contact: "NA",
-      ),
-      socialLinks: SocialLinks(
-        website: "",
-        instagram: "",
-        youtube: "",
-      ),
-    ),
-  ];
-
-  void _shareAllProducts() {}
-
-  // Simple placeholder edit dialog for admins. Replace with full editor as needed.
-  void _editProduct(Product p) {
-    final nameCtrl = TextEditingController(text: p.name);
-    final priceCtrl = TextEditingController(text: p.gradePrice['A']?.toString() ?? '');
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Product'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-            const SizedBox(height: 8),
-            TextField(controller: priceCtrl, decoration: const InputDecoration(labelText: 'Price (A)'), keyboardType: TextInputType.number),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () {
-            nameCtrl.dispose();
-            priceCtrl.dispose();
-            Navigator.of(context).pop();
-          }, child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final newName = nameCtrl.text.trim();
-              final newPrice = double.tryParse(priceCtrl.text.trim()) ?? p.gradePrice['A'] ?? 0.0;
-              nameCtrl.dispose();
-              priceCtrl.dispose();
-
-              // Update in-memory list and persist
-              final idx = _products.indexWhere((x) => x.id == p.id);
-              if (idx != -1) {
-                final updated = Product(
-                  id: p.id,
-                  productCode: p.productCode,
-                  name: newName,
-                  description: p.description,
-                  images: p.images,
-                  synonyms: p.synonyms,
-                  materialPointers: p.materialPointers,
-                  handcraftItemName: p.handcraftItemName,
-                  traderGradePrice: p.traderGradePrice,
-                  types: p.types,
-                  utilities: p.utilities,
-                  colors: p.colors,
-                  naturalColors: p.naturalColors,
-                  origin: p.origin,
-                  stateOrCountry: p.stateOrCountry,
-                  processingNature: p.processingNature,
-                  materialNaturality: p.materialNaturality,
-                  finishes: p.finishes,
-                  textures: p.textures,
-                  sizes: p.sizes,
-                  thickness: p.thickness,
-                  gradePrice: {...p.gradePrice, 'A': newPrice},
-                  miningDetails: p.miningDetails,
-                  socialLinks: p.socialLinks,
-                );
-                _products[idx] = updated;
-                await _persistProducts();
-                setState(() {});
-              }
-
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Saved (mock): $newName · ₹${newPrice.toStringAsFixed(2)}')));
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
+  void _shareAllProducts() {
+    // TODO: Implement share functionality
   }
 }
 
 class RoleTheme {
   static Color primary(String role) =>
       role == 'superadmin'
-          ? AppColors.primaryGold
+          ? AppColors.superAdminPrimary
           : role == 'admin'
           ? AppColors.secondaryBlue
           : AppColors.primaryTeal;
 
   static Color primaryLight(String role) =>
       role == 'superadmin'
-          ? AppColors.primaryGoldLight
+          ? AppColors.superAdminLight
           : role == 'admin'
           ? AppColors.secondaryBlueLight
           : AppColors.primaryTealLight;
 
   static Color primaryDark(String role) =>
       role == 'superadmin'
-          ? AppColors.primaryGoldDark
+          ? AppColors.superAdminPrimaryDark
           : role == 'admin'
           ? AppColors.secondaryBlueDark
           : AppColors.primaryTealDark;

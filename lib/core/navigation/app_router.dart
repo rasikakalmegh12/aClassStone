@@ -256,6 +256,7 @@ class AppRouter {
               BlocProvider<PostHandicraftsTypesBloc>(create: (context) => PostHandicraftsTypesBloc(),),
               BlocProvider<ProductEntryBloc>(create: (context) => ProductEntryBloc(),),
               BlocProvider<CatalogueImageEntryBloc>(create: (context) => CatalogueImageEntryBloc(),),
+              BlocProvider<PutCatalogueOptionsEntryBloc>(create: (context) => PutCatalogueOptionsEntryBloc(),),
             ],
             child: const CatalogueEntryPage(),
           );
@@ -329,7 +330,13 @@ class AppRouter {
         builder: (context, state) {
           final meetingId = state.pathParameters['meetingId'];
           // return MeetingDetailScreen(meetingId: meetingId);
-          return CataloguePage();
+          return MultiBlocProvider(
+              providers:[
+                BlocProvider<GetCatalogueProductListBloc>(create: (context) => GetCatalogueProductListBloc(),),
+                BlocProvider<GetCatalogueProductDetailsBloc>(create: (context) => GetCatalogueProductDetailsBloc(),),
+
+              ],
+              child: const CataloguePage());
         },
       ),
       // Registration Management Routes

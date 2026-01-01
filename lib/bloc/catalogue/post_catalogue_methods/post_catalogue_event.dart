@@ -1,4 +1,5 @@
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
+import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import 'dart:io';
 
 import '../../../api/models/request/PostCatalogueCommonRequestBody.dart';
@@ -120,3 +121,18 @@ class UploadCatalogueImage extends CatalogueImageEntryEvent {
     this.showLoader = false,
   });
 }
+
+// ========================= Put Catalogue Options Entry Event =========================
+abstract class PutCatalogueOptionsEntryEvent {}
+class UpdateCatalogueOptions extends PutCatalogueOptionsEntryEvent {
+  final String productId;
+  final PutCatalogueOptionEntryRequestBody requestBody;
+  final bool showLoader;
+
+  UpdateCatalogueOptions({
+    required this.productId,
+    required this.requestBody,
+    this.showLoader = false,
+  });
+}
+

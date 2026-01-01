@@ -1,6 +1,3 @@
-
-
-
 abstract class GetProductTypeEvent {}
 class FetchGetProductType extends GetProductTypeEvent {
 
@@ -95,3 +92,29 @@ class FetchGetHandicrafts extends GetHandicraftsEvent {
   FetchGetHandicrafts({this.showLoader = false});
 }
 
+// ========================= Get Catalogue Product List Event =========================
+abstract class GetCatalogueProductListEvent {}
+class FetchGetCatalogueProductList extends GetCatalogueProductListEvent {
+  final int page;
+  final int pageSize;
+  final bool showLoader;
+
+  FetchGetCatalogueProductList({
+    this.page = 1,
+    this.pageSize = 20,
+    this.showLoader = false,
+  });
+}
+
+// ======================== Get Catalogue Product Details Events ========================
+abstract class GetCatalogueProductDetailsEvent {}
+
+class FetchGetCatalogueProductDetails extends GetCatalogueProductDetailsEvent {
+  final String productId;
+  final bool showLoader;
+
+  FetchGetCatalogueProductDetails({
+    required this.productId,
+    this.showLoader = true,
+  });
+}

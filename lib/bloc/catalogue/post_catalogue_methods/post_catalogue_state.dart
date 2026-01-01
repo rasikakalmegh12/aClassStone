@@ -1,5 +1,6 @@
 import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/CatalogueImageEntryResponseBody.dart';
+import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 
 import '../../../api/models/response/PostCatalogueCommonResponseBody.dart';
 
@@ -195,3 +196,20 @@ class CatalogueImageEntryError extends CatalogueImageEntryState {
   final String message;
   CatalogueImageEntryError({required this.message});
 }
+
+// ========================= Put Catalogue Options Entry State =========================
+abstract class PutCatalogueOptionsEntryState {}
+class PutCatalogueOptionsEntryInitial extends PutCatalogueOptionsEntryState {}
+class PutCatalogueOptionsEntryLoading extends PutCatalogueOptionsEntryState {
+  final bool showLoader;
+  PutCatalogueOptionsEntryLoading({this.showLoader = false});
+}
+class PutCatalogueOptionsEntrySuccess extends PutCatalogueOptionsEntryState {
+  final ApiCommonResponseBody response;
+  PutCatalogueOptionsEntrySuccess({required this.response});
+}
+class PutCatalogueOptionsEntryError extends PutCatalogueOptionsEntryState {
+  final String message;
+  PutCatalogueOptionsEntryError({required this.message});
+}
+
