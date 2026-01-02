@@ -46,10 +46,18 @@ class _CataloguePageState extends State<CataloguePage>
 
   late AnimationController _controller;
   late Animation<double> _fade;
+  late PageController _pageController;
+  late AnimationController _bounceController;
+  late Animation<double> _bounceAnimation;
+  late AnimationController _shimmerController;
+  late Animation<double> _shimmerAnimation;
+  late AnimationController _pulseController;
 
   String _search = '';
   Map<String, List<String>> _filters = {};
   List<SimpleProduct> _products = [];
+  int _currentIndex = 0;
+  bool _isListView = false; // Toggle between swipeable and list view
 
   String get role => SessionManager.getUserRoleForPermissions();
   bool get isAdmin => role == 'admin' || role == 'superadmin';
@@ -68,6 +76,32 @@ class _CataloguePageState extends State<CataloguePage>
     );
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
+
+    _pageController = PageController(viewportFraction: 0.88);
+
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _bounceAnimation = CurvedAnimation(
+      parent: _bounceController,
+      curve: Curves.elasticOut,
+    );
+
+    // Shimmer effect for badges
+    _shimmerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+    _shimmerAnimation = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOutSine),
+    );
+
+    // Pulse effect for CTA button
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
 
     // Load products from API using BLoC
     context.read<GetCatalogueProductListBloc>().add(FetchGetCatalogueProductList(
@@ -109,6 +143,10 @@ class _CataloguePageState extends State<CataloguePage>
   @override
   void dispose() {
     _controller.dispose();
+    _pageController.dispose();
+    _bounceController.dispose();
+    _shimmerController.dispose();
+    _pulseController.dispose();
     super.dispose();
   }
 
@@ -118,19 +156,9 @@ class _CataloguePageState extends State<CataloguePage>
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-
-    int columns;
-    if (width < 600) {
-      columns = 2;        // phones
-    } else if (width < 900) {
-      columns = 3;        // tablets
-    } else {
-      columns = 4;        // large screens
-    }
 
     return Scaffold(
-      backgroundColor: Colors.grey[100],
+      // backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
         backgroundColor: primary,
         title: const Text("Product Catalogue"),
@@ -139,6 +167,15 @@ class _CataloguePageState extends State<CataloguePage>
             IconButton(
               icon: const Icon(Icons.share),
               onPressed: _shareAllProducts,
+            ),
+          if(isAdmin)
+            IconButton(
+              icon: Icon(_isListView ? Icons.view_carousel : Icons.list),
+              onPressed: () {
+                setState(() {
+                  _isListView = !_isListView;
+                });
+              },
             ),
           IconButton(
             icon: const Icon(Icons.tune),
@@ -213,6 +250,8 @@ class _CataloguePageState extends State<CataloguePage>
             opacity: _fade,
             child: Column(
               children: [
+
+
                 _searchBar(),
                 Expanded(
                   child: RefreshIndicator(
@@ -241,17 +280,9 @@ class _CataloguePageState extends State<CataloguePage>
                               ),
                             ],
                           )
-                        : GridView.builder(
-                            padding: const EdgeInsets.all(12),
-                            itemCount: products.length,
-                            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: columns,
-                              childAspectRatio: 0.65,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                            itemBuilder: (_, i) => _productCard(products[i]),
-                          ),
+                        : _isListView
+                            ? _buildListView(products)
+                            : _buildSwipeableView(products),
                   ),
                 ),
               ],
@@ -259,6 +290,165 @@ class _CataloguePageState extends State<CataloguePage>
           );
         },
       ),
+    );
+  }
+
+  /// Build List View (Grid Layout)
+  Widget _buildListView(List<SimpleProduct> products) {
+    // Calculate columns based on screen width
+    final screenWidth = MediaQuery.of(context).size.width;
+    final columns = screenWidth > 600 ? 3 : 2;
+
+    return GridView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: products.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        childAspectRatio: 0.65,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemBuilder: (_, i) => _productCard(products[i]),
+    );
+  }
+
+  /// Build Swipeable View
+  Widget _buildSwipeableView(List<SimpleProduct> products) {
+    return Column(
+      children: [
+        // Product counter with animated progress bar
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+          child: Column(
+            children: [
+              // Progress indicator
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: LinearProgressIndicator(
+                  value: (products.isEmpty ? 0 : (_currentIndex + 1) / products.length),
+                  backgroundColor: Colors.grey[300],
+                  valueColor: AlwaysStoppedAnimation<Color>(primary),
+                  minHeight: 4,
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Swipeable product cards with 3D effect
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: products.length,
+            physics: const BouncingScrollPhysics(),
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+              // Trigger bounce animation on page change
+              _bounceController.forward(from: 0);
+            },
+            itemBuilder: (context, index) {
+              return AnimatedBuilder(
+                animation: _pageController,
+                builder: (context, child) {
+                  double value = 1.0;
+                  double rotation = 0.0;
+
+                  if (_pageController.position.haveDimensions) {
+                    value = _pageController.page! - index;
+                    // Scale effect
+                    value = (1 - (value.abs() * 0.3)).clamp(0.7, 1.0);
+                    // Rotation effect for 3D feel
+                    rotation = ((_pageController.page! - index) * 0.1).clamp(-0.1, 0.1);
+                  }
+
+                  return Transform(
+                    alignment: Alignment.center,
+                    transform: Matrix4.identity()
+                      ..setEntry(3, 2, 0.001) // perspective
+                      ..rotateY(rotation),
+                    child: Center(
+                      child: SizedBox(
+                        height: Curves.easeOut.transform(value) *
+                               MediaQuery.of(context).size.height * 0.68,
+                        child: Opacity(
+                          opacity: value.clamp(0.85, 1.0),
+                          child: child,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                child: _swipeableProductCard(products[index]),
+              );
+            },
+          ),
+        ),
+        // Enhanced navigation hints with icons
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 20),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.swipe, size: 18, color: Colors.grey[700]),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Swipe',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Text(
+                  '${_currentIndex + 1} / ${products.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: primary,
+                  ),
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Details',
+                    style: TextStyle(
+                      color: Colors.grey[700],
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(Icons.touch_app, size: 18, color: Colors.grey[700]),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -277,6 +467,447 @@ class _CataloguePageState extends State<CataloguePage>
       ),
     );
   }
+
+  Widget _swipeableProductCard(SimpleProduct p) {
+    return GestureDetector(
+      onTap: () {
+        _bounceController.forward(from: 0);
+        Future.delayed(const Duration(milliseconds: 150), () => _openDetails(p));
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Hero(
+          tag: 'product_${p.id}',
+          child: Material(
+            color: Colors.transparent,
+            child: AnimatedBuilder(
+              animation: _bounceAnimation,
+              builder: (context, child) {
+                final scale = 1.0 - (_bounceAnimation.value * 0.05);
+                return Transform.scale(
+                  scale: scale,
+                  child: child,
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(32),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white,
+                      Colors.grey[50]!,
+                      Colors.grey[100]!,
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.5),
+                      blurRadius: 30,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 25,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(32),
+                  child: Stack(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          /// IMAGE Section with parallax and shimmer
+                          Expanded(
+                            flex: 3,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // Main Image with parallax effect
+                                AnimatedBuilder(
+                                  animation: _pageController,
+                                  builder: (context, child) {
+                                    double offset = 0.0;
+                                    if (_pageController.position.haveDimensions) {
+                                      final page = _pageController.page ?? 0;
+                                      final index = _products.indexOf(p);
+                                      offset = (page - index) * 50;
+                                    }
+                                    return Transform.translate(
+                                      offset: Offset(offset, 0),
+                                      child: child,
+                                    );
+                                  },
+                                  child: p.primaryImageUrl == null
+                                      ? _buildNoImagePlaceholder()
+                                      : Image.network(
+                                          p.primaryImageUrl!,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+                                        ),
+                                ),
+
+                                // Animated gradient overlay
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    height: 160,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withValues(alpha: 0.3),
+                                          Colors.black.withValues(alpha: 0.85),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Shimmer effect on top
+                                Positioned.fill(
+                                  child: AnimatedBuilder(
+                                    animation: _shimmerAnimation,
+                                    builder: (context, child) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment(_shimmerAnimation.value, -1),
+                                            end: Alignment(-_shimmerAnimation.value, 1),
+                                            colors: [
+                                              Colors.transparent,
+                                              Colors.white.withValues(alpha: 0.05),
+                                              Colors.transparent,
+                                            ],
+                                            stops: const [0.0, 0.5, 1.0],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                                // Product Type Badge
+                                Positioned(
+                                  top: 20,
+                                  right: 20,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: primary,
+                                      borderRadius: BorderRadius.circular(20),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.2),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      p.productTypeName.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                                // Product code badge
+                                Positioned(
+                                  top: 20,
+                                  left: 20,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(alpha: 0.3),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      p.productCode,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 0.8,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                      /// CONTENT Section with enhanced design
+                      Expanded(
+                        flex: 1,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.white,
+                                Colors.grey[50]!,
+                              ],
+                            ),
+                          ),
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  /// PRODUCT NAME with slide-in effect
+                                  TweenAnimationBuilder<double>(
+                                    duration: const Duration(milliseconds: 600),
+                                    tween: Tween(begin: 0.0, end: 1.0),
+                                    builder: (context, value, child) {
+                                      return Opacity(
+                                        opacity: value,
+                                        child: Transform.translate(
+                                          offset: Offset(0, 20 * (1 - value)),
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: Text(
+                                      p.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 20,
+                                        height: 1.2,
+                                        color: Colors.grey[900],
+                                        letterSpacing: -0.5,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 5),
+
+                                  /// PRICE ROW with animated elements
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      // Price section with shine effect
+                                      Expanded(
+                                        child: TweenAnimationBuilder<double>(
+                                          duration: const Duration(milliseconds: 800),
+                                          tween: Tween(begin: 0.0, end: 1.0),
+                                          curve: Curves.elasticOut,
+                                          builder: (context, value, child) {
+                                            return Transform.scale(
+                                              scale: value,
+                                              alignment: Alignment.centerLeft,
+                                              child: child,
+                                            );
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      '₹',
+                                                      style: TextStyle(
+                                                        color: primary,
+                                                        fontWeight: FontWeight.w900,
+                                                        fontSize: 20,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 2),
+                                                    Text(
+                                                      '${p.pricePerSqft.toInt()}',
+                                                      style: TextStyle(
+                                                        color: primary,
+                                                        fontWeight: FontWeight.w900,
+                                                        fontSize: 25,
+                                                        height: 1,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                                  decoration: BoxDecoration(
+                                                    color: primary.withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    'per sqft',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      color: primary,
+                                                      fontWeight: FontWeight.w700,
+                                                      letterSpacing: 0.5,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 16),
+
+                                      // Animated CTA Button with shimmer
+                                      AnimatedBuilder(
+                                        animation: _pulseController,
+                                        builder: (context, child) {
+                                          final scale = 1.0 + (_pulseController.value * 0.08);
+                                          return Transform.scale(
+                                            scale: scale,
+                                            child: AnimatedBuilder(
+                                              animation: _shimmerController,
+                                              builder: (context, shimmerChild) {
+                                                return Container(
+                                                  width: 50,
+                                                  height: 50,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    gradient: LinearGradient(
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                      colors: [primary, light, dark],
+                                                    ),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: primary.withValues(alpha: 0.3),
+                                                        blurRadius: 20 + (_pulseController.value * 10),
+                                                        spreadRadius:0.5+ (_pulseController.value * 2),
+                                                        offset: const Offset(0, 6),
+                                                      ),
+                                                      BoxShadow(
+                                                        color: Colors.white.withValues(alpha: 0.8),
+                                                        blurRadius: 8,
+                                                        spreadRadius: -3,
+                                                        offset: const Offset(0, -2),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      // Shimmer overlay
+                                                      Positioned.fill(
+                                                        child: ClipOval(
+                                                          child: Container(
+                                                            decoration: BoxDecoration(
+                                                              gradient: LinearGradient(
+                                                                begin: Alignment(-1.5 + (_shimmerController.value * 3), -1),
+                                                                end: Alignment(1.5 + (_shimmerController.value * 3), 1),
+                                                                colors: [
+                                                                  Colors.transparent,
+                                                                  Colors.white.withValues(alpha: 0.2),
+                                                                  Colors.white.withValues(alpha: 0.3),
+                                                                  Colors.white.withValues(alpha: 0.2),
+                                                                  Colors.transparent,
+                                                                ],
+                                                                stops: const [0.0, 0.35, 0.5, 0.65, 1.0],
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      // Button content
+                                                      Material(
+                                                        color: Colors.transparent,
+                                                        child: InkWell(
+                                                          onTap: () => _openDetails(p),
+                                                          customBorder: const CircleBorder(),
+                                                          splashColor: Colors.white.withValues(alpha: 0.5),
+                                                          child: const Center(
+                                                            child: Icon(
+                                                              Icons.arrow_forward_rounded,
+                                                              size: 32,
+                                                              color: Colors.white,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ),
+
+                        ],
+                      ),
+
+                      // Floating particles effect (optional decoration)
+                      // Positioned(
+                      //   top: 100,
+                      //   right: 30,
+                      //   child: AnimatedBuilder(
+                      //     animation: _shimmerController,
+                      //     builder: (context, child) {
+                      //       return Transform.translate(
+                      //         offset: Offset(0, _shimmerAnimation.value * 10),
+                      //         child: Opacity(
+                      //           opacity: 0.3,
+                      //           child: Container(
+                      //             width: 8,
+                      //             height: 8,
+                      //             decoration: BoxDecoration(
+                      //               color: primary,
+                      //               shape: BoxShape.circle,
+                      //               boxShadow: [
+                      //                 BoxShadow(
+                      //                   color: primary.withValues(alpha: 0.5),
+                      //                   blurRadius: 10,
+                      //                 ),
+                      //               ],
+                      //             ),
+                      //           ),
+                      //         ),
+                      //       );
+                      //     },
+                      //   ),
+                      // ),
+                   ]
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+        )
+      )
+    );
+  }
+
   Widget _productCard(SimpleProduct p) {
     return GestureDetector(
       onTap: () => _openDetails(p),
@@ -296,53 +927,53 @@ class _CataloguePageState extends State<CataloguePage>
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     child: p.primaryImageUrl == null
                         ? Container(
-                            color: Colors.grey[200],
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.broken_image_outlined,
-                                  size: 64,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'No Image',
-                                  style: TextStyle(
-                                    color: Colors.grey[500],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Image.network(
-                            p.primaryImageUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: Colors.grey[200],
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.broken_image_outlined,
-                                    size: 64,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Image Error',
-                                    style: TextStyle(
-                                      color: Colors.grey[500],
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                      color: Colors.grey[200],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.broken_image_outlined,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'No Image',
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
+                        ],
+                      ),
+                    )
+                        : Image.network(
+                      p.primaryImageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        color: Colors.grey[200],
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.broken_image_outlined,
+                              size: 64,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Image Error',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 // Product Type Badge
@@ -441,8 +1072,130 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
+  Widget _buildNoImagePlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            primary.withValues(alpha: 0.1),
+            light.withValues(alpha: 0.05),
+            Colors.grey[100]!,
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.8),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: primary.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.image_not_supported_outlined,
+              size: 100,
+              color: Colors.grey[400],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Text(
+              'No Image Available',
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-
+  Widget _buildImageErrorPlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.red[50]!,
+            Colors.grey[100]!,
+          ],
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.9),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.red.withValues(alpha: 0.2),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.broken_image_outlined,
+              size: 100,
+              color: Colors.red[300],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Text(
+              'Image Load Error',
+              style: TextStyle(
+                color: Colors.red[400],
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
 
   List<SimpleProduct> _applyFilters(List<SimpleProduct> products) {
@@ -476,18 +1229,15 @@ class _CataloguePageState extends State<CataloguePage>
         value: detailsBloc,
         child: BlocBuilder<GetCatalogueProductDetailsBloc, GetCatalogueProductDetailsState>(
           builder: (context, state) {
-            return DraggableScrollableSheet(
-              initialChildSize: 0.85,
-              expand: false,
-              builder: (context, scrollController) => Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-                  boxShadow: [BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.08), blurRadius: 10)],
-                ),
-                padding: const EdgeInsets.all(16),
-                child: _buildDetailsContent(state, scrollController, p),
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+                boxShadow: [BoxShadow(color: Color.fromRGBO(0, 0, 0, 0.08), blurRadius: 10)],
               ),
+              padding: const EdgeInsets.all(16),
+              child: _buildDetailsContent(state, null, p),
             );
           },
         ),
@@ -495,7 +1245,7 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _buildDetailsContent(GetCatalogueProductDetailsState state, ScrollController scrollController, SimpleProduct simpleProduct) {
+  Widget _buildDetailsContent(GetCatalogueProductDetailsState state, ScrollController? scrollController, SimpleProduct simpleProduct) {
     if (state is GetCatalogueProductDetailsLoading && state.showLoader) {
       return Center(
         child: CircularProgressIndicator(color: primary),
@@ -540,7 +1290,6 @@ class _CataloguePageState extends State<CataloguePage>
       }
 
       return ListView(
-        controller: scrollController,
         children: [
           // Header: Name + Code + Close
           Row(
@@ -890,3 +1639,5 @@ class RoleTheme {
           ? AppColors.secondaryBlueDark
           : AppColors.primaryTealDark;
 }
+
+
