@@ -4,6 +4,8 @@ import 'dart:io';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostMinesEntryRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
@@ -17,16 +19,20 @@ import 'package:apclassstone/api/models/response/GetCatalogueProductDetailsRespo
 import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetMinesOptionResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetNaturalColorResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetOriginsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetPriceRangeResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProcessingNaturesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostCatalogueCommonResponseBody.dart';
+import 'package:apclassstone/api/models/response/PostMinesEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
+import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -1524,9 +1530,10 @@ class ApiIntegration {
   static Future<GetCatalogueProductResponseBody> getCatalogueProductList({
     int page = 1,
     int pageSize = 20,
+    String? search
   }) async {
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}marketing/catalogue/products?page=$page&pageSize=$pageSize');
+      final url = Uri.parse('${ApiConstants.baseUrl}marketing/catalogue/products?page=$page&pageSize=$pageSize${search!=null?"&search=$search":""}');
       if (kDebugMode) print('📤 Sending getCatalogueProductList request to: $url');
 
       final response = await ApiClient.send(() {
@@ -1566,7 +1573,8 @@ class ApiIntegration {
   /// Returns [GetCatalogueProductDetailsResponseBody] with detailed product information
   static Future<GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails({
     required String productId,
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse('${ApiConstants.getCatalogueProductDetails}/$productId');
       if (kDebugMode) print('📤 Sending getCatalogueProductDetails request to: $url');
@@ -1606,6 +1614,90 @@ class ApiIntegration {
     }
   }
 
+
+  static Future<GetPriceRangeResponseBody> getPriceRange() async
+  {
+    try {
+      final url = Uri.parse(ApiConstants.getPriceRange);
+      if (kDebugMode) print('📤 Sending getPriceRange request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 getPriceRange status: ${response.statusCode}');
+        print('📥 getPriceRange body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return GetPriceRangeResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return GetPriceRangeResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Failed to fetch product details',
+          statusCode: response.statusCode,
+          data: null,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ getPriceRange error: $e');
+      return GetPriceRangeResponseBody(
+        status: false,
+        message: e.toString(),
+        statusCode: 500,
+        data: null,
+      );
+    }
+  }
+
+
+
+  static Future<GetMinesOptionResponseBody> getMinesOption() async
+  {
+    try {
+      final url = Uri.parse(ApiConstants.getMinesOption);
+      if (kDebugMode) print('📤 Sending getMinesOption request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 getMinesOption status: ${response.statusCode}');
+        print('📥 getMinesOption body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return GetMinesOptionResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return GetMinesOptionResponseBody(
+          status: false,
+          message: jsonResponse['message'] ?? 'Failed to fetch product details',
+          statusCode: response.statusCode,
+          data: null,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ getMinesOption error: $e');
+      return GetMinesOptionResponseBody(
+        status: false,
+        message: e.toString(),
+        statusCode: 500,
+        data: null,
+      );
+    }
+  }
 
   ///-----------------PATCH METHOD --------------------------
 
@@ -2488,7 +2580,8 @@ class ApiIntegration {
   static Future<ApiCommonResponseBody> putCatalogueOptionsEntry({
     required String productId,
     required PutCatalogueOptionEntryRequestBody requestBody,
-  }) async {
+  })
+  async {
     try {
       final url = Uri.parse('${ApiConstants.putCatalogueOptionsEntry}/$productId/options');
       if (kDebugMode) print('📤 Sending putCatalogueOptionsEntry request to: $url');
@@ -2521,6 +2614,96 @@ class ApiIntegration {
     } catch (e) {
       if (kDebugMode) print('❌ putCatalogueOptionsEntry error: $e');
       return ApiCommonResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+
+
+  static Future<PostMinesEntryResponseBody> postMinesEntry({
+    required PostMinesEntryRequestBody requestBody,
+  })
+  async {
+    try {
+      final url = Uri.parse(ApiConstants.postMinesEntry);
+      if (kDebugMode) print('📤 Sending postMinesEntry request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postMinesEntry status: ${response.statusCode}');
+        print('📥 postMinesEntry request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postMinesEntry body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostMinesEntryResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostMinesEntryResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postMinesEntry error: $e');
+      return PostMinesEntryResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+
+
+  static Future<GetCatalogueProductResponseBody> postSearch({
+    required PostSearchRequestBody requestBody,
+  })
+  async {
+    try {
+      final url = Uri.parse(ApiConstants.postSearch);
+      if (kDebugMode) print('📤 Sending postSearch request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postSearch status: ${response.statusCode}');
+        print('📥 postSearch request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postSearch body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return GetCatalogueProductResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return GetCatalogueProductResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postSearch error: $e');
+      return GetCatalogueProductResponseBody(
         status: false,
         message: e.toString(),
       );

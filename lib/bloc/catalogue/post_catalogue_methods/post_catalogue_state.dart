@@ -1,7 +1,9 @@
+import 'package:apclassstone/api/models/response/PostMinesEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/CatalogueImageEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 
+import '../../../api/models/response/GetCatalogueProductResponseBody.dart';
 import '../../../api/models/response/PostCatalogueCommonResponseBody.dart';
 
 // ========================= Post Colors State =========================
@@ -211,5 +213,39 @@ class PutCatalogueOptionsEntrySuccess extends PutCatalogueOptionsEntryState {
 class PutCatalogueOptionsEntryError extends PutCatalogueOptionsEntryState {
   final String message;
   PutCatalogueOptionsEntryError({required this.message});
+}
+
+
+// ========================= Put Catalogue Options Entry State =========================
+abstract class PostMinesEntryState {}
+class PostMinesEntryInitial extends PostMinesEntryState {}
+class PostMinesEntryLoading extends PostMinesEntryState {
+  final bool showLoader;
+  PostMinesEntryLoading({this.showLoader = false});
+}
+class PostMinesEntrySuccess extends PostMinesEntryState {
+  final PostMinesEntryResponseBody response;
+  PostMinesEntrySuccess({required this.response});
+}
+class PostMinesEntryError extends PostMinesEntryState {
+  final String message;
+  PostMinesEntryError({required this.message});
+}
+
+
+// ========================= Put Catalogue Options Entry State =========================
+abstract class PostSearchState {}
+class PostSearchInitial extends PostSearchState {}
+class PostSearchLoading extends PostSearchState {
+  final bool showLoader;
+  PostSearchLoading({this.showLoader = false});
+}
+class PostSearchSuccess extends PostSearchState {
+  final GetCatalogueProductResponseBody response;
+  PostSearchSuccess({required this.response});
+}
+class PostSearchError extends PostSearchState {
+  final String message;
+  PostSearchError({required this.message});
 }
 

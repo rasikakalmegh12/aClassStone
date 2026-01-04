@@ -9,8 +9,8 @@ class GetCatalogueProductResponseBody {
 
   GetCatalogueProductResponseBody.fromJson(Map<String, dynamic> json) {
     status = json['status'];
-    message = json['message']?.toString();
-    statusCode = json['statusCode'] != null ? (json['statusCode'] as num).toInt() : null;
+    message = json['message'];
+    statusCode = json['statusCode'];
     data = json['data'] != null ? new Data.fromJson(json['data']) : null;
   }
 
@@ -35,9 +35,9 @@ class Data {
   Data({this.page, this.pageSize, this.total, this.items});
 
   Data.fromJson(Map<String, dynamic> json) {
-    page = json['page'] != null ? (json['page'] as num).toInt() : null;
-    pageSize = json['pageSize'] != null ? (json['pageSize'] as num).toInt() : null;
-    total = json['total'] != null ? (json['total'] as num).toInt() : null;
+    page = json['page'];
+    pageSize = json['pageSize'];
+    total = json['total'];
     if (json['items'] != null) {
       items = <Items>[];
       json['items'].forEach((v) {
@@ -65,6 +65,8 @@ class Items {
   int? pricePerSqft;
   String? productTypeId;
   String? productTypeName;
+  String? priceRangeId;
+  String? priceRangeName;
   String? primaryImageUrl;
 
   Items(
@@ -74,16 +76,20 @@ class Items {
         this.pricePerSqft,
         this.productTypeId,
         this.productTypeName,
+        this.priceRangeId,
+        this.priceRangeName,
         this.primaryImageUrl});
 
   Items.fromJson(Map<String, dynamic> json) {
-    id = json['id']?.toString();
-    productCode = json['productCode']?.toString();
-    name = json['name']?.toString();
-    pricePerSqft = json['pricePerSqft'] != null ? (json['pricePerSqft'] as num).toInt() : null;
-    productTypeId = json['productTypeId']?.toString();
-    productTypeName = json['productTypeName']?.toString();
-    primaryImageUrl = json['primaryImageUrl']?.toString();
+    id = json['id'];
+    productCode = json['productCode'];
+    name = json['name'];
+    pricePerSqft = json['pricePerSqft'];
+    productTypeId = json['productTypeId'];
+    productTypeName = json['productTypeName'];
+    priceRangeId = json['priceRangeId'];
+    priceRangeName = json['priceRangeName'];
+    primaryImageUrl = json['primaryImageUrl'];
   }
 
   Map<String, dynamic> toJson() {
@@ -94,6 +100,8 @@ class Items {
     data['pricePerSqft'] = this.pricePerSqft;
     data['productTypeId'] = this.productTypeId;
     data['productTypeName'] = this.productTypeName;
+    data['priceRangeId'] = this.priceRangeId;
+    data['priceRangeName'] = this.priceRangeName;
     data['primaryImageUrl'] = this.primaryImageUrl;
     return data;
   }

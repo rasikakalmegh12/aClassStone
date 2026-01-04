@@ -267,6 +267,7 @@ class GetCatalogueProductListBloc extends Bloc<GetCatalogueProductListEvent, Get
         final response = await ApiIntegration.getCatalogueProductList(
           page: event.page,
           pageSize: event.pageSize,
+          search: event.search
         );
 
         if (response.status == true) {
@@ -307,3 +308,56 @@ class GetCatalogueProductDetailsBloc extends Bloc<GetCatalogueProductDetailsEven
     });
   }
 }
+
+
+// ======================== Get Catalogue Product Details BLoC ========================
+class GetPriceRangeBloc extends Bloc<GetPriceRangeEvent, GetPriceRangeState> {
+  GetPriceRangeBloc() : super(GetPriceRangeInitial()) {
+    on<FetchGetPriceRange>((FetchGetPriceRange event, Emitter<GetPriceRangeState> emit) async {
+      emit(GetPriceRangeLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.getPriceRange(
+
+        );
+
+        if (response.status == true) {
+          emit(GetPriceRangeLoaded(response: response));
+        } else {
+          emit(GetPriceRangeError(message: response.message ?? 'Failed to fetch price range details'));
+        }
+      } catch (e) {
+        emit(GetPriceRangeError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+  }
+}
+
+
+// ======================== Get Catalogue Product Details BLoC ========================
+class GetMinesOptionBloc extends Bloc<GetMinesOptionEvent, GetMinesOptionState> {
+  GetMinesOptionBloc() : super(GetMinesOptionInitial()) {
+    on<FetchGetMinesOption>((FetchGetMinesOption event, Emitter<GetMinesOptionState> emit) async {
+      emit(GetMinesOptionLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.getMinesOption(
+        );
+
+        if (response.status == true) {
+          emit(GetMinesOptionLoaded(response: response));
+        } else {
+          emit(GetMinesOptionsError(message: response.message ?? 'Failed to fetch mines details'));
+        }
+      } catch (e) {
+        emit(GetMinesOptionsError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+  }
+}
+
+

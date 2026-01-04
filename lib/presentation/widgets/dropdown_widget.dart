@@ -18,14 +18,18 @@ class CustomDropdownSection extends StatelessWidget {
   final String? selectedId;
   final Function(String? id, String? name) onChanged;
   final IconData icon;
+  final bool? extraFeature;
+  final Widget? widget;
+  final VoidCallback? onTap;
 
-  const CustomDropdownSection({
+
+   const CustomDropdownSection({
     super.key,
     required this.title,
     required this.options,
     required this.selectedId,
     required this.onChanged,
-    this.icon = Icons.arrow_drop_down_circle,
+    this.icon = Icons.arrow_drop_down_circle, this.extraFeature=false, this.widget, this.onTap,
   });
 
   @override
@@ -81,6 +85,12 @@ class CustomDropdownSection extends StatelessWidget {
                     size: 16,
                   ),
                 ),
+
+              if(extraFeature==true)
+                InkWell(
+                  onTap: onTap,
+                  child:widget ,
+                )
             ],
           ),
           const SizedBox(height: 12),

@@ -8,6 +8,8 @@ import 'package:apclassstone/data/repositories/punch_repository.dart';
 
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
+import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
+import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import 'connectivity_service.dart';
 import 'sync_service.dart';
 
@@ -26,6 +28,22 @@ class AppBlocProvider {
   static late PunchOutBloc _punchOutBloc;
   static late LocationPingBloc _locationPingBloc;
   static late ExecutiveTrackingBloc _executiveTrackingBloc;
+
+  // Catalogue BLoCs
+  static late GetProductTypeBloc _getProductTypeBloc;
+  static late GetUtilitiesBloc _getUtilitiesBloc;
+  static late GetColorsBloc _getColorsBloc;
+  static late GetFinishesBloc _getFinishesBloc;
+  static late GetTexturesBloc _getTexturesBloc;
+  static late GetNaturalColorsBloc _getNaturalColorsBloc;
+  static late GetOriginsBloc _getOriginsBloc;
+  static late GetStateCountriesBloc _getStateCountriesBloc;
+  static late GetProcessingNatureBloc _getProcessingNatureBloc;
+  static late GetNaturalMaterialBloc _getNaturalMaterialBloc;
+  static late GetHandicraftsBloc _getHandicraftsBloc;
+  static late GetPriceRangeBloc _getPriceRangeBloc;
+  static late GetMinesOptionBloc _getMinesOptionBloc;
+  static late PostSearchBloc _postSearchBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -78,6 +96,22 @@ class AppBlocProvider {
     // Initialize location ping bloc
     _locationPingBloc = LocationPingBloc();
     _executiveTrackingBloc = ExecutiveTrackingBloc();
+
+    // Initialize catalogue BLoCs
+    _getProductTypeBloc = GetProductTypeBloc();
+    _getUtilitiesBloc = GetUtilitiesBloc();
+    _getColorsBloc = GetColorsBloc();
+    _getFinishesBloc = GetFinishesBloc();
+    _getTexturesBloc = GetTexturesBloc();
+    _getNaturalColorsBloc = GetNaturalColorsBloc();
+    _getOriginsBloc = GetOriginsBloc();
+    _getStateCountriesBloc = GetStateCountriesBloc();
+    _getProcessingNatureBloc = GetProcessingNatureBloc();
+    _getNaturalMaterialBloc = GetNaturalMaterialBloc();
+    _getHandicraftsBloc = GetHandicraftsBloc();
+    _getPriceRangeBloc = GetPriceRangeBloc();
+    _getMinesOptionBloc = GetMinesOptionBloc();
+    _postSearchBloc = PostSearchBloc();
   }
 
   /// ✅ ADD THIS
@@ -104,6 +138,22 @@ class AppBlocProvider {
   static LocationPingBloc get locationPingBloc => _locationPingBloc;
   static ExecutiveTrackingBloc get executiveTrackingBloc => _executiveTrackingBloc;
 
+  // Catalogue BLoC getters
+  static GetProductTypeBloc get getProductTypeBloc => _getProductTypeBloc;
+  static GetUtilitiesBloc get getUtilitiesBloc => _getUtilitiesBloc;
+  static GetColorsBloc get getColorsBloc => _getColorsBloc;
+  static GetFinishesBloc get getFinishesBloc => _getFinishesBloc;
+  static GetTexturesBloc get getTexturesBloc => _getTexturesBloc;
+  static GetNaturalColorsBloc get getNaturalColorsBloc => _getNaturalColorsBloc;
+  static GetOriginsBloc get getOriginsBloc => _getOriginsBloc;
+  static GetStateCountriesBloc get getStateCountriesBloc => _getStateCountriesBloc;
+  static GetProcessingNatureBloc get getProcessingNatureBloc => _getProcessingNatureBloc;
+  static GetNaturalMaterialBloc get getNaturalMaterialBloc => _getNaturalMaterialBloc;
+  static GetHandicraftsBloc get getHandicraftsBloc => _getHandicraftsBloc;
+  static GetPriceRangeBloc get getPriceRangeBloc => _getPriceRangeBloc;
+  static GetMinesOptionBloc get getMinesOptionBloc => _getMinesOptionBloc;
+  static PostSearchBloc get postSearchBloc => _postSearchBloc;
+
   // Service getters for direct access
   static ConnectivityService get connectivityService => _connectivityService;
   static CacheRepository get cacheRepository => _cacheRepository;
@@ -118,13 +168,28 @@ class AppBlocProvider {
   static void dispose() {
     _authBloc.close();
     _logoutBloc.close();
-
     _registrationBloc.close();
     _queueBloc.close();
     _punchInBloc.close();
     _punchOutBloc.close();
     _locationPingBloc.close();
     _executiveTrackingBloc.close();
+
+    // Dispose catalogue BLoCs
+    _getProductTypeBloc.close();
+    _getUtilitiesBloc.close();
+    _getColorsBloc.close();
+    _getFinishesBloc.close();
+    _getTexturesBloc.close();
+    _getNaturalColorsBloc.close();
+    _getOriginsBloc.close();
+    _getStateCountriesBloc.close();
+    _getProcessingNatureBloc.close();
+    _getNaturalMaterialBloc.close();
+    _getHandicraftsBloc.close();
+    _getPriceRangeBloc.close();
+    _getMinesOptionBloc.close();
+
     _connectivityService.dispose();
     _syncService.dispose();
   }

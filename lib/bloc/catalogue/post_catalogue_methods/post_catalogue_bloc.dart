@@ -266,3 +266,51 @@ class PutCatalogueOptionsEntryBloc extends Bloc<PutCatalogueOptionsEntryEvent, P
   }
 }
 
+
+// ========================= Put Catalogue Options Entry BLoC =========================
+class PostMinesEntryBloc extends Bloc<PostMinesEntryEvent, PostMinesEntryState> {
+  PostMinesEntryBloc() : super(PostMinesEntryInitial()) {
+    on<SubmitPostMinesEntry>((SubmitPostMinesEntry event, Emitter<PostMinesEntryState> emit) async {
+      emit(PostMinesEntryLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.postMinesEntry(
+          requestBody: event.requestBody,
+        );
+
+        if (response.status == true) {
+          emit(PostMinesEntrySuccess(response: response));
+        } else {
+          emit(PostMinesEntryError(message: response.message ?? 'Failed to update mines options'));
+        }
+      } catch (e) {
+        emit(PostMinesEntryError(message: 'Error: ${e.toString()}'));
+      }
+    });
+  }
+}
+
+
+// ========================= Post Search  BLoC =========================
+class PostSearchBloc extends Bloc<PostSearchEvent, PostSearchState> {
+  PostSearchBloc() : super(PostSearchInitial()) {
+    on<SubmitPostSearch>((SubmitPostSearch event, Emitter<PostSearchState> emit) async {
+      emit(PostSearchLoading(showLoader: event.showLoader));
+
+      try {
+        final response = await ApiIntegration.postSearch(
+          requestBody: event.requestBody,
+        );
+
+        if (response.status == true) {
+          emit(PostSearchSuccess(response: response));
+        } else {
+          emit(PostSearchError(message: response.message ?? 'Failed to update mines options'));
+        }
+      } catch (e) {
+        emit(PostSearchError(message: 'Error: ${e.toString()}'));
+      }
+    });
+  }
+}
+

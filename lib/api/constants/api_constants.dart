@@ -64,6 +64,8 @@ class ApiConstants {
   static const String getHandicraftsTypes = "${baseUrl}marketing/admin/catalogue/options/handicraft-types";
   static const String getCatalogueProductList = "${baseUrl}marketing/catalogue/products?page=1&pageSize=20";
   static const String getCatalogueProductDetails = "${baseUrl}marketing/catalogue/products";
+  static const String getPriceRange = "${baseUrl}marketing/admin/catalogue/options/price-ranges";
+  static const String getMinesOption = "${baseUrl}marketing/admin/catalogue/mines/options";
 
 
   static const String postColors = "${baseUrl}marketing/admin/catalogue/options/colours";
@@ -78,7 +80,12 @@ class ApiConstants {
   static const String postProductEntry= "${baseUrl}marketing/admin/catalogue/products";
   static const String postImageEntry= "${baseUrl}marketing/admin/catalogue/products";
   static const String putCatalogueOptionsEntry= "${baseUrl}marketing/admin/catalogue/products";
+  static const String postMinesEntry= "${baseUrl}marketing/admin/catalogue/mines";
+  static const String postSearch= "${baseUrl}marketing/catalogue/products/search";
 
+ // Clients Apis
+
+  static const String postClients = "${baseUrl}marketing/clients";
 
 
 

@@ -4,6 +4,7 @@ import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart
 import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetNaturalColorResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetOriginsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetPriceRangeResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProcessingNaturesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetProductTypeResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.dart';
@@ -11,6 +12,8 @@ import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetUtilitiesTypeResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetCatalogueProductResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetCatalogueProductDetailsResponseBody.dart';
+
+import '../../../api/models/response/GetMinesOptionResponseBody.dart';
 
 // ========================= Product Type States =========================
 abstract class GetProductTypeState {}
@@ -223,3 +226,46 @@ class GetCatalogueProductDetailsError extends GetCatalogueProductDetailsState {
   final String message;
   GetCatalogueProductDetailsError({required this.message});
 }
+
+
+// ======================== Get Catalogue Product Details State ========================
+abstract class GetPriceRangeState {}
+
+class GetPriceRangeInitial extends GetPriceRangeState {}
+
+class GetPriceRangeLoading extends GetPriceRangeState {
+  final bool showLoader;
+  GetPriceRangeLoading({this.showLoader = false});
+}
+
+class GetPriceRangeLoaded extends GetPriceRangeState {
+  final GetPriceRangeResponseBody response;
+  GetPriceRangeLoaded({required this.response});
+}
+
+class GetPriceRangeError extends GetPriceRangeState {
+  final String message;
+  GetPriceRangeError({required this.message});
+}
+
+
+// ======================== Get Catalogue Product Details State ========================
+abstract class GetMinesOptionState {}
+
+class GetMinesOptionInitial extends GetMinesOptionState {}
+
+class GetMinesOptionLoading extends GetMinesOptionState {
+  final bool showLoader;
+  GetMinesOptionLoading({this.showLoader = false});
+}
+
+class GetMinesOptionLoaded extends GetMinesOptionState {
+  final GetMinesOptionResponseBody response;
+  GetMinesOptionLoaded({required this.response});
+}
+
+class GetMinesOptionsError extends GetMinesOptionState {
+  final String message;
+  GetMinesOptionsError({required this.message});
+}
+

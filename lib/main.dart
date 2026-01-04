@@ -10,6 +10,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'bloc/auth/auth_bloc.dart';
 import 'bloc/auth/auth_state.dart';
 import 'bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
+import 'bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import 'bloc/dashboard/dashboard_bloc.dart';
 import 'bloc/registration/registration_bloc.dart';
 import 'core/constants/app_colors.dart';
@@ -88,6 +89,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MultiBlocProvider(
           providers: [
+            BlocProvider<PostSearchBloc>(create: (context) => PostSearchBloc(),),
             BlocProvider<GetCatalogueProductDetailsBloc>(create: (context) => GetCatalogueProductDetailsBloc(),),
             BlocProvider(
               create: (context) => AppBlocProvider.authBloc,),
@@ -96,7 +98,19 @@ class MyApp extends StatelessWidget {
             BlocProvider(
               create: (context) => AppBlocProvider.registrationBloc,
             ),
-
+        BlocProvider<GetProductTypeBloc>(create: (context) => GetProductTypeBloc(),),
+        BlocProvider<GetUtilitiesBloc>(create: (context) => GetUtilitiesBloc(),),
+        BlocProvider<GetColorsBloc>(create: (context) => GetColorsBloc(),),
+        BlocProvider<GetFinishesBloc>(create: (context) => GetFinishesBloc(),),
+        BlocProvider<GetTexturesBloc>(create: (context) => GetTexturesBloc(),),
+        BlocProvider<GetNaturalColorsBloc>(create: (context) => GetNaturalColorsBloc(),),
+        BlocProvider<GetOriginsBloc>(create: (context) => GetOriginsBloc(),),
+        BlocProvider<GetStateCountriesBloc>(create: (context) => GetStateCountriesBloc(),),
+        BlocProvider<GetProcessingNatureBloc>(create: (context) => GetProcessingNatureBloc(),),
+        BlocProvider<GetNaturalMaterialBloc>(create: (context) => GetNaturalMaterialBloc(),),
+        BlocProvider<GetHandicraftsBloc>(create: (context) => GetHandicraftsBloc(),),
+        BlocProvider<GetMinesOptionBloc>(create: (context) => GetMinesOptionBloc(),),
+        BlocProvider<GetPriceRangeBloc>(create: (context) => GetPriceRangeBloc(),),
             BlocProvider(
               create: (context) => AppBlocProvider.locationPingBloc,
             ),
@@ -106,10 +120,12 @@ class MyApp extends StatelessWidget {
             BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
             BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
             BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
+            BlocProvider<GetProductTypeBloc>(create: (context) => GetProductTypeBloc(),),
             BlocProvider<LocationPingBloc>(create: (context) => LocationPingBloc(),),
             BlocProvider(
               create: (context) => AppBlocProvider.queueBloc,
             ),
+            BlocProvider<PostMinesEntryBloc>(create: (context) => PostMinesEntryBloc(),),
             // BlocProvider(
             //   create: (context) => AppBlocProvider.meetingBloc,
             // ),

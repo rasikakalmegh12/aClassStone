@@ -1,3 +1,5 @@
+import 'package:apclassstone/api/models/request/PostMinesEntryRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import 'dart:io';
@@ -135,4 +137,37 @@ class UpdateCatalogueOptions extends PutCatalogueOptionsEntryEvent {
     this.showLoader = false,
   });
 }
+
+
+
+// ========================= Post Mines Entry Event =========================
+abstract class PostMinesEntryEvent {}
+class SubmitPostMinesEntry extends PostMinesEntryEvent {
+
+  final PostMinesEntryRequestBody requestBody;
+  final bool showLoader;
+
+  SubmitPostMinesEntry({
+
+    required this.requestBody,
+    this.showLoader = false,
+  });
+}
+
+
+// ========================= Post Mines Entry Event =========================
+abstract class PostSearchEvent {}
+class SubmitPostSearch extends PostSearchEvent {
+
+  final PostSearchRequestBody requestBody;
+  final bool showLoader;
+
+  SubmitPostSearch({
+
+    required this.requestBody,
+    this.showLoader = false,
+  });
+}
+
+
 

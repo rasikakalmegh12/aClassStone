@@ -98,11 +98,13 @@ class FetchGetCatalogueProductList extends GetCatalogueProductListEvent {
   final int page;
   final int pageSize;
   final bool showLoader;
+  final String? search;
 
   FetchGetCatalogueProductList({
     this.page = 1,
     this.pageSize = 20,
     this.showLoader = false,
+    this.search
   });
 }
 
@@ -118,3 +120,35 @@ class FetchGetCatalogueProductDetails extends GetCatalogueProductDetailsEvent {
     this.showLoader = true,
   });
 }
+
+
+
+// ======================== Get Price Range Events ========================
+abstract class GetPriceRangeEvent {}
+
+class FetchGetPriceRange extends GetPriceRangeEvent {
+
+  final bool showLoader;
+
+  FetchGetPriceRange({
+
+    this.showLoader = true,
+  });
+}
+
+
+
+// ======================== Get Catalogue Product Details Events ========================
+abstract class GetMinesOptionEvent {}
+
+class FetchGetMinesOption extends GetMinesOptionEvent {
+
+  final bool showLoader;
+
+  FetchGetMinesOption({
+
+    this.showLoader = true,
+  });
+}
+
+

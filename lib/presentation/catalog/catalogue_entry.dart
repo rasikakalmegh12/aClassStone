@@ -14,6 +14,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:path_provider/path_provider.dart';
+import '../../api/models/request/PostMinesEntryRequestBody.dart';
 import '../../api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
@@ -32,6 +33,23 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   final ImagePicker _picker = ImagePicker();
   final List<File> _images = [];
   final int _maxImages = 7;
+// Add controllers / variables in your State
+  final _priceArchitectAGradeController = TextEditingController();
+  final _priceArchitectBGradeController = TextEditingController();
+  final _priceArchitectCGradeController = TextEditingController();
+
+  final _priceTraderAGradeController = TextEditingController();
+  final _priceTraderBGradeController = TextEditingController();
+  final _priceTraderCGradeController = TextEditingController();
+
+  final _marketingOneLinerController = TextEditingController();
+
+
+  String? selectedPriceRangeId;
+  String? selectedMineId;
+
+  List<DropdownOption> priceRangeOptions = [];
+  List<DropdownOption> mineOptions = [];
 
   // Form data
   final TextEditingController _productNameController = TextEditingController();
@@ -45,6 +63,9 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
   String? _savedProductId; // Store product ID from successful section 1 submission
 
   // Multi-select filters
+  final TextEditingController _synonymController = TextEditingController();
+  final List<String> _synonyms = [];
+
   final List<String> _selectedProductTypes = [];
   final List<String> _selectedUtilities = [];
   final List<String> _selectedColours = [];
@@ -127,6 +148,22 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     '0–50', '50–100', '100–200', '200–1000', 'Above 1000'
   ];
 
+  final _mineFormKey = GlobalKey<FormState>();
+
+  final _mineNameController = TextEditingController();
+  final _mineLocationController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  final _contactPhoneController = TextEditingController();
+  final _contactEmailController = TextEditingController();
+  final _websiteUrlController = TextEditingController();
+  final _instagramUrlController = TextEditingController();
+  final _youtubeUrlController = TextEditingController();
+  final _pinterestUrlController = TextEditingController();
+
+  bool _blocksAvailable = true;
+  bool _mineIsActive = true;
+
+
 
   @override
   void initState() {
@@ -143,6 +180,8 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
     context.read<GetProcessingNatureBloc>().add(FetchGetProcessingNature());
     context.read<GetNaturalMaterialBloc>().add(FetchGetNaturalMaterial());
     context.read<GetHandicraftsBloc>().add(FetchGetHandicrafts());
+    context.read<GetPriceRangeBloc>().add(FetchGetPriceRange());
+    context.read<GetMinesOptionBloc>().add(FetchGetMinesOption());
   }
 
 
@@ -388,31 +427,53 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
           title: _showSection1 ? "Product Entry - Step 1" : "Product Entry - Step 2",
           backgroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
               ? AppColors.superAdminPrimary
-              : AppColors.primaryTealDark,
+              : AppColors.primaryDeepBlue,
         ),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Section 1: Basic Product Information
-                  if (_showSection1) ...[
-                    _buildSection1(),
-                  ],
+      body: MultiBlocListener(
+        listeners: [
+        BlocListener<GetMinesOptionBloc, GetMinesOptionState>(
+      listener: (context, state) {
+        if (state is GetMinesOptionLoaded) {
+          setState(() {
+            mineOptions = state.response.data!
+                .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                .map((item) => DropdownOption(
+              id: item.id!,
+              name: item.name!,
+              code: item.location,
+            ))
+                .toList();
 
-                  // Section 2: Additional Details
-                  if (_showSection2) ...[
-                    _buildSection2(),
+          });
+        }
+      },
+        )
+        ],
+
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Section 1: Basic Product Information
+                    if (_showSection1) ...[
+                      _buildSection1(),
+                    ],
+
+                    // Section 2: Additional Details
+                    if (_showSection2) ...[
+                      _buildSection2(),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -428,7 +489,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
 
         // Basic Information Card
         Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -477,7 +538,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   fillColor: Colors.grey.shade50,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
               // Product Code
               TextField(
@@ -491,12 +552,12 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   fillColor: Colors.grey.shade50,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10 ),
 
               // Description
               TextField(
                 controller: _descriptionController,
-                maxLines: 3,
+                maxLines: 2,
                 decoration: InputDecoration(
                   labelText: 'Description',
                   hintText: 'Enter product description',
@@ -506,7 +567,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   fillColor: Colors.grey.shade50,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
               // Product Type Dropdown
               BlocBuilder<GetProductTypeBloc, GetProductTypeState>(
@@ -551,7 +612,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
               // Price Per Sq Ft
               TextField(
@@ -567,6 +628,317 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   suffixText: '₹/sq ft',
                 ),
               ),
+              // Architect & Trader Pricing Grid
+              const SizedBox(height: 16),
+              const Text(
+                'Pricing by Segment (₹/sq ft)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Set differentiated prices for architects and traders across grade levels.',
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+
+              const SizedBox(height: 10),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                padding: const EdgeInsets.all(5),
+                child: Column(
+                  children: [
+                    const Row(
+                      children: [
+                        Expanded(child: SizedBox()),
+                        Expanded(
+                          child: Center(
+                            child: Text('Grade A', style: TextStyle(fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Text('Grade B', style: TextStyle(fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                        Expanded(
+                          child: Center(
+                            child: Text('Grade C', style: TextStyle(fontWeight: FontWeight.w600)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Architect Row
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Architect',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: TextField(
+                              controller: _priceArchitectAGradeController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: '0',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: TextField(
+
+                              controller: _priceArchitectBGradeController,
+                              keyboardType: TextInputType.number,
+
+                              decoration: const InputDecoration(
+                                hintText: '0',
+
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: TextField(
+                              controller: _priceArchitectCGradeController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: '0',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    // Trader Row
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            'Trader',
+                            style: TextStyle(fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: TextField(
+                              controller: _priceTraderAGradeController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: '0',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: TextField(
+                              controller: _priceTraderBGradeController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: '0',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: TextField(
+                              controller: _priceTraderCGradeController,
+                              keyboardType: TextInputType.number,
+                              decoration: const InputDecoration(
+                                hintText: '0',
+                                isDense: true,
+                                border: OutlineInputBorder(),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+// Price Range Dropdown
+              BlocBuilder<GetPriceRangeBloc, GetPriceRangeState>(
+                builder: (context, state) {
+                  if (state is GetPriceRangeLoaded) {
+                    if (state.response.data != null && state.response.data!.isNotEmpty) {
+                      priceRangeOptions = state.response.data!
+                          .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                          .map((item) => DropdownOption(
+                        id: item.id!,
+                        name: item.name!,
+                        code: item.code,
+                      ))
+                          .toList();
+                    }
+                    return CustomDropdownSection(
+                      title: 'Price Range *',
+                      options: priceRangeOptions,
+                      selectedId: selectedPriceRangeId,
+                      onChanged: (id, name) {
+                        setState(() {
+                          selectedPriceRangeId = id;
+                        });
+                      },
+                      icon: Icons.stacked_bar_chart,
+                    );
+                  } else if (state is GetPriceRangeLoading && state.showLoader) {
+                    return _buildLoadingContainer();
+                  } else if (state is GetPriceRangeError) {
+                    return _buildErrorContainer('price ranges', state.message);
+                  }
+                  return CustomDropdownSection(
+                    title: 'Price Range *',
+                    options: priceRangeOptions,
+                    selectedId: selectedPriceRangeId,
+                    onChanged: (id, name) {
+                      setState(() {
+                        selectedPriceRangeId = id;
+                      });
+                    },
+                    icon: Icons.stacked_bar_chart,
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+
+// Mine Dropdown
+    BlocListener<GetMinesOptionBloc, GetMinesOptionState>(
+                listener: (context, state) {
+                  if (state is GetMinesOptionLoaded) {
+                    setState(() {
+                      mineOptions = state.response.data!
+                          .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                          .map((item) => DropdownOption(
+                        id: item.id!,
+                        name: item.name!,
+                        code: item.location,
+                      ))
+                          .toList();
+
+                    });
+                  }
+                },
+                child: BlocBuilder<GetMinesOptionBloc, GetMinesOptionState>(
+                  builder: (context, state) {
+                    if (kDebugMode) {
+                      print('🔄 GetMinesOptionBloc state: ${state.runtimeType}');
+                    }
+
+                    if (state is GetMinesOptionLoaded) {
+                      if (state.response.data != null && state.response.data!.isNotEmpty) {
+                        mineOptions = state.response.data!
+                            .where((item) => item.id != null && item.name != null && item.name!.isNotEmpty)
+                            .map((item) => DropdownOption(
+                          id: item.id!,
+                          name: item.name!,
+                          code: item.location,
+                        ))
+                            .toList();
+
+                        if (kDebugMode) {
+                          print('✅ Mines loaded: ${mineOptions.length} mines');
+                        }
+                      }
+                      return CustomDropdownSection(
+                        title: 'Mines *',
+                        options: mineOptions,
+                        selectedId: selectedMineId,
+                        onChanged: (id, name) {
+                          setState(() {
+                            selectedMineId = id;
+                          });
+                        },
+                        icon: Icons.landscape_outlined,
+                        extraFeature: true,
+                        widget: IconButton(
+                            color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                                ? AppColors.superAdminPrimary
+                                : AppColors.primaryDeepBlue,
+                            onPressed: () {
+                          setState(() {
+                            _openAddMineBottomSheet(context);
+                          });
+                          if (kDebugMode) {
+                            print("Add Mines");
+                          }
+                        }, icon:
+                         const Icon(Icons.add)),
+
+
+                      );
+                    } else if (state is GetMinesOptionLoading && state.showLoader) {
+                      return _buildLoadingContainer();
+                    } else if (state is GetMinesOptionsError) {
+                      return _buildErrorContainer('mines', state.message);
+                    }
+                    return CustomDropdownSection(
+                      title: 'Mines *',
+                      options: mineOptions,
+                      selectedId: selectedMineId,
+                      onChanged: (id, name) {
+                        setState(() {
+                          selectedMineId = id;
+                        });
+                      },
+                      icon: Icons.landscape_outlined,
+
+                      extraFeature: true,
+                        widget: const Icon(Icons.add),
+                      onTap: (){
+                        print("Add Mines");
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+
+// Marketing One-liner
+              TextField(
+                controller: _marketingOneLinerController,
+                maxLength: 80,
+                decoration: InputDecoration(
+                  labelText: 'Marketing One-liner',
+                  hintText: 'Eg. Premium marble for luxury spaces',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.campaign_outlined),
+                  filled: true,
+                  fillColor: Colors.grey.shade50,
+                  counterText: '',
+                ),
+              ),
+              const SizedBox(height: 10),
               const SizedBox(height: 24),
 
               // Submit Button for Section 1
@@ -604,6 +976,789 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       ],
     );
   }
+  Color get _primaryRoleColor =>
+      SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+          ? AppColors.superAdminPrimary
+          : AppColors.primaryDeepBlue;
+
+  Color get _primaryRoleLight => _primaryRoleColor.withOpacity(0.08);
+
+  void _openAddMineBottomSheet1(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return FractionallySizedBox(
+          heightFactor: 0.8, // 80% of screen
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, -6),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 12,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+              ),
+              child: BlocConsumer<PostMinesEntryBloc, PostMinesEntryState>(
+                listener: (context, state) {
+                  if (state is PostMinesEntrySuccess) {
+                    Navigator.of(ctx).pop();
+                    context.read<GetMinesOptionBloc>().add(FetchGetMinesOption());
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Mine added successfully')),
+                    );
+                  } else if (state is PostMinesEntryError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message ?? 'Failed to add mine')),
+                    );
+                  }
+                },
+                builder: (context, state) {
+                  final isLoading = state is PostMinesEntryLoading;
+
+                  return Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      // drag handle
+                      Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade400,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+
+                      // header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _primaryRoleLight,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              height: 32,
+                              width: 32,
+                              decoration: BoxDecoration(
+                                color: _primaryRoleColor.withOpacity(0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.landscape_outlined,
+                                size: 18,
+                                color: _primaryRoleColor,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            const Expanded(
+                              child: Text(
+                                'Add New Mine',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close),
+                              color: Colors.grey.shade700,
+                              onPressed: () => Navigator.of(ctx).pop(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // form in scroll
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: _primaryRoleColor.withOpacity(0.12),
+                              ),
+                            ),
+                            child: Form(
+                              key: _mineFormKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Name
+                                  _buildLabeledField(
+                                    label: 'Mine Name *',
+                                    icon: Icons.terrain_outlined,
+                                    controller: _mineNameController,
+                                    validator: (v) =>
+                                    (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // Location
+                                  _buildLabeledField(
+                                    label: 'Location *',
+                                    icon: Icons.location_on_outlined,
+                                    controller: _mineLocationController,
+                                    validator: (v) =>
+                                    (v == null || v.trim().isEmpty) ? 'Location is required' : null,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // Owner
+                                  _buildLabeledField(
+                                    label: 'Owner Name',
+                                    icon: Icons.person_outline,
+                                    controller: _ownerNameController,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // Phone + Email in a row
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildLabeledField(
+                                          label: 'Phone',
+                                          icon: Icons.phone_outlined,
+                                          controller: _contactPhoneController,
+                                          keyboardType: TextInputType.phone,
+                                          maxLength: 10
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: _buildLabeledField(
+                                          label: 'Email',
+                                          icon: Icons.email_outlined,
+                                          controller: _contactEmailController,
+                                          keyboardType: TextInputType.emailAddress,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // website
+                                  _buildLabeledField(
+                                    label: 'Website',
+                                    icon: Icons.public_outlined,
+                                    controller: _websiteUrlController,
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // socials row 1
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildLabeledField(
+                                          label: 'Instagram',
+                                          icon: Icons.camera_alt_outlined,
+                                          controller: _instagramUrlController,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: _buildLabeledField(
+                                          label: 'YouTube',
+                                          icon: Icons.play_circle_outline,
+                                          controller: _youtubeUrlController,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+
+                                  // socials row 2
+                                  _buildLabeledField(
+                                    label: 'Pinterest',
+                                    icon: Icons.push_pin_outlined,
+                                    controller: _pinterestUrlController,
+                                  ),
+                                  const SizedBox(height: 8),
+
+                                  // toggles in card
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 6),
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: _primaryRoleColor.withOpacity(0.12),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        SwitchListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          title: const Text('Blocks Available'),
+                                          activeColor: _primaryRoleColor,
+                                          value: _blocksAvailable,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              _blocksAvailable = val;
+                                            });
+                                          },
+                                        ),
+                                        const Divider(height: 0),
+                                        SwitchListTile(
+                                          contentPadding: EdgeInsets.zero,
+                                          title: const Text('Active'),
+                                          activeColor: _primaryRoleColor,
+                                          value: _mineIsActive,
+                                          onChanged: (val) {
+                                            setState(() {
+                                              _mineIsActive = val;
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // bottom buttons with primary color
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: _primaryRoleColor,
+                                side: BorderSide(color: _primaryRoleColor.withOpacity(0.4)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: isLoading ? null : () => Navigator.of(ctx).pop(),
+                              child: const Text('Cancel'),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _primaryRoleColor,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                if (_mineFormKey.currentState!.validate()) {
+                                  final req = PostMinesEntryRequestBody(
+                                    name: _mineNameController.text.trim(),
+                                    location: _mineLocationController.text.trim(),
+                                    ownerName: _ownerNameController.text.trim(),
+                                    contactPhone: _contactPhoneController.text.trim(),
+                                    contactEmail: _contactEmailController.text.trim(),
+                                    blocksAvailable: _blocksAvailable,
+                                    websiteUrl: _websiteUrlController.text.trim(),
+                                    instagramUrl: _instagramUrlController.text.trim(),
+                                    youtubeUrl: _youtubeUrlController.text.trim(),
+                                    pinterestUrl: _pinterestUrlController.text.trim(),
+                                    isActive: _mineIsActive,
+                                  );
+                                  context.read<PostMinesEntryBloc>().add(
+                                    SubmitPostMinesEntry(
+                                      requestBody: req,
+                                      showLoader: true,
+                                    ),
+                                  );
+                                }
+                              },
+                              child: isLoading
+                                  ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                                  : const Text('Save Mine'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+  Widget _buildLabeledField({
+    required String label,
+    required IconData icon,
+    required TextEditingController controller,
+    String? Function(String?)? validator,
+    int?maxLength,
+    TextInputType? keyboardType,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: _primaryRoleColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextFormField(
+          controller: controller,
+          validator: validator,
+          keyboardType: keyboardType,
+          maxLength: maxLength,
+          decoration: InputDecoration(
+
+            counterText: '',
+            prefixIcon: Icon(icon, color: _primaryRoleColor,size: 17,),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 32, // default is ~48, reduce this
+              minHeight: 32,
+            ),
+            filled: true,
+            fillColor: _primaryRoleColor.withOpacity(0.03),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _primaryRoleColor.withOpacity(0.12)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _primaryRoleColor, width: 1.2),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            contentPadding: const EdgeInsets.symmetric( horizontal:4,vertical: 10),
+          ),
+        ),
+      ],
+    );
+  }
+  void _openAddMineBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        String? errorMessage; // local error text
+
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return FractionallySizedBox(
+              heightFactor: 0.8, // 80% of screen
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, -6),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: 20,
+                    right: 20,
+                    top: 12,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+                  ),
+                  child: BlocConsumer<PostMinesEntryBloc, PostMinesEntryState>(
+                    listener: (context, state) {
+                      if (state is PostMinesEntrySuccess) {
+                        Navigator.of(context).pop();
+
+                        // Call GetMines API to refresh the list
+                        if (kDebugMode) {
+                          print('✅ Mine added successfully, refreshing mine list...');
+                        }
+                        context.read<GetMinesOptionBloc>().add(FetchGetMinesOption(showLoader: true ));
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Mine added successfully')),
+                        );
+                      } else if (state is PostMinesEntryError) {
+                        if (kDebugMode) {
+                          print('❌ Error adding mine: ${state.message}');
+                        }
+                        setModalState(() {
+                          errorMessage =
+                              state.message ?? 'Failed to add mine. Please try again.';
+                        });
+                      }
+                    },
+                    builder: (context, state) {
+                      final isLoading = state is PostMinesEntryLoading;
+
+                      return Column(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          // drag handle
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade400,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+
+                          // header
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: _primaryRoleLight,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  height: 32,
+                                  width: 32,
+                                  decoration: BoxDecoration(
+                                    color: _primaryRoleColor.withOpacity(0.15),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.landscape_outlined,
+                                    size: 18,
+                                    color: _primaryRoleColor,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                const Expanded(
+                                  child: Text(
+                                    'Add New Mine',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.close),
+                                  color: Colors.grey.shade700,
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // inline error text (if any)
+                          if (errorMessage != null && errorMessage!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.06),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red.withOpacity(0.4)),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Icon(Icons.error_outline,
+                                      size: 18, color: Colors.red),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      errorMessage!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 10),
+
+                          // form in scroll
+                          Expanded(
+                            child: SingleChildScrollView(
+                              child: Container(
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade50,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: _primaryRoleColor.withOpacity(0.12),
+                                  ),
+                                ),
+                                child: Form(
+                                  key: _mineFormKey,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildLabeledField(
+                                        label: 'Mine Name *',
+                                        icon: Icons.terrain_outlined,
+                                        controller: _mineNameController,
+                                        validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                            ? 'Name is required'
+                                            : null,
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      _buildLabeledField(
+                                        label: 'Location *',
+                                        icon: Icons.location_on_outlined,
+                                        controller: _mineLocationController,
+                                        validator: (v) =>
+                                        (v == null || v.trim().isEmpty)
+                                            ? 'Location is required'
+                                            : null,
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      _buildLabeledField(
+                                        label: 'Owner Name',
+                                        icon: Icons.person_outline,
+                                        controller: _ownerNameController,
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildLabeledField(
+                                              label: 'Phone',
+                                              icon: Icons.phone_outlined,
+                                              controller: _contactPhoneController,
+                                              keyboardType: TextInputType.phone,
+                                              maxLength: 10,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _buildLabeledField(
+                                              label: 'Email',
+                                              icon: Icons.email_outlined,
+                                              controller: _contactEmailController,
+                                              keyboardType:
+                                              TextInputType.emailAddress,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      _buildLabeledField(
+                                        label: 'Website',
+                                        icon: Icons.public_outlined,
+                                        controller: _websiteUrlController,
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildLabeledField(
+                                              label: 'Instagram',
+                                              icon: Icons.camera_alt_outlined,
+                                              controller: _instagramUrlController,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: _buildLabeledField(
+                                              label: 'YouTube',
+                                              icon: Icons.play_circle_outline,
+                                              controller: _youtubeUrlController,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+
+                                      _buildLabeledField(
+                                        label: 'Pinterest',
+                                        icon: Icons.push_pin_outlined,
+                                        controller: _pinterestUrlController,
+                                      ),
+                                      const SizedBox(height: 8),
+
+                                      Container(
+                                        margin: const EdgeInsets.only(top: 6),
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(
+                                            color: _primaryRoleColor.withOpacity(0.12),
+                                          ),
+                                        ),
+                                        child: Column(
+                                          children: [
+                                            SwitchListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              title: const Text('Blocks Available'),
+                                              activeColor: _primaryRoleColor,
+                                              value: _blocksAvailable,
+                                              onChanged: (val) {
+                                                setModalState(() {
+                                                  _blocksAvailable = val;
+                                                });
+                                              },
+                                            ),
+                                            const Divider(height: 0),
+                                            SwitchListTile(
+                                              contentPadding: EdgeInsets.zero,
+                                              title: const Text('Active'),
+                                              activeColor: _primaryRoleColor,
+                                              value: _mineIsActive,
+                                              onChanged: (val) {
+                                                setModalState(() {
+                                                  _mineIsActive = val;
+                                                });
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: _primaryRoleColor,
+                                    side: BorderSide(
+                                        color: _primaryRoleColor.withOpacity(0.4)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                  onPressed:
+                                  isLoading ? null : () => Navigator.of(context).pop(),
+                                  child: const Text('Cancel'),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: _primaryRoleColor,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  onPressed: isLoading
+                                      ? null
+                                      : () {
+                                    if (_mineFormKey.currentState!.validate()) {
+                                      setModalState(() {
+                                        errorMessage = null; // clear old error
+                                      });
+                                      final req = PostMinesEntryRequestBody(
+                                        name: _mineNameController.text.trim(),
+                                        location:
+                                        _mineLocationController.text.trim(),
+                                        ownerName:
+                                        _ownerNameController.text.trim(),
+                                        contactPhone:
+                                        _contactPhoneController.text.trim(),
+                                        contactEmail:
+                                        _contactEmailController.text.trim(),
+                                        blocksAvailable: _blocksAvailable,
+                                        websiteUrl:
+                                        _websiteUrlController.text.trim(),
+                                        instagramUrl:
+                                        _instagramUrlController.text.trim(),
+                                        youtubeUrl:
+                                        _youtubeUrlController.text.trim(),
+                                        pinterestUrl:
+                                        _pinterestUrlController.text.trim(),
+                                        isActive: _mineIsActive,
+                                      );
+                                      context
+                                          .read<PostMinesEntryBloc>()
+                                          .add(SubmitPostMinesEntry(
+                                        requestBody: req,
+                                        showLoader: true,
+                                      ));
+                                    }
+                                  },
+                                  child: isLoading
+                                      ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                      : const Text('Save Mine'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
 
   Widget _buildImageUploadSection() {
     return Container(
@@ -1113,6 +2268,171 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
               return _buildFilterSection('Handicraft Type', handicrafts, _selectedHandicrafts);
             },
           ),
+        const SizedBox(height: 16),
+        // Synonyms section
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(10),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.translate_outlined,
+                    size: 20,
+                    color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                        ? AppColors.superAdminPrimary
+                        : AppColors.primaryDeepBlue,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Synonyms',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Add alternative names your buyers might search for.',
+                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 12),
+
+              // Input + add button
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _synonymController,
+                      maxLength: 40,
+                      decoration: InputDecoration(
+                        counterText: '',
+                        hintText: 'Type a synonym and tap +',
+                        filled: true,
+                        fillColor: Colors.white,
+                        prefixIcon: Icon(
+                          Icons.edit_outlined,
+                          size: 18,
+                          color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                              ? AppColors.superAdminPrimary
+                              : AppColors.primaryDeepBlue,
+                        ),
+                        prefixIconConstraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: (SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                                ? AppColors.superAdminPrimary
+                                : AppColors.primaryDeepBlue)
+                                .withOpacity(0.12),
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                                ? AppColors.superAdminPrimary
+                                : AppColors.primaryDeepBlue,
+                            width: 1.2,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    height: 44,
+                    width: 44,
+                    decoration: BoxDecoration(
+                      color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                          ? AppColors.superAdminPrimary
+                          : AppColors.primaryDeepBlue,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.add, color: Colors.white, size: 22),
+                      onPressed: () {
+                        final text = _synonymController.text.trim();
+                        if (text.isNotEmpty && !_synonyms.contains(text)) {
+                          setState(() {
+                            _synonyms.add(text);
+                            _synonymController.clear();
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // Show added synonyms as chips
+              if (_synonyms.isNotEmpty) ...[
+                Text(
+                  'Added synonyms:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: _synonyms.map((s) {
+                    return Chip(
+                      label: Text(s),
+                      backgroundColor: (SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                          ? AppColors.superAdminPrimary
+                          : AppColors.primaryDeepBlue)
+                          .withOpacity(0.06),
+                      labelStyle: TextStyle(
+                        fontSize: 12,
+                        color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                            ? AppColors.superAdminPrimary
+                            : AppColors.primaryDeepBlue,
+                      ),
+                      deleteIcon: const Icon(Icons.close, size: 16),
+                      onDeleted: () {
+                        setState(() {
+                          _synonyms.remove(s);
+                        });
+                      },
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: (SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                              ? AppColors.superAdminPrimary
+                              : AppColors.primaryDeepBlue)
+                              .withOpacity(0.25),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
+        ),
+
+
         const SizedBox(height: 24),
 
         // Final Submit Button
@@ -1252,6 +2572,16 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       productTypeId: selectedProductTypeId,
       pricePerSqft: price,
       isActive: true,
+      priceRangeId:selectedPriceRangeId ,
+      priceSqftArchitectGradeA: int.parse(_priceArchitectAGradeController.text),
+      priceSqftArchitectGradeB: int.parse(_priceArchitectBGradeController.text),
+      priceSqftArchitectGradeC: int.parse(_priceArchitectCGradeController.text),
+      priceSqftTraderGradeA: int.parse(_priceTraderAGradeController.text),
+      priceSqftTraderGradeB: int.parse(_priceTraderBGradeController.text),
+      priceSqftTraderGradeC: int.parse(_priceTraderCGradeController.text),
+      mineId:selectedMineId ,
+      marketingOneLiner: _marketingOneLinerController.text.toString(),
+
       sortOrder: 0,
     );
 
@@ -2217,7 +3547,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
       materialNaturalityOptionIds: materialNaturalityIds,
       handicraftTypeOptionIds: handicraftIds,
       utilityIds: utilityIds,
-      synonyms: [], // Empty array for synonyms
+      synonyms: _synonyms, // Empty array for synonyms
     );
 
     // Call PutCatalogueOptionsEntryBloc
@@ -2285,7 +3615,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
           children: [
             Icon(Icons.check_circle, color: AppColors.success, size: 32),
             SizedBox(width: 12),
-            Text('Product Entry Complete!',overflow: TextOverflow.ellipsis,softWrap: true,),
+            Text('Product Entry Complete!',overflow: TextOverflow.ellipsis,softWrap: true,maxLines: 2,style: TextStyle(fontSize: 15),),
           ],
         ),
         content: SingleChildScrollView(
@@ -2335,6 +3665,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context); // Go back to previous screen
+
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"

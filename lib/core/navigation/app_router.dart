@@ -14,6 +14,7 @@ import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
+import '../../core/services/repository_provider.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
@@ -242,6 +243,8 @@ class AppRouter {
               BlocProvider<GetProcessingNatureBloc>(create: (context) => GetProcessingNatureBloc(),),
               BlocProvider<GetNaturalMaterialBloc>(create: (context) => GetNaturalMaterialBloc(),),
               BlocProvider<GetHandicraftsBloc>(create: (context) => GetHandicraftsBloc(),),
+              BlocProvider<GetMinesOptionBloc>(create: (context) => GetMinesOptionBloc(),),
+              BlocProvider<GetPriceRangeBloc>(create: (context) => GetPriceRangeBloc(),),
 
 
 
@@ -257,6 +260,8 @@ class AppRouter {
               BlocProvider<ProductEntryBloc>(create: (context) => ProductEntryBloc(),),
               BlocProvider<CatalogueImageEntryBloc>(create: (context) => CatalogueImageEntryBloc(),),
               BlocProvider<PutCatalogueOptionsEntryBloc>(create: (context) => PutCatalogueOptionsEntryBloc(),),
+              BlocProvider<PostMinesEntryBloc>(create: (context) => PostMinesEntryBloc(),),
+              BlocProvider<PostSearchBloc>(create: (context) => PostSearchBloc(),),
             ],
             child: const CatalogueEntryPage(),
           );
@@ -334,7 +339,20 @@ class AppRouter {
               providers:[
                 BlocProvider<GetCatalogueProductListBloc>(create: (context) => GetCatalogueProductListBloc(),),
                 BlocProvider<GetCatalogueProductDetailsBloc>(create: (context) => GetCatalogueProductDetailsBloc(),),
-
+                // Filter BLoCs - using singleton instances from AppBlocProvider
+                BlocProvider<GetProductTypeBloc>.value(value: AppBlocProvider.getProductTypeBloc),
+                BlocProvider<GetUtilitiesBloc>.value(value: AppBlocProvider.getUtilitiesBloc),
+                BlocProvider<GetColorsBloc>.value(value: AppBlocProvider.getColorsBloc),
+                BlocProvider<GetFinishesBloc>.value(value: AppBlocProvider.getFinishesBloc),
+                BlocProvider<GetTexturesBloc>.value(value: AppBlocProvider.getTexturesBloc),
+                BlocProvider<GetNaturalColorsBloc>.value(value: AppBlocProvider.getNaturalColorsBloc),
+                BlocProvider<GetOriginsBloc>.value(value: AppBlocProvider.getOriginsBloc),
+                BlocProvider<GetStateCountriesBloc>.value(value: AppBlocProvider.getStateCountriesBloc),
+                BlocProvider<GetProcessingNatureBloc>.value(value: AppBlocProvider.getProcessingNatureBloc),
+                BlocProvider<GetNaturalMaterialBloc>.value(value: AppBlocProvider.getNaturalMaterialBloc),
+                BlocProvider<GetHandicraftsBloc>.value(value: AppBlocProvider.getHandicraftsBloc),
+                BlocProvider<GetPriceRangeBloc>.value(value: AppBlocProvider.getPriceRangeBloc),
+                BlocProvider<GetMinesOptionBloc>.value(value: AppBlocProvider.getMinesOptionBloc),
               ],
               child: const CataloguePage());
         },
