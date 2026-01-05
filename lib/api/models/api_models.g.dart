@@ -245,7 +245,7 @@
 //       success: json['success'] as bool,
 //       message: json['message'] as String,
 //       statusCode: (json['statusCode'] as num?)?.toInt(),
-//       attendance: (json['attendance'] as List<dynamic>?)
+//       executive_history: (json['executive_history'] as List<dynamic>?)
 //           ?.map((e) => AttendanceRecord.fromJson(e as Map<String, dynamic>))
 //           .toList(),
 //     );
@@ -256,7 +256,7 @@
 //       'success': instance.success,
 //       'message': instance.message,
 //       'statusCode': instance.statusCode,
-//       'attendance': instance.attendance,
+//       'executive_history': instance.executive_history,
 //     };
 //
 // StartMeetingRequest _$StartMeetingRequestFromJson(Map<String, dynamic> json) =>

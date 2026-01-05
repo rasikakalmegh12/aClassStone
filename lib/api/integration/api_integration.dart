@@ -12,10 +12,13 @@ import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
 import 'package:apclassstone/api/models/response/CatalogueImageEntryResponseBody.dart';
+import 'package:apclassstone/api/models/response/ExecutiveAttendanceMonthlyResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveTrackingByDaysResponse.dart';
 import 'package:apclassstone/api/models/response/GetCatalogueProductResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetCatalogueProductDetailsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetClientIdDetailsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
@@ -744,10 +747,10 @@ class ApiIntegration {
   }
 
   static Future<ExecutiveAttendanceResponseBody> executiveAttendance(String date) async {
-    // try {
+    try {
     final url = Uri.parse("${ApiConstants.executiveAttendance}?date=$date");
 
-    print('📤 Sending locationPing request to: $url');
+    print('📤 Sending executiveAttendance request to: $url');
 
 
     final response = await ApiClient.send(() {
@@ -761,43 +764,43 @@ class ApiIntegration {
     print('📥 Response status: ${response.statusCode}');
     if (kDebugMode) {
       print('Response body: ${response.body}');
-      print('headers body: ${ApiConstants.headerWithToken}');
+
     }
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       final jsonResponse = jsonDecode(response.body);
       final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
       if (kDebugMode) {
-        print('✅ locationPing successful: ${result.message}');
+        print('✅ executiveAttendance successful: ${result.message}');
       }
       return result;
     } else {
       final jsonResponse = jsonDecode(response.body);
       final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
       if (kDebugMode) {
-        print('❌ locationPing failed with status ${response.statusCode}');
+        print('❌ executiveAttendance failed with status ${response.statusCode}');
       }
       return ExecutiveAttendanceResponseBody(
         status: false,
-        message: 'Location Ping failed. Status: ${result.message}',
+        message: 'Executive Attendance failed. Status: ${result.message}',
         statusCode: response.statusCode,
       );
     }
-    // } on http.ClientException catch (e) {
-    //   final errorMsg = 'Network error login: ${e.toString()}';
-    //   print('❌ $errorMsg');
-    //   return ApiCommonResponseBody(
-    //     status: false,
-    //     message: errorMsg,
-    //   );
-    // } catch (e) {
-    //   final errorMsg = 'Error: ${e.toString()}';
-    //   print('❌ $errorMsg');
-    //   return ApiCommonResponseBody(
-    //     status: false,
-    //     message: errorMsg,
-    //   );
-    // }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error Executive Attendance: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ExecutiveAttendanceResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ExecutiveAttendanceResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
   }
 
   static Future<ExecutiveTrackingByDaysResponse> executiveTrackingByDays(String userId, String date) async {
@@ -851,6 +854,63 @@ class ApiIntegration {
       final errorMsg = 'Error: ${e.toString()}';
       print('❌ $errorMsg');
       return ExecutiveTrackingByDaysResponse(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  static Future<ExecutiveAttendanceMonthlyResponseBody> executiveAttendanceMonthly(String userId,String fromDate,String toDate) async {
+    try {
+      final url = Uri.parse("${ApiConstants.executiveAttendanceDateWise}/$userId/attendance?from=$fromDate&to=$toDate");
+
+      print('📤 Sending executiveAttendanceMonthly request to: $url');
+
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ExecutiveAttendanceMonthlyResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ executiveAttendanceMonthly successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ExecutiveAttendanceMonthlyResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ executiveAttendanceMonthly failed with status ${response.statusCode}');
+        }
+        return ExecutiveAttendanceMonthlyResponseBody(
+          status: false,
+          message: 'Executive Attendance Monthly failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error Executive Attendance Monthly : ${e.toString()}';
+      print('❌ $errorMsg');
+      return ExecutiveAttendanceMonthlyResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ExecutiveAttendanceMonthlyResponseBody(
         status: false,
         message: errorMsg,
       );
@@ -1695,6 +1755,287 @@ class ApiIntegration {
         message: e.toString(),
         statusCode: 500,
         data: null,
+      );
+    }
+  }
+
+
+    //--------Client -----------
+
+  static Future<GetClientListResponseBody> getClientList() async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Clients List from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getClientsList);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetClientListResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached ClientsList: $e');
+            return GetClientListResponseBody(
+              status: false,
+              message: 'Failed to load cached Clients List: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetClientListResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse(ApiConstants.getClientsList);
+
+      if (kDebugMode) {
+        print('📤 Sending getClientsList request to: $url');
+        print('📤 Sending getClientsList header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getClientsList status: ${response.statusCode}');
+        print('Response getClientsList body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetClientListResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getClientsList successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                ApiConstants.getClientsList,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getClientsList response');
+          }
+        } catch (e) {
+          print('Error caching getClientsList: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getClientsList failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetClientListResponseBody.fromJson(jsonResponse);
+        return GetClientListResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getClientsList);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetClientListResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetClientListResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getClientsList);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetClientListResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetClientListResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+
+  static Future<GetClientIdDetailsResponseBody> getClientDetails(String clientId) async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Clients List from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getClientsDetails}/$clientId");
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetClientIdDetailsResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached Clients Details: $e');
+            return GetClientIdDetailsResponseBody(
+              status: false,
+              message: 'Failed to load cached Clients Details: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetClientIdDetailsResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse("${ApiConstants.getClientsDetails}/$clientId");
+
+      if (kDebugMode) {
+        print('📤 Sending Client Details request to: $url');
+        print('📤 Sending getClients Details header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getClients Details status: ${response.statusCode}');
+        print('Response getClients Details body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetClientIdDetailsResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getClients Details successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                "${ApiConstants.getClientsDetails}/$clientId" ,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getClientsList response');
+          }
+        } catch (e) {
+          print('Error caching getClientsList: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getClients Details failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetClientIdDetailsResponseBody.fromJson(jsonResponse);
+        return GetClientIdDetailsResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getClientsDetails}/$clientId");
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetClientIdDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetClientIdDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getClientsDetails}/$clientId");
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetClientIdDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetClientIdDetailsResponseBody(
+        status: false,
+        message: errorMsg,
       );
     }
   }

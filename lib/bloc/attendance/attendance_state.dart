@@ -2,6 +2,7 @@ import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 
 import '../../api/models/response/ApiCommonResponseBody.dart';
+import '../../api/models/response/ExecutiveAttendanceMonthlyResponseBody.dart';
 import '../../api/models/response/ExecutiveTrackingByDaysResponse.dart';
 
 abstract class PunchInState {}
@@ -68,4 +69,20 @@ class ExecutiveTrackingLoaded extends ExecutiveTrackingState {
 class ExecutiveTrackingError extends ExecutiveTrackingState {
   final String message;
   ExecutiveTrackingError({required this.message});
+}
+
+
+abstract class AttendanceTrackingMonthlyState {}
+class EAttendanceTrackingMonthlyInitial extends AttendanceTrackingMonthlyState {}
+class AttendanceTrackingMonthlyLoading extends AttendanceTrackingMonthlyState {
+  final bool showLoader; // new: UI should show loader only if true
+  AttendanceTrackingMonthlyLoading({this.showLoader = false});
+}
+class AttendanceTrackingMonthlyLoaded extends AttendanceTrackingMonthlyState {
+  final ExecutiveAttendanceMonthlyResponseBody response;
+  AttendanceTrackingMonthlyLoaded({required this.response});
+}
+class AttendanceTrackingMonthlyError extends AttendanceTrackingMonthlyState {
+  final String message;
+  AttendanceTrackingMonthlyError({required this.message});
 }

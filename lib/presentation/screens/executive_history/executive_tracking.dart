@@ -660,7 +660,8 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                'Session ${session.sessionId?.substring(0, 6)}',
+                                                // 'Session ${session.sessionId?.substring(0, 6)}',
+                                                'Session $index',
                                                 style: const TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                               Text(

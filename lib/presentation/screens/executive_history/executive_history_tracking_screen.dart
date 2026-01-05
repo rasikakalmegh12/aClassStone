@@ -11,8 +11,8 @@ import '../../../bloc/attendance/attendance_state.dart';
 import '../../../core/session/session_manager.dart';
 import '../../widgets/app_bar.dart';
 
-class AttendanceHistoryScreen extends StatelessWidget {
-  const AttendanceHistoryScreen({super.key});
+class ExecutiveHistoryScreen extends StatelessWidget {
+  const ExecutiveHistoryScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,19 +20,21 @@ class AttendanceHistoryScreen extends StatelessWidget {
       create: (context) => ExecutiveAttendanceBloc()..add(FetchExecutiveAttendance(
           date: DateFormat('dd-MMM-yyyy').format(DateTime.now())
       )),
-      child: const AttendanceHistoryView(),
+      child: const ExecutiveHistoryView(),
     );
   }
 }
 
-class AttendanceHistoryView extends StatefulWidget {
-  const AttendanceHistoryView({super.key});
+
+
+class ExecutiveHistoryView extends StatefulWidget {
+  const ExecutiveHistoryView({super.key});
 
   @override
-  State<AttendanceHistoryView> createState() => _AttendanceHistoryViewState();
+  State<ExecutiveHistoryView> createState() => _ExecutiveHistoryViewState();
 }
 
-class _AttendanceHistoryViewState extends State<AttendanceHistoryView> {
+class _ExecutiveHistoryViewState extends State<ExecutiveHistoryView> {
   late DateTime _selectedDate;
 
   @override
@@ -71,7 +73,7 @@ class _AttendanceHistoryViewState extends State<AttendanceHistoryView> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
         child: CoolAppCard(
-          title: "Attendance History",
+          title: "Executive Tracking",
           backgroundColor: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryTealDark,
           action: IconButton(
             icon: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
@@ -509,7 +511,7 @@ class EmptyAttendance extends StatelessWidget {
         children: [
           Icon(Icons.schedule_outlined, size: 80, color: Colors.grey),
           SizedBox(height: 16),
-          Text('No attendance data', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
+          Text('No executive_history data', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600)),
           SizedBox(height: 8),
           Text('Pull to refresh', style: TextStyle(color: Colors.grey)),
         ],
@@ -529,7 +531,7 @@ class LoadingAttendance extends StatelessWidget {
         children: [
           CircularProgressIndicator(),
           SizedBox(height: 16),
-          Text('Loading attendance...', style: TextStyle(fontSize: 16)),
+          Text('Loading executive_history...', style: TextStyle(fontSize: 16)),
         ],
       ),
     );

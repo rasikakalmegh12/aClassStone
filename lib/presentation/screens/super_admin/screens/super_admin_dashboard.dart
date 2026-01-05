@@ -1923,7 +1923,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'QUICK ACTIONS',
             style: TextStyle(
               fontSize: 12,
@@ -1937,10 +1937,10 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             children: [
               Expanded(
                 child: _buildQuickActionButton(
-                  label: 'Attendance',
-                  icon: Icons.assignment_outlined,
+                  label: 'Executive Tracking',
+                  icon: Icons.route,
                   onTap: () {
-                    context.pushNamed("attendance");
+                    context.pushNamed("executiveHistoryTracking");
                   },
                 ),
               ),
@@ -1961,6 +1961,17 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             children: [
               Expanded(
                 child: _buildQuickActionButton(
+                  label: 'Attendance',
+                  icon: Icons.assignment_outlined,
+                  onTap: () {
+                    context.pushNamed("attendanceTracking");
+                    // Show more options
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQuickActionButton(
                   label: 'Leads',
                   icon: Icons.star_outline,
                   onTap: () {
@@ -1974,20 +1985,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                   label: 'Clients',
                   icon: Icons.person_outline,
                   onTap: () {
+                    context.pushNamed("clientsListScreen");
+                  },
+                ),
+              ),
 
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'More',
-                  icon: Icons.more_horiz,
-                  onTap: () {
-                    // Show more options
-                  },
-                ),
-              ),
+
             ],
           ),
         ],

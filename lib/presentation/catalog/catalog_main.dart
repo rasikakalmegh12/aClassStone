@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../api/models/response/GetCatalogueProductResponseBody.dart' hide Data;
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
@@ -17,23 +19,6 @@ import '../../api/models/response/GetCatalogueProductDetailsResponseBody.dart';
 /// SIMPLE PRODUCT MODEL (for list view only)
 /// ==========================
 
-class SimpleProduct {
-  final String id;
-  final String productCode;
-  final String name;
-  final double pricePerSqft;
-  final String productTypeName;
-  final String? primaryImageUrl;
-
-  SimpleProduct({
-    required this.id,
-    required this.productCode,
-    required this.name,
-    required this.pricePerSqft,
-    required this.productTypeName,
-    this.primaryImageUrl,
-  });
-}
 
 /// ==========================
 /// CATALOGUE PAGE
@@ -78,10 +63,11 @@ class _CataloguePageState extends State<CataloguePage>
   Map<String, String> _handicraftIdMap = {};
   Map<String, String> _priceRangeIdMap = {};
 
-  List<SimpleProduct> _products = [];
+  List<Items> _products = [];
   int _currentIndex = 0;
   bool _isListView = false; // Toggle between swipeable and list view
-  bool _isShowingSearchResults = false; // Track if showing search results
+  bool _hasFiltersApplied = false; // Track if any filters are currently applied
+  bool _usePostSearchApi = false; // Flag to determine which API to use
 
   String get role => SessionManager.getUserRoleForPermissions();
   bool get isAdmin => role == 'admin' || role == 'superadmin';
@@ -152,7 +138,16 @@ class _CataloguePageState extends State<CataloguePage>
 
   /// Handle pull-to-refresh
   Future<void> _handleRefresh() async {
-    // Trigger BLoC to fetch fresh data without showing loader
+    // Reset all flags and filters on refresh
+    setState(() {
+      _hasFiltersApplied = false;
+      _usePostSearchApi = false;
+      _filters.clear();
+      _search = '';
+      _searchController.clear();
+    });
+
+    // Always trigger GetCatalogueProductListBloc on refresh
     context.read<GetCatalogueProductListBloc>().add(
       FetchGetCatalogueProductList(page: 1, pageSize: 20, showLoader: false),
     );
@@ -164,16 +159,16 @@ class _CataloguePageState extends State<CataloguePage>
   // Removed old _loadProducts method - now using BLoC
 
   /// Convert API Items to SimpleProduct model
-  SimpleProduct _convertApiItemToSimpleProduct(dynamic item) {
+  Items _convertApiItemToSimpleProduct1(dynamic item) {
     final hasValidImage = item.primaryImageUrl != null &&
                           item.primaryImageUrl.toString().isNotEmpty &&
                           item.primaryImageUrl.toString() != 'null';
 
-    return SimpleProduct(
+    return Items(
       id: item.id ?? '',
       productCode: item.productCode ?? '',
       name: item.name ?? 'Unnamed Product',
-      pricePerSqft: (item.pricePerSqft ?? 0).toDouble(),
+      // pricePerSqft: (item.pricePerSqft ?? 0).toDouble(),
       productTypeName: item.productTypeName ?? 'Stone',
       primaryImageUrl: hasValidImage ? item.primaryImageUrl.toString() : null,
     );
@@ -242,18 +237,16 @@ class _CataloguePageState extends State<CataloguePage>
             // Update products with search results
             final apiProducts = searchState.response.data?.items ?? [];
             setState(() {
-              _isShowingSearchResults = true;
+              _usePostSearchApi = true; // Mark that we're using PostSearch API
               if (apiProducts.isNotEmpty) {
                 print("apiProducts.isNotEmpty");
-                _products = apiProducts.map((item) => _convertApiItemToSimpleProduct(item)).toList();
+                _products = apiProducts;
               } else {
                 _products = [];
               }
             });
           } else if (searchState is PostSearchError) {
-            setState(() {
-              _isShowingSearchResults = false;
-            });
+            // Don't change the flag on error, keep showing previous results
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Search error: ${searchState.message}'),
@@ -304,12 +297,13 @@ class _CataloguePageState extends State<CataloguePage>
           }
 
           if (state is GetCatalogueProductListLoaded) {
-            // Convert API response to SimpleProduct models (only if not showing search results)
-            if (!_isShowingSearchResults) {
+            // Convert API response to SimpleProduct models (only if not using PostSearch API)
+            if (!_usePostSearchApi) {
               final apiProducts = state.response.data?.items ?? [];
 
               if (apiProducts.isNotEmpty) {
-                _products = apiProducts.map((item) => _convertApiItemToSimpleProduct(item)).toList();
+                // _products = apiProducts.map((item) => _convertApiItemToSimpleProduct(item)).toList();
+                _products = apiProducts;
               } else {
                 _products = []; // Empty list if no products
               }
@@ -368,7 +362,7 @@ class _CataloguePageState extends State<CataloguePage>
   }
 
   /// Build List View (Grid Layout)
-  Widget _buildListView(List<SimpleProduct> products) {
+  Widget _buildListView(List<Items> products) {
     // Calculate columns based on screen width
     final screenWidth = MediaQuery.of(context).size.width;
     final columns = screenWidth > 600 ? 3 : 2;
@@ -388,7 +382,7 @@ class _CataloguePageState extends State<CataloguePage>
   }
 
   /// Build Swipeable View
-  Widget _buildSwipeableView(List<SimpleProduct> products) {
+  Widget _buildSwipeableView(List<Items> products) {
     return Column(
       children: [
         // Product counter with animated progress bar
@@ -543,21 +537,30 @@ class _CataloguePageState extends State<CataloguePage>
                     setState(() {
                       _search = '';
                       _currentIndex = 0;
-                      _isShowingSearchResults = false; // Reset search flag
+                      // If no filters are applied, switch back to GetCatalogueProductList
+                      if (!_hasFiltersApplied) {
+                        _usePostSearchApi = false;
+                      }
                     });
                     // Reset page controller if in swipeable view
                     if (!_isListView && _pageController.hasClients) {
                       _pageController.jumpToPage(0);
                     }
-                    // Call API without search
-                    context.read<GetCatalogueProductListBloc>().add(
-                      FetchGetCatalogueProductList(
-                        page: 1,
-                        pageSize: 20,
-                        showLoader: false,
-                        search: null,
-                      ),
-                    );
+                    // Call appropriate API
+                    if (_hasFiltersApplied) {
+                      // If filters are applied, call PostSearch with empty search
+                      _callPostSearch(searchQuery: "");
+                    } else {
+                      // Otherwise call GetCatalogueProductList
+                      context.read<GetCatalogueProductListBloc>().add(
+                        FetchGetCatalogueProductList(
+                          page: 1,
+                          pageSize: 20,
+                          showLoader: false,
+                          search: null,
+                        ),
+                      );
+                    }
                   },
                 )
               : null,
@@ -592,14 +595,14 @@ class _CataloguePageState extends State<CataloguePage>
 
           // Start new timer for debouncing (500ms delay)
           _debounce = Timer(const Duration(milliseconds: 500), () {
-            // Check if any filters are applied
-            bool hasFilters = _filters.values.any((list) => list.isNotEmpty);
-
-            if (hasFilters || v.trim().isNotEmpty) {
-              // Call PostSearchBloc when filters are applied or searching
+            // If filters are applied, always use PostSearch
+            if (_hasFiltersApplied) {
               _callPostSearch(searchQuery: v.trim().isEmpty ? "" : v.trim());
             } else {
-              // Call regular API without filters
+              // No filters: use GetCatalogueProductList for search
+              setState(() {
+                _usePostSearchApi = false;
+              });
               context.read<GetCatalogueProductListBloc>().add(
                 FetchGetCatalogueProductList(
                   page: 1,
@@ -717,7 +720,7 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _swipeableProductCard(SimpleProduct p) {
+  Widget _swipeableProductCard(Items p) {
     return GestureDetector(
       key: ValueKey('swipeable_card_${p.id}'), // Unique key for proper rebuild
       onTap: () {
@@ -779,47 +782,64 @@ class _CataloguePageState extends State<CataloguePage>
                               fit: StackFit.expand,
                               children: [
                                 // Main Image with parallax effect
-                                AnimatedBuilder(
-                                  animation: _pageController,
-                                  builder: (context, child) {
-                                    double offset = 0.0;
-                                    if (_pageController.hasClients && _pageController.position.haveDimensions) {
-                                      final page = _pageController.page ?? 0;
-                                      final index = _products.indexOf(p);
-                                      offset = (page - index) * 50;
-                                    }
-                                    return Transform.translate(
-                                      offset: Offset(offset, 0),
-                                      child: child,
-                                    );
-                                  },
-                                  child: p.primaryImageUrl == null
-                                      ? _buildNoImagePlaceholder()
-                                      : Image.network(
-                                          p.primaryImageUrl!,
-                                          key: ValueKey('swipeable_image_${p.id}_${p.primaryImageUrl}'), // Force image rebuild
-                                          fit: BoxFit.cover,
-                                          loadingBuilder: (context, child, loadingProgress) {
-                                            if (loadingProgress == null) return child;
-                                            return Container(
-                                              color: Colors.grey[300],
-                                              child: Center(
-                                                child: CircularProgressIndicator(
-                                                  value: loadingProgress.expectedTotalBytes != null
-                                                      ? loadingProgress.cumulativeBytesLoaded /
-                                                          loadingProgress.expectedTotalBytes!
-                                                      : null,
-                                                  color: primary,
-                                                  strokeWidth: 3,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
-                                        ),
-                                ),
+                                // AnimatedBuilder(
+                                //   animation: _pageController,
+                                //   builder: (context, child) {
+                                //     double offset = 0.0;
+                                //     if (_pageController.hasClients && _pageController.position.haveDimensions) {
+                                //       final page = _pageController.page ?? 0;
+                                //       final index = _products.indexOf(p);
+                                //       offset = (page - index) * 50;
+                                //     }
+                                //     return Transform.translate(
+                                //       offset: Offset(offset, 0),
+                                //       child: child,
+                                //     );
+                                //   },
+                                //   child: p.primaryImageUrl == null
+                                //       ? _buildNoImagePlaceholder()
+                                //       : Image.network(
+                                //           p.primaryImageUrl!,
+                                //           key: ValueKey('swipeable_image_${p.id}_${p.primaryImageUrl}'), // Force image rebuild
+                                //           fit: BoxFit.cover,
+                                //           loadingBuilder: (context, child, loadingProgress) {
+                                //             if (loadingProgress == null) return child;
+                                //             return Container(
+                                //               color: Colors.grey[300],
+                                //               child: Center(
+                                //                 child: CircularProgressIndicator(
+                                //                   value: loadingProgress.expectedTotalBytes != null
+                                //                       ? loadingProgress.cumulativeBytesLoaded /
+                                //                           loadingProgress.expectedTotalBytes!
+                                //                       : null,
+                                //                   color: primary,
+                                //                   strokeWidth: 3,
+                                //                 ),
+                                //               ),
+                                //             );
+                                //           },
+                                //           errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+                                //         ),
+                                // ),
+                         p.primaryImageUrl != null
+                            ? Image.network(
+                              p.primaryImageUrl!,  // Safe now
+                              key: ValueKey('swipeable_image_${p.id}_${p.primaryImageUrl}'),
+                              fit: BoxFit.cover,
+                              loadingBuilder: (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(Icons.image, color: Colors.white70, size: 40),
+                                );
+                              },
+                              errorBuilder: (context, error, stackTrace) => _buildImageErrorPlaceholder(),
+                            )
+                          : _buildNoImagePlaceholder(),
 
-                                // Animated gradient overlay
+
+
+                // Animated gradient overlay
                                 Positioned(
                                   bottom: 0,
                                   left: 0,
@@ -881,7 +901,7 @@ class _CataloguePageState extends State<CataloguePage>
                                       ],
                                     ),
                                     child: Text(
-                                      p.productTypeName.toUpperCase(),
+                                      p.name!.toUpperCase(),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 11,
@@ -907,7 +927,7 @@ class _CataloguePageState extends State<CataloguePage>
                                       ),
                                     ),
                                     child: Text(
-                                      p.productCode,
+                                      p.productCode!,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
@@ -954,7 +974,7 @@ class _CataloguePageState extends State<CataloguePage>
                                       );
                                     },
                                     child: Text(
-                                      p.name,
+                                      p.name!,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
@@ -1006,7 +1026,7 @@ class _CataloguePageState extends State<CataloguePage>
                                                     ),
                                                     const SizedBox(width: 2),
                                                     Text(
-                                                      '${p.pricePerSqft.toInt()}',
+                                                      '${(p.lowestPricePerSqft ?? 0).toInt()}',
                                                       style: TextStyle(
                                                         color: primary,
                                                         fontWeight: FontWeight.w900,
@@ -1175,13 +1195,13 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _productCard(SimpleProduct p) {
+  Widget _productCard(Items p) {
     return GestureDetector(
       key: ValueKey('product_card_${p.id}'), // Unique key for proper rebuild
       onTap: () => _openDetails(p),
       child: Card(
         elevation: 3,
-        color: light.withOpacity(0.05),
+        color: light.withValues(alpha: 0.05),
         shadowColor: Colors.black26,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),side: const BorderSide(color: AppColors.grey300)),
         clipBehavior: Clip.antiAlias, // Important: ensures child respects border radius
@@ -1284,7 +1304,7 @@ class _CataloguePageState extends State<CataloguePage>
                       ],
                     ),
                     child: Text(
-                      p.productTypeName,
+                      p.name!,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 11,
@@ -1305,7 +1325,7 @@ class _CataloguePageState extends State<CataloguePage>
                 children: [
                   /// PRODUCT NAME
                   Text(
-                    p.name,
+                    p.name!,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -1326,7 +1346,7 @@ class _CataloguePageState extends State<CataloguePage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '₹${p.pricePerSqft.toInt()}',
+                            '₹${p.lowestPricePerSqft?.toInt()}',
                             style: TextStyle(
                               color: primary,
                               fontWeight: FontWeight.w800,
@@ -1503,13 +1523,13 @@ class _CataloguePageState extends State<CataloguePage>
   /// DETAILS PAGE
   /// ==========================
 
-  void _openDetails(SimpleProduct p) {
+  void _openDetails(Items p) {
     // Get the BLoC instance before showing bottom sheet
     final detailsBloc = context.read<GetCatalogueProductDetailsBloc>();
 
     // Trigger BLoC to fetch product details
     detailsBloc.add(
-      FetchGetCatalogueProductDetails(productId: p.id, showLoader: true),
+      FetchGetCatalogueProductDetails(productId: p.id!, showLoader: true),
     );
 
     showModalBottomSheet(
@@ -1536,7 +1556,7 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _buildDetailsContent(GetCatalogueProductDetailsState state, ScrollController? scrollController, SimpleProduct simpleProduct) {
+  Widget _buildDetailsContent(GetCatalogueProductDetailsState state, ScrollController? scrollController, Items simpleProduct) {
     if (state is GetCatalogueProductDetailsLoading && state.showLoader) {
       return Center(
         child: CircularProgressIndicator(color: primary),
@@ -1617,7 +1637,7 @@ class _CataloguePageState extends State<CataloguePage>
           const SizedBox(height: 16),
 
           // Price
-          if (data.pricePerSqft != null)
+          if (data.priceRangeName != null)
             Card(
               elevation: 0,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1632,7 +1652,7 @@ class _CataloguePageState extends State<CataloguePage>
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      '₹${data.pricePerSqft} / sqft',
+                      '₹${data.priceRangeName} / sqft',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -1651,53 +1671,188 @@ class _CataloguePageState extends State<CataloguePage>
             _buildInfoRow('Description', data.description!),
 
           // Synonyms
-          if (data.synonyms.isNotEmpty)
-            _buildInfoRow('Synonyms', data.synonyms.join(', ')),
+          if (data.synonyms!.isNotEmpty)
+            _buildInfoRow('One Liner', data.marketingOneLiner ?? "NA"),
 
           // Product Type
           if (data.productTypeName != null)
             _buildInfoRow('Product Type', data.productTypeName!),
 
           // Utilities
-          if (data.utilities.isNotEmpty)
-            _buildInfoRow('Utilities', data.utilities.map((u) => u.name ?? '').join(', ')),
+          if (data.utilities!.isNotEmpty)
+            _buildInfoRow('Utilities', data.utilities!.map((u) => u.name ?? '').join(', ')),
 
           // Colors
-          if (data.colours.isNotEmpty)
-            _buildInfoRow('Colors', data.colours.map((c) => c.name ?? '').join(', ')),
+          if (data.colours!.isNotEmpty)
+            _buildInfoRow('Colors', '', colorList: data.colours),
 
           // Natural Colors
-          if (data.naturalColours.isNotEmpty)
-            _buildInfoRow('Natural Colors', data.naturalColours.map((c) => c.name ?? '').join(', ')),
+          if (data.naturalColours!.isNotEmpty)
+            _buildInfoRow('Natural Colors', '', colorList: data.naturalColours),
 
           // Finishes
-          if (data.finishes.isNotEmpty)
-            _buildInfoRow('Finishes', data.finishes.map((f) => f.name ?? '').join(', ')),
+          if (data.finishes!.isNotEmpty)
+            _buildInfoRow('Finishes', data.finishes!.map((f) => f.name ?? '').join(', ')),
 
           // Textures
-          if (data.textures.isNotEmpty)
-            _buildInfoRow('Textures', data.textures.map((t) => t.name ?? '').join(', ')),
+          if (data.textures!.isNotEmpty)
+            _buildInfoRow('Textures', data.textures!.map((t) => t.name ?? '').join(', ')),
 
           // Origins
-          if (data.origins.isNotEmpty)
-            _buildInfoRow('Origins', data.origins.map((o) => o.name ?? '').join(', ')),
+          if (data.origins!.isNotEmpty)
+            _buildInfoRow('Origins', data.origins!.map((o) => o.name ?? '').join(', ')),
 
           // State/Countries
-          if (data.stateCountries.isNotEmpty)
-            _buildInfoRow('State/Countries', data.stateCountries.map((s) => s.name ?? '').join(', ')),
+          if (data.stateCountries!.isNotEmpty)
+            _buildInfoRow('State/Countries', data.stateCountries!.map((s) => s.name ?? '').join(', ')),
 
           // Processing Natures
-          if (data.processingNatures.isNotEmpty)
-            _buildInfoRow('Processing Nature', data.processingNatures.map((p) => p.name ?? '').join(', ')),
+          if (data.processingNatures!.isNotEmpty)
+            _buildInfoRow('Processing Nature', data.processingNatures!.map((p) => p.name ?? '').join(', ')),
 
           // Material Naturalities
-          if (data.materialNaturalities.isNotEmpty)
-            _buildInfoRow('Material Naturality', data.materialNaturalities.map((m) => m.name ?? '').join(', ')),
+          if (data.materialNaturalities!.isNotEmpty)
+            _buildInfoRow('Material Naturality', data.materialNaturalities!.map((m) => m.name ?? '').join(', ')),
 
           // Handicraft Types
-          if (data.handicraftTypes.isNotEmpty)
-            _buildInfoRow('Handicraft Types', data.handicraftTypes.map((h) => h.name ?? '').join(', ')),
+          if (data.handicraftTypes!.isNotEmpty)
+            _buildInfoRow('Handicraft Types', data.handicraftTypes!.map((h) => h.name ?? '').join(', ')),
 
+          if (data.priceSqftArchitectGradeA != null ||
+              data.priceSqftArchitectGradeB != null ||
+              data.priceSqftArchitectGradeC != null)
+            Container(
+              margin: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: RoleTheme.primary(role).withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: RoleTheme.primaryLight(role),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.price_check, size: 18, color: RoleTheme.primary(role)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Pricing (₹/sqft)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: RoleTheme.primary(role),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Architect Pricing Row
+                  if (data.priceSqftArchitectGradeA != null ||
+                      data.priceSqftArchitectGradeB != null ||
+                      data.priceSqftArchitectGradeC != null)
+                    _buildPricingGroup(
+                      'Architect',
+                      data.priceSqftArchitectGradeA,
+                      data.priceSqftArchitectGradeB,
+                      data.priceSqftArchitectGradeC,
+                      RoleTheme.primary(role),
+                    ),
+
+                  // Trader Pricing Row
+                  if (data.priceSqftTraderGradeA != null ||
+                      data.priceSqftTraderGradeB != null ||
+                      data.priceSqftTraderGradeC != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: _buildPricingGroup(
+                        'Trader',
+                        data.priceSqftTraderGradeA,
+                        data.priceSqftTraderGradeB,
+                        data.priceSqftTraderGradeC,
+                        RoleTheme.primary(role),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+
+
+          if (isAdmin && data.mineName != null)
+            Container(
+              margin: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+                boxShadow: [
+                  BoxShadow(
+                    color: RoleTheme.primary(role).withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: RoleTheme.primaryLight(role),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.business,
+                          size: 18,
+                          color: RoleTheme.primary(role),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Mine Details',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: RoleTheme.primary(role),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Compact info rows
+                  if (data.mineName != null) _buildCompactRow(Icons.business, 'Mine', data.mineName!, RoleTheme.primary(role)),
+                  if (data.mineOwnerName != null) _buildCompactRow(Icons.person, 'Owner', data.mineOwnerName!, RoleTheme.primary(role)),
+                  if (data.mineContactPhone != null) _buildCompactRow(Icons.phone, 'Mobile', data.mineContactPhone!, RoleTheme.primary(role)),
+                  if (data.mineContactEmail != null) _buildCompactRow(Icons.email, 'Email', data.mineContactEmail!, RoleTheme.primary(role)),
+                  if (data.mineLocation != null) _buildCompactRow(Icons.location_on, 'Location', data.mineLocation!, RoleTheme.primary(role)),
+                ],
+              ),
+            ),
           const SizedBox(height: 20),
 
           // Close Button
@@ -1717,105 +1872,544 @@ class _CataloguePageState extends State<CataloguePage>
       child: Text('Loading...', style: TextStyle(color: Colors.grey[600])),
     );
   }
-
-  Widget _buildImageSection(Data data) {
-    // Build complete image list: primaryImageUrl first, then imageUrls
-    final List<String> allImages = [];
-
-    // Add primary image first if it exists
-    if (data.primaryImageUrl != null &&
-        data.primaryImageUrl!.isNotEmpty &&
-        data.primaryImageUrl != 'null') {
-      allImages.add(data.primaryImageUrl!);
-    }
-
-    // Add other images from imageUrls (excluding duplicates)
-    for (var imageUrl in data.imageUrls) {
-      if (imageUrl.isNotEmpty &&
-          imageUrl != 'null' &&
-          !allImages.contains(imageUrl)) {
-        allImages.add(imageUrl);
-      }
-    }
-
-    // If no images available, show placeholder
-    if (allImages.isEmpty) {
-      return Container(
-        height: 220,
-        decoration: BoxDecoration(
-          color: Colors.grey[200],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
-            const SizedBox(height: 12),
-            Text(
-              'No Images Available',
-              style: TextStyle(color: Colors.grey[500], fontSize: 14),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Show single image or image carousel
-    return SizedBox(
-      height: 220,
-      child: Stack(
+  Widget _buildCompactRow(IconData icon, String title, String value, Color roleColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          PageView.builder(
-            itemCount: allImages.length,
-            itemBuilder: (context, index) => ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                allImages[index],
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: Colors.grey[200],
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Image Load Error',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
-                      ),
-                    ],
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: roleColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(icon, size: 16, color: roleColor),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: RichText(
+              text: TextSpan(
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                children: [
+                  TextSpan(
+                    text: '$title: ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
-                ),
+                  TextSpan(text: value),
+                ],
               ),
             ),
           ),
-          // Show image counter if multiple images
-          if (allImages.length > 1)
-            Positioned(
-              bottom: 12,
-              right: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  '${allImages.length} images',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
+  Widget _buildPricingGroup(
+      String category,
+      int? gradeA,
+      int? gradeB,
+      int? gradeC,
+      Color roleColor,
+      ) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border(
+          left: BorderSide(width: 4, color: roleColor),  // Fixed: Use BorderSide
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            category,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: roleColor,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              _buildPriceChip('A', gradeA, roleColor),
+              const SizedBox(width: 8),
+              _buildPriceChip('B', gradeB, roleColor),
+              const SizedBox(width: 8),
+              _buildPriceChip('C', gradeC, roleColor),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+// Price chip helper
+  Widget _buildPriceChip(String grade, int? price, Color roleColor) {
+    if (price == null) return const SizedBox.shrink();
+
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: roleColor.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              grade,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            Text(
+              '₹$price',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: roleColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  Widget _buildImageSection(Data data) {
+    // Build complete image list (same logic)
+    final List<String> allImages = [];
+    if (data.primaryImageUrl != null && data.primaryImageUrl!.isNotEmpty && data.primaryImageUrl != 'null') {
+      allImages.add(data.primaryImageUrl!);
+    }
+    for (var imageUrl in data.imageUrls ?? []) {
+      if (imageUrl.isNotEmpty && imageUrl != 'null' && !allImages.contains(imageUrl)) {
+        allImages.add(imageUrl);
+      }
+    }
+
+    if (allImages.isEmpty) {
+      return Container(
+        height: 220,
+        decoration: BoxDecoration(color: Colors.grey[200], borderRadius: BorderRadius.circular(12)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 12),
+            Text('No Images Available', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+          ],
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: () => _showImageDialog(context, allImages),
+          // _showFullScreenImages(context, allImages),
+      child: SizedBox(
+        height: 220,
+        child: Stack(
+          children: [
+            PageView.builder(
+              itemCount: allImages.length,
+              itemBuilder: (context, index) => ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  allImages[index],
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: Colors.grey[200],
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
+                        const SizedBox(height: 12),
+                        Text('Image Load Error', style: TextStyle(color: Colors.grey[500], fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // Zoom hint
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.zoom_in, color: Colors.white, size: 18),
+              ),
+            ),
+            // Image counter
+            if (allImages.length > 1)
+              Positioned(
+                bottom: 12,
+                left: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${allImages.length} images',
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+// Full screen zoomable gallery
+  void _showFullScreenImages(BuildContext context, List<String> images) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => FullScreenImageGallery(images: images),
+    );
+  }
+  // Widget _buildImageSection(Data data) {
+  //   // Build complete image list: primaryImageUrl first, then imageUrls
+  //   final List<String> allImages = [];
+  //
+  //   // Add primary image first if it exists
+  //   if (data.primaryImageUrl != null &&
+  //       data.primaryImageUrl!.isNotEmpty &&
+  //       data.primaryImageUrl != 'null') {
+  //     allImages.add(data.primaryImageUrl!);
+  //   }
+  //
+  //   // Add other images from imageUrls (excluding duplicates)
+  //   for (var imageUrl in data.imageUrls!) {
+  //     if (imageUrl.isNotEmpty &&
+  //         imageUrl != 'null' &&
+  //         !allImages.contains(imageUrl)) {
+  //       allImages.add(imageUrl);
+  //     }
+  //   }
+  //
+  //   // If no images available, show placeholder
+  //   if (allImages.isEmpty) {
+  //     return Container(
+  //       height: 220,
+  //       decoration: BoxDecoration(
+  //         color: Colors.grey[200],
+  //         borderRadius: BorderRadius.circular(12),
+  //       ),
+  //       child: Column(
+  //         mainAxisAlignment: MainAxisAlignment.center,
+  //         children: [
+  //           Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
+  //           const SizedBox(height: 12),
+  //           Text(
+  //             'No Images Available',
+  //             style: TextStyle(color: Colors.grey[500], fontSize: 14),
+  //           ),
+  //         ],
+  //       ),
+  //     );
+  //   }
+  //
+  //   // Show single image or image carousel
+  //   return SizedBox(
+  //     height: 220,
+  //     child: Stack(
+  //       children: [
+  //         PageView.builder(
+  //           itemCount: allImages.length,
+  //           itemBuilder: (context, index) => ClipRRect(
+  //             borderRadius: BorderRadius.circular(12),
+  //             child: Image.network(
+  //               allImages[index],
+  //               fit: BoxFit.cover,
+  //               errorBuilder: (context, error, stackTrace) => Container(
+  //                 color: Colors.grey[200],
+  //                 child: Column(
+  //                   mainAxisAlignment: MainAxisAlignment.center,
+  //                   children: [
+  //                     Icon(Icons.broken_image_outlined, size: 80, color: Colors.grey[400]),
+  //                     const SizedBox(height: 12),
+  //                     Text(
+  //                       'Image Load Error',
+  //                       style: TextStyle(color: Colors.grey[500], fontSize: 14),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         // Show image counter if multiple images
+  //         if (allImages.length > 1)
+  //           Positioned(
+  //             bottom: 12,
+  //             right: 12,
+  //             child: Container(
+  //               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+  //               decoration: BoxDecoration(
+  //                 color: Colors.black.withValues(alpha: 0.6),
+  //                 borderRadius: BorderRadius.circular(20),
+  //               ),
+  //               child: Text(
+  //                 '${allImages.length} images',
+  //                 style: const TextStyle(
+  //                   color: Colors.white,
+  //                   fontSize: 12,
+  //                   fontWeight: FontWeight.w600,
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
+  void _showImageDialog(BuildContext context, List<String> images) {
+    int currentIndex = 0;
+    final PageController pageController = PageController();
+    final TransformationController transformationController =
+    TransformationController();
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'ImageDialog',
+      barrierColor: Colors.black54,
+      transitionDuration: const Duration(milliseconds: 280),
+      pageBuilder: (_, __, ___) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Center(
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  height: MediaQuery.of(context).size.height * 0.75,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black45,
+                        blurRadius: 30,
+                        offset: Offset(0, 15),
+                      ),
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+
+                      /// ================= IMAGE VIEW =================
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: PageView.builder(
+                          controller: pageController,
+                          itemCount: images.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              currentIndex = index;
+                              transformationController.value =
+                                  Matrix4.identity(); // reset zoom on page change
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return InteractiveViewer(
+                              transformationController:
+                              transformationController,
+                              minScale: 1,
+                              maxScale: 4,
+                              panEnabled: true,
+                              child: Center(
+                                child: Image.network(
+                                  images[index],
+                                  fit: BoxFit.contain,
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
+                                    if (loadingProgress == null) return child;
+                                    return const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    );
+                                  },
+                                  errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.broken_image,
+                                    size: 70,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      /// ================= TOP BAR =================
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.75),
+                                Colors.transparent,
+                              ],
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(22),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${currentIndex + 1} / ${images.length}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => Navigator.pop(context),
+                                child: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: const BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: Colors.white24,
+                                  ),
+                                  child: const Icon(
+                                    Icons.close,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      /// ================= DOT INDICATOR =================
+                      if (images.length > 1)
+                        Positioned(
+                          bottom: 16,
+                          left: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              images.length,
+                                  (index) => AnimatedContainer(
+                                duration: const Duration(milliseconds: 250),
+                                margin:
+                                const EdgeInsets.symmetric(horizontal: 4),
+                                height: 8,
+                                width: currentIndex == index ? 22 : 8,
+                                decoration: BoxDecoration(
+                                  color: currentIndex == index
+                                      ? Colors.white
+                                      : Colors.white38,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      /// ================= ZOOM CONTROLS =================
+                      Positioned(
+                        bottom: 50,
+                        right: 16,
+                        child: Column(
+                          children: [
+                            _ZoomButton(
+                              icon: Icons.add,
+                              onTap: () => _zoom(
+                                  transformationController, 1.25),
+                            ),
+                            const SizedBox(height: 10),
+                            _ZoomButton(
+                              icon: Icons.remove,
+                              onTap: () =>
+                                  _zoom(transformationController, 0.8),
+                            ),
+                            const SizedBox(height: 10),
+                            _ZoomButton(
+                              icon: Icons.refresh,
+                              onTap: () => transformationController.value =
+                                  Matrix4.identity(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+
+      /// ================= ANIMATION =================
+      transitionBuilder: (context, animation, _, child) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween(begin: 0.92, end: 1.0).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOut),
+            ),
+            child: child,
+          ),
+        );
+      },
+
+
+    );
+  }
+
+  /// ================= ZOOM LOGIC =================
+  void _zoom(
+      TransformationController controller,
+      double scaleFactor,
+      ) {
+    final Matrix4 matrix = controller.value.clone();
+    matrix.scale(scaleFactor);
+    controller.value = matrix;
+  }
+
+
+
+
+
+
+
+
+  Widget _buildInfoRow(String label, String value, {List<dynamic>? colorList}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 5),
       child: Card(
@@ -1838,13 +2432,75 @@ class _CataloguePageState extends State<CataloguePage>
                 ),
               ),
               Expanded(
-                child: Text(
-                  value,
-                  style: TextStyle(
-                    color: Colors.grey[800],
-                    fontSize: 14,
-                  ),
-                ),
+                child: (label == "Colors" || label == "Natural Colors") && colorList != null
+                    ? Wrap(
+                        spacing: 5,
+                        runSpacing: 5,
+                        children: colorList.map((colorItem) {
+                          final colorCode = colorItem.code ?? '';
+                          final colorName = colorItem.name ?? '';
+
+                          // Parse color code safely
+                          Color displayColor;
+                          try {
+                            // Handle format like "0XA20101" or "0xff9c27b0"
+                            String hexString = colorCode
+                                .toUpperCase()
+                                .replaceAll('0X', '')
+                                .trim();
+
+                            // If it's 6 characters (RGB), add FF prefix for full opacity (ARGB)
+                            // If it's 8 characters (ARGB), use as is
+                            if (hexString.length == 6) {
+                              // Add FF for full opacity: A20101 -> FFA20101
+                              displayColor = Color(int.parse('FF$hexString', radix: 16));
+                            } else if (hexString.length == 8) {
+                              // Already has alpha channel
+                              displayColor = Color(int.parse(hexString, radix: 16));
+                            } else {
+                              if (kDebugMode) {
+                                print('⚠️ Invalid color hex length for "$colorCode": ${hexString.length} chars');
+                              }
+                              displayColor = Colors.grey; // fallback
+                            }
+                          } catch (e) {
+                            if (kDebugMode) {
+                              print('⚠️ Error parsing color code "$colorCode": $e');
+                            }
+                            displayColor = Colors.grey; // fallback
+                          }
+
+                          return Tooltip(
+                            message: colorName,
+                            child: Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: displayColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withAlpha(20),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      )
+                    : Text(
+                        value,
+                        style: TextStyle(
+                          color: Colors.grey[800],
+                          fontSize: 14,
+                        ),
+                      ),
               ),
             ],
           ),
@@ -1920,9 +2576,11 @@ class _CataloguePageState extends State<CataloguePage>
                           onPressed: () {
                             setState(() {
                               _filters.clear();
-                              _isShowingSearchResults = false; // Reset search results flag
+                              _hasFiltersApplied = false;
+                              _usePostSearchApi = false;
                             });
                             Navigator.pop(sheetContext);
+                            // Always call GetCatalogueProductList when clearing all filters
                             context.read<GetCatalogueProductListBloc>().add(
                               FetchGetCatalogueProductList(
                                 page: 1,
@@ -2235,13 +2893,20 @@ class _CataloguePageState extends State<CataloguePage>
                       // Check if any filters are applied
                       bool hasFilters = _filters.values.any((list) => list.isNotEmpty);
 
-                      if (hasFilters || _search.isNotEmpty) {
-                        // Call PostSearchBloc with filters
+                      setState(() {
+                        _hasFiltersApplied = hasFilters;
+                      });
+
+                      if (hasFilters) {
+                        // Filters are applied: use PostSearchBloc
+                        setState(() {
+                          _usePostSearchApi = true;
+                        });
                         _callPostSearch(searchQuery: _search.isEmpty ? "" : _search);
                       } else {
-                        // No filters applied, use regular GetCatalogueProductList
+                        // No filters: use GetCatalogueProductList
                         setState(() {
-                          _isShowingSearchResults = false;
+                          _usePostSearchApi = false;
                         });
                         context.read<GetCatalogueProductListBloc>().add(
                           FetchGetCatalogueProductList(
@@ -2385,3 +3050,111 @@ class RoleTheme {
 }
 
 
+class FullScreenImageGallery extends StatefulWidget {
+  final List<String> images;
+
+  const FullScreenImageGallery({Key? key, required this.images}) : super(key: key);
+
+  @override
+  State<FullScreenImageGallery> createState() => _FullScreenImageGalleryState();
+}
+
+class _FullScreenImageGalleryState extends State<FullScreenImageGallery> {
+  late PageController _controller;
+  int currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          if (widget.images.length > 1)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                '${currentIndex + 1} / ${widget.images.length}',
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+        ],
+      ),
+      body: PageView.builder(
+        controller: _controller,
+        onPageChanged: (index) => setState(() => currentIndex = index),
+        itemCount: widget.images.length,
+        itemBuilder: (context, index) => InteractiveViewer(
+          panEnabled: true,
+          boundaryMargin: const EdgeInsets.all(20),
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Center(
+            child: Image.network(
+              widget.images[index],
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.grey[900],
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.broken_image, size: 80, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text('Failed to load image', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
+/// ================= ZOOM BUTTON =================
+class _ZoomButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ZoomButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black54,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: Colors.white, size: 22),
+        ),
+      ),
+    );
+  }
+}

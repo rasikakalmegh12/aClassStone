@@ -39,3 +39,14 @@ class FetchExecutiveTracking extends ExecutiveTrackingEvent {
 
   FetchExecutiveTracking({required this.date, required this.userId, this.showLoader = false});
 }
+
+
+abstract class AttendanceTrackingMonthlyEvent {}
+class FetchAttendanceTrackingMonthly extends AttendanceTrackingMonthlyEvent {
+  final String userId;
+  final String  fromDate;
+  final String  toDate;
+  final bool showLoader; // new: whether the UI should show a full-page loader
+
+  FetchAttendanceTrackingMonthly({required this.userId, this.showLoader = false, required this.fromDate, required this.toDate});
+}

@@ -44,6 +44,7 @@ class ApiConstants {
 
  //  Admin and SuperAdmin Common Apis
   static const String executiveAttendance = "${baseUrl}marketing/admin/executives/attendance/day";
+  static const String executiveAttendanceDateWise = "${baseUrl}marketing/admin/executives";
 
 
 
@@ -86,6 +87,8 @@ class ApiConstants {
  // Clients Apis
 
   static const String postClients = "${baseUrl}marketing/clients";
+  static const String getClientsDetails = "${baseUrl}marketing/clients";
+  static const String getClientsList = "${baseUrl}marketing/clients";
 
 
 

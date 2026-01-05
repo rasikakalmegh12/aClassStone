@@ -132,7 +132,7 @@ CREATE INDEX idx_queue_created ON queued_requests(createdAt)
 ```json
 {
   "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "endpoint": "/api/attendance/punch-in",
+  "endpoint": "/api/executive_history/punch-in",
   "method": "POST",
   "requestBody": "{\"timestamp\":\"2025-12-21T10:30:00Z\",\"location\":\"Office\"}",
   "headers": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",

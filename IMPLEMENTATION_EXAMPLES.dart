@@ -130,11 +130,11 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   void _registerCustomHandlers() {
     // Register custom sync handler for punch endpoints
     _syncService.registerCustomHandler(
-      '/api/attendance/punch-in',
+      '/api/executive_history/punch-in',
       (request) => _customPunchSync(request, 'punch-in'),
     );
     _syncService.registerCustomHandler(
-      '/api/attendance/punch-out',
+      '/api/executive_history/punch-out',
       (request) => _customPunchSync(request, 'punch-out'),
     );
   }
@@ -147,7 +147,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       emit(AttendanceLoading());
 
       final response = await _offlineApi.post(
-        '/api/attendance/punch-in',
+        '/api/executive_history/punch-in',
         data: {
           'timestamp': DateTime.now().toIso8601String(),
           'location': event.location,
@@ -174,7 +174,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       emit(AttendanceLoading());
 
       final response = await _offlineApi.post(
-        '/api/attendance/punch-out',
+        '/api/executive_history/punch-out',
         data: {
           'timestamp': DateTime.now().toIso8601String(),
         },

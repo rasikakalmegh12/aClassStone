@@ -1,6 +1,7 @@
 import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/api/network/network_service.dart';
 import 'package:apclassstone/api/network/offline_api_wrapper.dart';
+import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/data/local/cache_repository.dart';
 import 'package:apclassstone/data/local/queue_repository.dart';
 import 'package:apclassstone/bloc/queue/queue_bloc.dart';
@@ -44,6 +45,9 @@ class AppBlocProvider {
   static late GetPriceRangeBloc _getPriceRangeBloc;
   static late GetMinesOptionBloc _getMinesOptionBloc;
   static late PostSearchBloc _postSearchBloc;
+  static late AttendanceTrackingMonthlyBloc _attendanceTrackingMonthlyBloc;
+  static late GetClientDetailsBloc _getClientDetailsBloc;
+  static late GetClientListBloc _getClientListBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -82,13 +86,14 @@ class AppBlocProvider {
     // Initialize BLoCs
     _authBloc = LoginBloc();
     _registrationBloc = RegistrationBloc();
+
     _queueBloc = QueueBloc(
       queueRepository: _queue_repository,
       syncService: _syncService,
       offlineApiWrapper: _offlineApiWrapper,
     );
 
-    // Initialize punch repository and attendance bloc
+    // Initialize punch repository and executive_history bloc
     _punchRepository = PunchRepository();
     _punchInBloc = PunchInBloc();
     _punchOutBloc = PunchOutBloc();
@@ -112,6 +117,10 @@ class AppBlocProvider {
     _getPriceRangeBloc = GetPriceRangeBloc();
     _getMinesOptionBloc = GetMinesOptionBloc();
     _postSearchBloc = PostSearchBloc();
+    _attendanceTrackingMonthlyBloc = AttendanceTrackingMonthlyBloc();
+
+    _getClientDetailsBloc = GetClientDetailsBloc();
+    _getClientListBloc=GetClientListBloc();
   }
 
   /// ✅ ADD THIS
@@ -153,6 +162,9 @@ class AppBlocProvider {
   static GetPriceRangeBloc get getPriceRangeBloc => _getPriceRangeBloc;
   static GetMinesOptionBloc get getMinesOptionBloc => _getMinesOptionBloc;
   static PostSearchBloc get postSearchBloc => _postSearchBloc;
+  static AttendanceTrackingMonthlyBloc get attendanceTrackingMonthlyBloc => _attendanceTrackingMonthlyBloc;
+  static GetClientDetailsBloc get getClientDetailsBloc => _getClientDetailsBloc;
+  static GetClientListBloc get getClientListBloc => _getClientListBloc;
 
   // Service getters for direct access
   static ConnectivityService get connectivityService => _connectivityService;
@@ -190,6 +202,9 @@ class AppBlocProvider {
     _getPriceRangeBloc.close();
     _getMinesOptionBloc.close();
 
+    _getClientListBloc.close();
+    _getClientListBloc.close();
+    _attendanceTrackingMonthlyBloc.close();
     _connectivityService.dispose();
     _syncService.dispose();
   }

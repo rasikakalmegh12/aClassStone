@@ -257,7 +257,7 @@ final response = await AppBlocProvider.offlineApiWrapper.get(
 ### POST Request with Queuing
 ```dart
 final response = await AppBlocProvider.offlineApiWrapper.post(
-  '/api/attendance/punch-in',
+  '/api/executive_history/punch-in',
   data: {'timestamp': DateTime.now()},
   shouldQueue: true,
   userId: userId,

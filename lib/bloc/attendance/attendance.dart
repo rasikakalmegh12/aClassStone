@@ -132,13 +132,13 @@
 //
 //         if (response.success) {
 //           emit(AttendanceHistoryLoaded(
-//             attendanceRecords: response.attendance ?? []
+//             attendanceRecords: response.executive_history ?? []
 //           ));
 //         } else {
 //           emit(AttendanceError(response.message));
 //         }
 //       } catch (e) {
-//         emit(AttendanceError('Failed to load attendance history: ${e.toString()}'));
+//         emit(AttendanceError('Failed to load executive_history history: ${e.toString()}'));
 //       }
 //     });
 //

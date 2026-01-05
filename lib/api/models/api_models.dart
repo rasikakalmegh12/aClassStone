@@ -274,20 +274,20 @@
 //
 // @JsonSerializable()
 // class AttendanceHistoryResponse extends BaseResponse {
-//   final List<AttendanceRecord>? attendance;
+//   final List<AttendanceRecord>? executive_history;
 //
 //   const AttendanceHistoryResponse({
 //     required bool success,
 //     required String message,
 //     int? statusCode,
-//     this.attendance,
+//     this.executive_history,
 //   }) : super(success: success, message: message, statusCode: statusCode);
 //
 //   factory AttendanceHistoryResponse.fromJson(Map<String, dynamic> json) => _$AttendanceHistoryResponseFromJson(json);
 //   Map<String, dynamic> toJson() => _$AttendanceHistoryResponseToJson(this);
 //
 //   @override
-//   List<Object?> get props => [...super.props, attendance];
+//   List<Object?> get props => [...super.props, executive_history];
 // }
 //
 // // Meeting Models

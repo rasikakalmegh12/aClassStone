@@ -804,11 +804,12 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   label: 'Clients',
                   icon: Icons.person_outline,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ClientsListScreen()),
-                      // MaterialPageRoute(builder: (context) => const TemporaryPlaceholderScreen(screenName: 'Clients')),
-                    );
+                    context.pushNamed("clientsListScreen");
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(builder: (context) => const ClientsListScreen()),
+                    //   // MaterialPageRoute(builder: (context) => const TemporaryPlaceholderScreen(screenName: 'Clients')),
+                    // );
                   },
                 ),
               ),

@@ -108,6 +108,24 @@ class AppColors {
     end: Alignment.bottomRight,
     colors: [superAdminPrimary, superAdminPrimaryDark],
   );
+
+  // -------------------------
+  // Admin palette
+  // A designated color set for Admin screens. Professional and distinct from
+  // Super Admin while maintaining visual harmony with the overall app design.
+  // -------------------------
+  static const Color adminPrimary = Color(0xFF1E40AF); // vibrant blue
+  static const Color adminPrimaryDark = Color(0xFF1E3A8A);
+  static const Color adminPrimaryLight = Color(0xFF3B82F6);
+  static const Color adminLight = Color(0xFF93C5FD);
+  static const Color adminAccent = Color(0xFFF59E0B); // amber accent
+  static const Color adminCard = Color(0xFFF0F9FF);
+
+  static const LinearGradient adminGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [adminPrimary, adminPrimaryDark],
+  );
 }
 
 /// Color Scheme Extensions

@@ -1,7 +1,9 @@
 import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
+import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
+import 'package:apclassstone/presentation/screens/attendance/attendance_tracking.dart';
 import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
 import 'package:apclassstone/presentation/screens/super_admin/screens/all_users_screen.dart';
 import 'package:apclassstone/presentation/screens/super_admin/screens/pending_users_screen.dart';
@@ -17,9 +19,11 @@ import '../../bloc/registration/registration_bloc.dart';
 import '../../core/services/repository_provider.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
+import '../../presentation/screens/attendance/attendance_monthly_tracking.dart';
+import '../../presentation/screens/executive/clients/clients_list_screen.dart';
+import '../../presentation/screens/executive_history/executive_history_tracking_screen.dart';
+import '../../presentation/screens/executive_history/executive_tracking.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
-import '../../presentation/screens/attendance/attendance_history_screen.dart';
-import '../../presentation/screens/attendance/executive_tracking.dart';
 
 import '../../presentation/screens/dashboard/admin_dashboard.dart';
 import '../../presentation/screens/dashboard/admin_dashboard_screen.dart';
@@ -171,6 +175,7 @@ class AppRouter {
               BlocProvider<PendingBloc>(
                 create: (context) => PendingBloc(),
               ),
+              BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
             ],
             child: AdminDashboard(user: user!),
           );
@@ -224,8 +229,6 @@ class AppRouter {
           );
         },
       ),
-
-
       GoRoute(
         path: '/catalogueEntry',
         name: 'catalogueEntry',
@@ -275,21 +278,49 @@ class AppRouter {
       ),
 
       // Attendance Routes
+
       GoRoute(
-        path: '/attendance',
-        name: 'attendance',
+          path: '/attendanceTracking',
+          name: 'attendanceTracking',
+          builder: (context, state) {
+            return   MultiBlocProvider(
+              providers: [
+                BlocProvider<ExecutiveAttendanceBloc>(create: (context) => ExecutiveAttendanceBloc(),),
+              ],
+              child: const AttendanceTracking(),
+            );
+          }
+      ),
+
+
+      GoRoute(
+          path: '/attendanceMonthlyTracking',
+          name: 'attendanceMonthlyTracking',
+          builder: (context, state) {
+            final userId = state.extra as String?;
+            return   MultiBlocProvider(
+              providers: [
+                BlocProvider<AttendanceTrackingMonthlyBloc>(create: (context) => AttendanceTrackingMonthlyBloc(),),
+              ],
+              child: AttendanceMonthlyTracking(userId: userId!,),
+            );
+          }
+      ),
+
+
+      // Executive Tracking Routes
+      GoRoute(
+        path: '/executiveHistoryTracking',
+        name: 'executiveHistoryTracking',
         builder: (context, state) {
         return   MultiBlocProvider(
               providers: [
               BlocProvider<ExecutiveAttendanceBloc>(create: (context) => ExecutiveAttendanceBloc(),),
 
               ],
-              child: const AttendanceHistoryScreen(),
+              child: const ExecutiveHistoryScreen(),
               );
         }
-
-
-
       ),
       GoRoute(
         path: '/executiveTracking',
@@ -304,13 +335,33 @@ class AppRouter {
             MultiBlocProvider(
               providers: [
                 BlocProvider<ExecutiveTrackingBloc>(create: (context) => ExecutiveTrackingBloc(),),
-
               ],
               child: ExecutiveTracking(userId: userId, date: date),
             );
 
         },
       ),
+
+      GoRoute(
+        path: '/clientsListScreen',
+        name: 'clientsListScreen',
+        builder: (context, state) {
+
+
+
+          return
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+                BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+              ],
+              child: const ClientsListScreen(),
+            );
+
+        },
+      ),
+
+
       // Meeting Routes
       GoRoute(
         path: '/meetings',
@@ -388,7 +439,7 @@ class AppRouter {
   // }
   //
   // static void goToAttendance(BuildContext context) {
-  //   context.goNamed('attendance');
+  //   context.goNamed('executive_history');
   // }
   //
   // static void goToMeetings(BuildContext context) {

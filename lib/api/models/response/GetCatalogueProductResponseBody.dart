@@ -31,8 +31,18 @@ class Data {
   int? pageSize;
   int? total;
   List<Items>? items;
+  int? totalPages;
+  bool? hasNext;
+  bool? hasPrev;
 
-  Data({this.page, this.pageSize, this.total, this.items});
+  Data(
+      {this.page,
+        this.pageSize,
+        this.total,
+        this.items,
+        this.totalPages,
+        this.hasNext,
+        this.hasPrev});
 
   Data.fromJson(Map<String, dynamic> json) {
     page = json['page'];
@@ -44,6 +54,9 @@ class Data {
         items!.add(new Items.fromJson(v));
       });
     }
+    totalPages = json['totalPages'];
+    hasNext = json['hasNext'];
+    hasPrev = json['hasPrev'];
   }
 
   Map<String, dynamic> toJson() {
@@ -54,6 +67,9 @@ class Data {
     if (this.items != null) {
       data['items'] = this.items!.map((v) => v.toJson()).toList();
     }
+    data['totalPages'] = this.totalPages;
+    data['hasNext'] = this.hasNext;
+    data['hasPrev'] = this.hasPrev;
     return data;
   }
 }
@@ -62,33 +78,33 @@ class Items {
   String? id;
   String? productCode;
   String? name;
-  int? pricePerSqft;
   String? productTypeId;
   String? productTypeName;
   String? priceRangeId;
   String? priceRangeName;
+  int? lowestPricePerSqft;
   String? primaryImageUrl;
 
   Items(
       {this.id,
         this.productCode,
         this.name,
-        this.pricePerSqft,
         this.productTypeId,
         this.productTypeName,
         this.priceRangeId,
         this.priceRangeName,
+        this.lowestPricePerSqft,
         this.primaryImageUrl});
 
   Items.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     productCode = json['productCode'];
     name = json['name'];
-    pricePerSqft = json['pricePerSqft'];
     productTypeId = json['productTypeId'];
     productTypeName = json['productTypeName'];
     priceRangeId = json['priceRangeId'];
     priceRangeName = json['priceRangeName'];
+    lowestPricePerSqft = json['lowestPricePerSqft'];
     primaryImageUrl = json['primaryImageUrl'];
   }
 
@@ -97,11 +113,11 @@ class Items {
     data['id'] = this.id;
     data['productCode'] = this.productCode;
     data['name'] = this.name;
-    data['pricePerSqft'] = this.pricePerSqft;
     data['productTypeId'] = this.productTypeId;
     data['productTypeName'] = this.productTypeName;
     data['priceRangeId'] = this.priceRangeId;
     data['priceRangeName'] = this.priceRangeName;
+    data['lowestPricePerSqft'] = this.lowestPricePerSqft;
     data['primaryImageUrl'] = this.primaryImageUrl;
     return data;
   }

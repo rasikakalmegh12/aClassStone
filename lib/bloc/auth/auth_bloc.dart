@@ -51,7 +51,7 @@ class LogoutBloc extends Bloc<LogoutEvent, LogoutState> {
           emit(LogoutLoaded(response: response));
         } else {
           emit(LogoutError(
-            message: response.message ?? 'Failed to load executive attendance',
+            message: response.message ?? 'Failed to load executive executive_history',
           ));
         }
       } catch (e) {

@@ -117,7 +117,7 @@ class ExecutiveAttendanceBloc extends Bloc<ExecutiveAttendanceEvent, ExecutiveAt
           emit(ExecutiveAttendanceLoaded(response: response));
         } else {
           emit(ExecutiveAttendanceError(
-            message: response.message ?? 'Failed to load executive attendance',
+            message: response.message ?? 'Failed to load executive executive_history',
           ));
         }
       } catch (e) {
@@ -152,6 +152,36 @@ class ExecutiveTrackingBloc extends Bloc<ExecutiveTrackingEvent, ExecutiveTracki
         }
       } catch (e) {
         emit(ExecutiveTrackingError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}
+
+
+class AttendanceTrackingMonthlyBloc extends Bloc<AttendanceTrackingMonthlyEvent, AttendanceTrackingMonthlyState> {
+  AttendanceTrackingMonthlyBloc() : super(EAttendanceTrackingMonthlyInitial()) {
+    // Handle user registration
+    on<FetchAttendanceTrackingMonthly>((event, emit) async {
+      // Emit loading but preserve whether UI should show a loader
+      emit(AttendanceTrackingMonthlyLoading(showLoader: event.showLoader));
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.executiveAttendanceMonthly(event.userId,event.fromDate,event.toDate);
+
+        // Check if registration was successful
+        if (response.status == true) {
+          emit(AttendanceTrackingMonthlyLoaded(response: response));
+        } else {
+          emit(AttendanceTrackingMonthlyLoaded(response: response));
+        }
+      } catch (e) {
+        emit(AttendanceTrackingMonthlyError(
           message: 'Error: ${e.toString()}',
         ));
       }

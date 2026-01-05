@@ -403,7 +403,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     _buildCredentialRow('Super Admin', 'superadmin@acls.local', 'SuperAdmin123!'),
-                                    _buildCredentialRow('Admin', 'admin@demo.com', 'admin@123'),
+                                    _buildCredentialRow('Admin', 'adm@adm.com', '123456'),
                                     _buildCredentialRow('Executive', 'demouser4@gmail.com', 'demouser4'),
                                   ],
                                 ),
