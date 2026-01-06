@@ -155,9 +155,14 @@ class AppRouter {
                 BlocProvider<PendingBloc>(
                   create: (context) => PendingBloc(),
                 ),
+
+                BlocProvider<ActiveSessionBloc>(
+                  create: (context) => ActiveSessionBloc(),
+                ),
                 BlocProvider(create: (_) => PunchInBloc()),
                 BlocProvider(create: (_) => PunchOutBloc()),
                 BlocProvider(create: (_) => LocationPingBloc()),
+                BlocProvider(create: (_) => ActiveSessionBloc()),
               ],
               child:  ExecutiveDashboard(user: user!)
             );

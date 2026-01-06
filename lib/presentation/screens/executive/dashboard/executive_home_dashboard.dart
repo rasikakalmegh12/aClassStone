@@ -19,6 +19,9 @@ import '../../../../bloc/attendance/attendance_state.dart';
 import '../../../../bloc/auth/auth_bloc.dart';
 import '../../../../bloc/auth/auth_event.dart';
 import '../../../../bloc/auth/auth_state.dart';
+import '../../../../bloc/dashboard/dashboard_bloc.dart';
+import '../../../../bloc/dashboard/dashboard_event.dart';
+import '../../../../bloc/dashboard/dashboard_state.dart';
 import '../../../../core/constants/app_colors.dart';
 
 import '../../../../main.dart';
@@ -46,6 +49,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   bool isPunchedIn = false;
   String? punchInTime;
   bool isPunching = false; // new: disables repeated taps while processing
+  Timer? _autoPunchOutTimer; // Timer to check for auto punch-out at 11:30 PM
 
   String currentCity = "Jaipur";
   int plannedVisits = 5;
@@ -59,17 +63,12 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   void initState() {
     super.initState();
     print("session refresh token ${SessionManager.getRefreshToken()}");
-    isPunchedIn = SessionManager.isPunchedIn();
-    print('isPunchedIn: $isPunchedIn');
-    final storedTime = SessionManager.getPunchInTime();
-    if (storedTime != null) {
-      punchInTime = storedTime;
-    }
 
-    if (isPunchedIn) {
-      print("start foreground service");
-      _startForegroundService();
-    }
+    // Call ActiveSessionBloc to check current session status
+    context.read<ActiveSessionBloc>().add(FetchActiveSession());
+
+    // Start timer to check for auto punch-out at 11:30 PM
+    _startAutoPunchOutTimer();
   }
 
   Future<void> _startForegroundService() async {
@@ -80,6 +79,84 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     );
   }
 
+  void _startAutoPunchOutTimer() {
+    // Cancel existing timer if any
+    _autoPunchOutTimer?.cancel();
+
+    // Check every minute if it's 11:30 PM
+    _autoPunchOutTimer = Timer.periodic(const Duration(minutes: 1), (timer) async {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      final now = DateTime.now();
+
+      // Check if it's 11:30 PM (23:30)
+      if (now.hour == 23 && now.minute == 30 && isPunchedIn) {
+        print('🕚 Auto punch-out triggered at 11:30 PM');
+        await _performAutoPunchOut();
+      }
+    });
+
+    print('✅ Auto punch-out timer started - will check every minute');
+  }
+
+  Future<void> _performAutoPunchOut() async {
+    if (!isPunchedIn || isLoading) return;
+
+    print('🔄 Performing auto punch-out...');
+
+    double? lat;
+    double? lng;
+    int? accuracyM;
+
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission != LocationPermission.denied &&
+          permission != LocationPermission.deniedForever) {
+        try {
+          final pos = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.best,
+            timeLimit: const Duration(seconds: 10),
+          );
+          lat = pos.latitude;
+          lng = pos.longitude;
+          accuracyM = pos.accuracy.toInt();
+        } catch (e) {
+          // Fallback to last known position
+          final lastPos = await Geolocator.getLastKnownPosition();
+          if (lastPos != null) {
+            lat = lastPos.latitude;
+            lng = lastPos.longitude;
+            accuracyM = lastPos.accuracy.toInt();
+          }
+        }
+      }
+    } catch (e) {
+      print('⚠️ Could not get location for auto punch-out: $e');
+    }
+
+    final userId = SessionManager.getUserId()?.toString() ?? '';
+    final body = PunchInOutRequestBody(
+      capturedAt: DateTime.now().toUtc().toIso8601String(),
+      lat: lat,
+      lng: lng,
+      accuracyM: accuracyM,
+      deviceId: '',
+      deviceModel: '',
+    );
+
+    // Trigger punch out via Bloc
+    context.read<PunchOutBloc>().add(
+      FetchPunchOut(body: body, id: userId),
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +164,42 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       backgroundColor: AppColors.backgroundLight,
       body: MultiBlocListener(
         listeners: [
+          BlocListener<ActiveSessionBloc, ActiveSessionState>(
+            listener: (context, state) async {
+              if (state is ActiveSessionLoaded) {
+                // Check if there's an active session with PUNCHED_IN status
+                if (state.response.data?.status == "PUNCHED_IN") {
+                  await SessionManager.setPunchIn(true);
+                  await SessionManager.setPunchInTime(
+                    state.response.data?.punchedInAtDisplay ?? '',
+                  );
+                  setState(() {
+                    isPunchedIn = true;
+                    punchInTime = state.response.data?.punchedInAtDisplay ?? '';
+                  });
+                  print("Active session found - starting foreground service");
+                  _startForegroundService();
+                  _startAutoPunchOutTimer(); // Ensure timer is running
+                } else {
+                  // No active session or punched out
+                  await SessionManager.setPunchIn(false);
+                  setState(() {
+                    isPunchedIn = false;
+                    punchInTime = null;
+                  });
+                  print("No active session - punched out state");
+                }
+              } else if (state is ActiveSessionError) {
+                // If error (e.g., no active session), set to punched out
+                await SessionManager.setPunchIn(false);
+                setState(() {
+                  isPunchedIn = false;
+                  punchInTime = null;
+                });
+                print("ActiveSession error: ${state.message} - setting to punched out");
+              }
+            },
+          ),
           BlocListener<LocationPingBloc, LocationPingState>(
             listener: (context, state) {
               if (state is LocationPingLoaded) {
@@ -125,6 +238,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   notificationText: 'Location tracking active',
                   callback: startCallback,
                 );
+                _startAutoPunchOutTimer(); // Start auto punch-out timer
                 // _startPingTimer(SessionManager.getUserNameSync() ?? '');
                 _showSuccessMessage('Punched in successfully');
               }
@@ -160,6 +274,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   punchInTime = null;
                 });
                 await FlutterForegroundTask.stopService();
+                _autoPunchOutTimer?.cancel(); // Cancel auto punch-out timer
 
                 // _stopPingTimer();
                 _showSuccessMessage('Punched out successfully');
@@ -937,7 +1052,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     );
   }
 
-  void _handlePunchAction() async {
+  void _handlePunchAction1() async {
     if (isLoading) return;
 
     setState(() => isLoading = true);
@@ -1001,11 +1116,51 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     }
   }
 
+// dart
+  void _handlePunchAction() async {
+    if (isLoading) return;
 
-  void _handlePunchAction1() async {
-    if (isPunching) return;
+    setState(() => isLoading = true);
 
-    setState(() => isPunching = true);
+    // If currently punched in, confirm punch-out first
+    if (isPunchedIn) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Confirm Punch Out'),
+            content: const Text('Are you sure you want to punch out?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Punch Out'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirm != true) {
+        // user cancelled
+        setState(() => isLoading = false);
+        return;
+      }
+      // proceed to gather location and call PunchOutBloc below
+    } else {
+      // 🔋 Request all permissions including battery optimization (only when punching IN)
+      final permissionsGranted = await BatteryOptimizationHelper.requestAllPermissions();
+      if (!permissionsGranted) {
+        setState(() => isLoading = false);
+        _showSuccessMessage(
+            'Please grant all permissions for background location tracking');
+        return;
+      }
+    }
 
     double? lat;
     double? lng;
@@ -1020,7 +1175,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         _showSuccessMessage(
-            'Location permission denied - punch will be saved without location');
+            'Location permission denied - punch saved without location');
       } else {
         final pos = await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.best);
@@ -1028,12 +1183,13 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
         lng = pos.longitude;
         accuracyM = pos.accuracy.toInt();
       }
-    } catch (e) {
+    } catch (_) {
       _showSuccessMessage(
-          'Could not get location - punch will be saved without location');
+          'Could not get location - punch saved without location');
     }
 
     final userId = SessionManager.getUserId()?.toString() ?? '';
+
     final body = PunchInOutRequestBody(
       capturedAt: DateTime.now().toUtc().toIso8601String(),
       lat: lat,
@@ -1044,17 +1200,18 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     );
 
     if (isPunchedIn) {
-      /// 👉 Punch OUT
+      // Dispatch punch out only after confirmation
       context.read<PunchOutBloc>().add(
         FetchPunchOut(body: body, id: userId),
       );
     } else {
-      /// 👉 Punch IN
       context.read<PunchInBloc>().add(
         FetchPunchIn(body: body, id: userId),
       );
     }
   }
+
+
 
 
   void _showSuccessMessage(String message) {
@@ -1196,6 +1353,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
 
   @override
   void dispose() {
+    _autoPunchOutTimer?.cancel();
     // _pingTimer?.cancel();
     super.dispose();
   }

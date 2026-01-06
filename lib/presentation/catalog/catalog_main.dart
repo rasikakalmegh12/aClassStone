@@ -386,23 +386,23 @@ class _CataloguePageState extends State<CataloguePage>
     return Column(
       children: [
         // Product counter with animated progress bar
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-          child: Column(
-            children: [
-              // Progress indicator
-              ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: LinearProgressIndicator(
-                  value: (products.isEmpty ? 0 : (_currentIndex + 1) / products.length),
-                  backgroundColor: Colors.grey[300],
-                  valueColor: AlwaysStoppedAnimation<Color>(primary),
-                  minHeight: 4,
-                ),
-              ),
-            ],
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
+        //   child: Column(
+        //     children: [
+        //       // Progress indicator
+        //       ClipRRect(
+        //         borderRadius: BorderRadius.circular(10),
+        //         child: LinearProgressIndicator(
+        //           value: (products.isEmpty ? 0 : (_currentIndex + 1) / products.length),
+        //           backgroundColor: Colors.grey[300],
+        //           valueColor: AlwaysStoppedAnimation<Color>(primary),
+        //           minHeight: 4,
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
         // Swipeable product cards with 3D effect
         Expanded(
           child: PageView.builder(
@@ -884,33 +884,33 @@ class _CataloguePageState extends State<CataloguePage>
                                 ),
 
                                 // Product Type Badge
-                                Positioned(
-                                  top: 20,
-                                  right: 20,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: primary,
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withValues(alpha: 0.2),
-                                          blurRadius: 8,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: Text(
-                                      p.name!.toUpperCase(),
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.8,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                // Positioned(
+                                //   top: 20,
+                                //   right: 20,
+                                //   child: Container(
+                                //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                //     decoration: BoxDecoration(
+                                //       color: primary,
+                                //       borderRadius: BorderRadius.circular(20),
+                                //       boxShadow: [
+                                //         BoxShadow(
+                                //           color: Colors.black.withValues(alpha: 0.2),
+                                //           blurRadius: 8,
+                                //           offset: const Offset(0, 2),
+                                //         ),
+                                //       ],
+                                //     ),
+                                //     child: Text(
+                                //       p.name!.toUpperCase(),
+                                //       style: const TextStyle(
+                                //         color: Colors.white,
+                                //         fontSize: 11,
+                                //         fontWeight: FontWeight.w700,
+                                //         letterSpacing: 0.8,
+                                //       ),
+                                //     ),
+                                //   ),
+                                // ),
 
                                 // Product code badge
                                 Positioned(
@@ -1872,6 +1872,7 @@ class _CataloguePageState extends State<CataloguePage>
       child: Text('Loading...', style: TextStyle(color: Colors.grey[600])),
     );
   }
+
   Widget _buildCompactRow(IconData icon, String title, String value, Color roleColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -1987,6 +1988,7 @@ class _CataloguePageState extends State<CataloguePage>
       ),
     );
   }
+
   Widget _buildImageSection(Data data) {
     // Build complete image list (same logic)
     final List<String> allImages = [];

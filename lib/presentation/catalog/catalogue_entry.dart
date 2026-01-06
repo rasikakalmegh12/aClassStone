@@ -19,6 +19,7 @@ import '../../api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/session/session_manager.dart';
 import '../widgets/app_bar.dart';
+import '../widgets/autocomplete_container.dart';
 import '../widgets/dropdown_widget.dart';
 import '../widgets/custom_loader.dart';
 
@@ -1030,29 +1031,48 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                         print('✅ Mines loaded: ${mineOptions.length} mines');
                       }
                     }
-                    return CustomDropdownSection(
+                    return CustomAutocompleteSection(
                       title: 'Mines *',
                       options: mineOptions,
                       selectedId: selectedMineId,
-                      onChanged: (id, name) {
+                      onSelected: (id, name) {
                         setState(() {
                           selectedMineId = id;
                         });
                       },
                       icon: Icons.landscape_outlined,
-                      extraFeature: true,
-                      widget: IconButton(
-                          color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
-                              ? AppColors.superAdminPrimary
-                              : AppColors.primaryDeepBlue,
-                          onPressed: () {
-                        _openAddMineBottomSheet(context);
-                        if (kDebugMode) {
-                          print("🔧 Opening Add Mine Bottom Sheet");
-                        }
-                      }, icon:
-                       const Icon(Icons.add)),
+                      showTrailing: true,
+                      trailingWidget: IconButton(
+                        icon: const Icon(Icons.add),
+                        color: SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                            ? AppColors.superAdminPrimary
+                            : AppColors.primaryDeepBlue,
+                        onPressed: () => _openAddMineBottomSheet(context),
+                      ),
                     );
+                    // return CustomDropdownSection(
+                    //   title: 'Mines *',
+                    //   options: mineOptions,
+                    //   selectedId: selectedMineId,
+                    //   onChanged: (id, name) {
+                    //     setState(() {
+                    //       selectedMineId = id;
+                    //     });
+                    //   },
+                    //   icon: Icons.landscape_outlined,
+                    //   extraFeature: true,
+                    //   widget: IconButton(
+                    //       color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                    //           ? AppColors.superAdminPrimary
+                    //           : AppColors.primaryDeepBlue,
+                    //       onPressed: () {
+                    //     _openAddMineBottomSheet(context);
+                    //     if (kDebugMode) {
+                    //       print("🔧 Opening Add Mine Bottom Sheet");
+                    //     }
+                    //   }, icon:
+                    //    const Icon(Icons.add)),
+                    // );
                   } else if (state is GetMinesOptionLoading && state.showLoader) {
                     if (kDebugMode) {
                       print('⏳ Loading mines...');
@@ -1064,31 +1084,52 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                     }
                     return _buildErrorContainer('mines', state.message);
                   }
-
-                  // Default state - show dropdown with current options
-                  return CustomDropdownSection(
+                  return CustomAutocompleteSection(
                     title: 'Mines *',
                     options: mineOptions,
                     selectedId: selectedMineId,
-                    onChanged: (id, name) {
+                    onSelected: (id, name) {
                       setState(() {
                         selectedMineId = id;
                       });
                     },
                     icon: Icons.landscape_outlined,
-                    extraFeature: true,
-                    widget: IconButton(
-                        color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
-                            ? AppColors.superAdminPrimary
-                            : AppColors.primaryDeepBlue,
-                        onPressed: () {
-                      _openAddMineBottomSheet(context);
-                      if (kDebugMode) {
-                        print("🔧 Opening Add Mine Bottom Sheet");
-                      }
-                    }, icon:
-                     const Icon(Icons.add)),
+                    showTrailing: true,
+                    trailingWidget: IconButton(
+                      icon: const Icon(Icons.add),
+                      color: SessionManager.getUserRole()
+                          .toString()
+                          .toLowerCase() ==
+                          "superadmin"
+                          ? AppColors.superAdminPrimary
+                          : AppColors.primaryDeepBlue,
+                      onPressed: () => _openAddMineBottomSheet(context),
+                    ),
                   );
+                  // Default state - show dropdown with current options
+                  // return CustomDropdownSection(
+                  //   title: 'Mines *',
+                  //   options: mineOptions,
+                  //   selectedId: selectedMineId,
+                  //   onChanged: (id, name) {
+                  //     setState(() {
+                  //       selectedMineId = id;
+                  //     });
+                  //   },
+                  //   icon: Icons.landscape_outlined,
+                  //   extraFeature: true,
+                  //   widget: IconButton(
+                  //       color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                  //           ? AppColors.superAdminPrimary
+                  //           : AppColors.primaryDeepBlue,
+                  //       onPressed: () {
+                  //     _openAddMineBottomSheet(context);
+                  //     if (kDebugMode) {
+                  //       print("🔧 Opening Add Mine Bottom Sheet");
+                  //     }
+                  //   }, icon:
+                  //    const Icon(Icons.add)),
+                  // );
                 },
               ),
               const SizedBox(height: 10),

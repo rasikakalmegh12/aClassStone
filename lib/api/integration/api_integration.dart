@@ -8,6 +8,7 @@ import 'package:apclassstone/api/models/request/PostMinesEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
+import 'package:apclassstone/api/models/response/ActiveSessionResponseBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApproveResponseBody.dart';
@@ -408,6 +409,65 @@ class ApiIntegration {
 
 
   /// ------------------GET METHOD --------------------------
+
+    static Future<ActiveSessionResponseBody> getActiveSession() async {
+      try {
+      final url = Uri.parse(ApiConstants.activeSession);
+
+      print('📤 Sending activeSession request to: $url');
+
+      print('headers activeSession: ${ApiConstants.headerWithToken()}');
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      print('📥 Response status activeSession: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body activeSession: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ActiveSessionResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ activeSession successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ActiveSessionResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ activeSession  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
+      } on http.ClientException catch (e) {
+        final errorMsg = 'Network error in active Session: ${e.toString()}';
+        print('❌ $errorMsg');
+        return ActiveSessionResponseBody(
+          status: false,
+          message: errorMsg,
+        );
+      } catch (e) {
+        final errorMsg = 'Error: ${e.toString()}';
+        print('❌ $errorMsg');
+        return ActiveSessionResponseBody(
+          status: false,
+          message: errorMsg,
+        );
+      }
+    }
 
   static Future<GetProfileResponseBody> getProfile() async {
     try {
@@ -1587,13 +1647,9 @@ class ApiIntegration {
   /// - [pageSize]: Number of items per page (default: 20)
   ///
   /// Returns [GetCatalogueProductResponseBody] with product list and pagination info
-  static Future<GetCatalogueProductResponseBody> getCatalogueProductList({
-    int page = 1,
-    int pageSize = 20,
-    String? search
-  }) async {
+  static Future<GetCatalogueProductResponseBody> getCatalogueProductList({int page = 1, int pageSize = 20, String? search}) async {
     try {
-      final url = Uri.parse('${ApiConstants.baseUrl}marketing/catalogue/products?page=$page&pageSize=$pageSize${search!=null?"&search=$search":""}');
+      final url = Uri.parse('${ApiConstants.getCatalogueProductList}?page=$page&pageSize=$pageSize${search!=null?"&search=$search":""}');
       if (kDebugMode) print('📤 Sending getCatalogueProductList request to: $url');
 
       final response = await ApiClient.send(() {
@@ -1631,9 +1687,7 @@ class ApiIntegration {
   /// Get Catalogue Product Details by ID
   ///
   /// Returns [GetCatalogueProductDetailsResponseBody] with detailed product information
-  static Future<GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails({
-    required String productId,
-  }) async
+  static Future<GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails({required String productId,}) async
   {
     try {
       final url = Uri.parse('${ApiConstants.getCatalogueProductDetails}/$productId');

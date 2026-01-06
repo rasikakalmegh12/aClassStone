@@ -63,7 +63,7 @@ class ApiConstants {
   static const String getProcessingNatures = "${baseUrl}marketing/admin/catalogue/options/processing-natures";
   static const String getNaturalMaterials = "${baseUrl}marketing/admin/catalogue/options/material-naturalities";
   static const String getHandicraftsTypes = "${baseUrl}marketing/admin/catalogue/options/handicraft-types";
-  static const String getCatalogueProductList = "${baseUrl}marketing/catalogue/products?page=1&pageSize=20";
+  static const String getCatalogueProductList = "${baseUrl}marketing/catalogue/products";
   static const String getCatalogueProductDetails = "${baseUrl}marketing/catalogue/products";
   static const String getPriceRange = "${baseUrl}marketing/admin/catalogue/options/price-ranges";
   static const String getMinesOption = "${baseUrl}marketing/admin/catalogue/mines/options";

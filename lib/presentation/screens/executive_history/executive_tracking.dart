@@ -661,11 +661,12 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
                                             children: [
                                               Text(
                                                 // 'Session ${session.sessionId?.substring(0, 6)}',
-                                                'Session $index',
+                                                'Session ${index+1}',
                                                 style: const TextStyle(fontWeight: FontWeight.bold),
                                               ),
                                               Text(
-                                                'Work: ${session.workMinutes ?? 0} mins',
+                                                // 'Work: ${session.workMinutes ?? 0} mins',
+                                                'Work: ${_formatHoursMinutes(session.workMinutes ?? 0)}',
                                                 style: const TextStyle(fontSize: 12, color: Colors.grey),
                                               ),
                                             ],
@@ -706,6 +707,13 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
   }
 
   // ================= HELPERS =================
+  String _formatHoursMinutes(int totalMinutes) {
+    final h = totalMinutes ~/ 60;
+    final m = totalMinutes % 60;
+    if (h > 0 && m > 0) return '${h} hr ${m} min';
+    if (h > 0) return '${h} hr';
+    return '${m} min';
+  }
   String _formatDateTime(String? value) {
     if (value == null || value.isEmpty) return '--';
     final parts = value.split(' ');

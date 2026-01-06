@@ -166,7 +166,7 @@ class _AttendanceMonthlyTrackingState extends State<AttendanceMonthlyTracking> w
               _buildMonthSelector(primaryColor),
 
               // Summary Cards
-              _buildSummaryCards(totalDays, activeDays, totalHours, remainingMinutes, primaryColor),
+              _buildSummaryCards(totalDays,  totalHours, remainingMinutes, primaryColor),
 
               // Attendance List Header
               Padding(
@@ -293,7 +293,7 @@ class _AttendanceMonthlyTrackingState extends State<AttendanceMonthlyTracking> w
     );
   }
 
-  Widget _buildSummaryCards(int totalDays, int activeDays, int totalHours, int remainingMinutes, Color primaryColor) {
+  Widget _buildSummaryCards(int totalDays, int totalHours, int remainingMinutes, Color primaryColor) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
@@ -306,15 +306,15 @@ class _AttendanceMonthlyTrackingState extends State<AttendanceMonthlyTracking> w
               color: Colors.blue,
             ),
           ),
-          const SizedBox(width: 5),
-          Expanded(
-            child: _SummaryCard(
-              icon: Icons.check_circle,
-              title: 'Active Days',
-              value: '$activeDays',
-              color: Colors.green,
-            ),
-          ),
+          // const SizedBox(width: 5),
+          // Expanded(
+          //   child: _SummaryCard(
+          //     icon: Icons.check_circle,
+          //     title: 'Active Days',
+          //     value: '$activeDays',
+          //     color: Colors.green,
+          //   ),
+          // ),
           const SizedBox(width: 5),
           Expanded(
             child: _SummaryCard(
@@ -419,6 +419,7 @@ class _AttendanceMonthlyTrackingState extends State<AttendanceMonthlyTracking> w
       ),
     );
   }
+
 }
 
 // Summary Card Widget
@@ -602,7 +603,7 @@ class _AttendanceCard extends StatelessWidget {
 
           // Details
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             child: Column(
               children: [
                 _buildDetailRow(

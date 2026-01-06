@@ -50,6 +50,7 @@
 // }
 
 
+import 'package:apclassstone/api/models/response/ActiveSessionResponseBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 
 abstract class AllUsersState {}
@@ -62,4 +63,18 @@ class AllUsersLoaded extends AllUsersState {
 class AllUsersError extends AllUsersState {
   final String? message;
   AllUsersError({required this.message});
+}
+
+
+
+abstract class ActiveSessionState {}
+class ActiveSessionInitial extends ActiveSessionState {}
+class ActiveSessionLoading extends ActiveSessionState {}
+class ActiveSessionLoaded extends ActiveSessionState {
+  final ActiveSessionResponseBody response;
+  ActiveSessionLoaded(this.response);
+}
+class ActiveSessionError extends ActiveSessionState {
+  final String? message;
+  ActiveSessionError({required this.message});
 }

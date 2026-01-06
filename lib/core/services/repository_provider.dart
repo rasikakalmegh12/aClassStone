@@ -48,6 +48,7 @@ class AppBlocProvider {
   static late AttendanceTrackingMonthlyBloc _attendanceTrackingMonthlyBloc;
   static late GetClientDetailsBloc _getClientDetailsBloc;
   static late GetClientListBloc _getClientListBloc;
+  static late ActiveSessionBloc _activeSessionBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -97,7 +98,7 @@ class AppBlocProvider {
     _punchRepository = PunchRepository();
     _punchInBloc = PunchInBloc();
     _punchOutBloc = PunchOutBloc();
-
+    _activeSessionBloc=ActiveSessionBloc();
     // Initialize location ping bloc
     _locationPingBloc = LocationPingBloc();
     _executiveTrackingBloc = ExecutiveTrackingBloc();
@@ -142,6 +143,7 @@ class AppBlocProvider {
   /// Get AttendanceBloc instance
   static PunchInBloc get punchInBloc => _punchInBloc;
   static PunchOutBloc get punchOutBloc => _punchOutBloc;
+  static ActiveSessionBloc get activeSessionBloc => _activeSessionBloc;
 
   /// Get LocationPingBloc instance
   static LocationPingBloc get locationPingBloc => _locationPingBloc;
@@ -186,6 +188,7 @@ class AppBlocProvider {
     _punchOutBloc.close();
     _locationPingBloc.close();
     _executiveTrackingBloc.close();
+    _activeSessionBloc.close();
 
     // Dispose catalogue BLoCs
     _getProductTypeBloc.close();

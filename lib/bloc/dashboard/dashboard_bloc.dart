@@ -112,3 +112,35 @@ class AllUsersBloc extends Bloc<AllUsersEvent, AllUsersState> {
 
   }
 }
+
+
+class ActiveSessionBloc extends Bloc<ActiveSessionEvent, ActiveSessionState> {
+  ActiveSessionBloc() : super(ActiveSessionInitial()) {
+    // Handle user registration
+    on<FetchActiveSession>((event, emit) async {
+      emit(ActiveSessionLoading());
+
+      try {
+
+
+        // Call API
+        final response = await ApiIntegration.getActiveSession();
+
+        // Check if registration was successful
+        if (response.statusCode==200) {
+          emit(ActiveSessionLoaded(response));
+        } else {
+          emit(ActiveSessionError(
+
+            message: response.message ?? 'Session failed',
+          ));
+        }
+      } catch (e) {
+        emit(ActiveSessionError(
+          message: 'Error: ${e.toString()}',
+        ));
+      }
+    });
+
+  }
+}
