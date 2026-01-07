@@ -1,8 +1,30 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
+import 'package:geolocator/geolocator.dart';
 
+import '../../../../bloc/client/get_client/get_client_bloc.dart';
+import '../../../../bloc/client/get_client/get_client_event.dart';
+import '../../../../bloc/client/get_client/get_client_state.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../widgets/autocomplete_container.dart';
+import '../../../widgets/dropdown_widget.dart';
+
+// ContactOption class to hold contact details
+class ContactOption {
+  final String id;
+  final String name;
+  final String phone;
+  final String locationName;
+
+  ContactOption({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.locationName,
+  });
+}
 
 class NewMomScreen extends StatefulWidget {
   const NewMomScreen({super.key});
@@ -28,6 +50,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
   // Form State
   String? selectedClient;
   String? selectedContact;
+  String? selectedContactId;
   String? selectedMeetingType;
   String contactType = 'existing';
   bool discussedProduct = false;
@@ -36,7 +59,26 @@ class _NewMomScreenState extends State<NewMomScreen> {
   bool followUpRequired = false;
   bool needsFollowUp = false;
   List<File> photos = [];
-  String currentLocation = 'Captured automatically';
+  List<DropdownOption> clientOptions = [];
+  List<ContactOption> contactOptions = [];
+  String? selectedClientId;
+  String currentLocation = 'Fetching location...';
+  double? currentLat;
+  double? currentLng;
+
+  // Checklist notes
+  Map<String, TextEditingController> checklistNotes = {
+    'discussedProduct': TextEditingController(),
+    'priceInquiry': TextEditingController(),
+    'sampleRequested': TextEditingController(),
+    'followUpRequired': TextEditingController(),
+  };
+  Map<String, bool> showChecklistNotes = {
+    'discussedProduct': false,
+    'priceInquiry': false,
+    'sampleRequested': false,
+    'followUpRequired': false,
+  };
 
   final List<String> clients = [
     'A Class Stone',
@@ -60,6 +102,47 @@ class _NewMomScreenState extends State<NewMomScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    context.read<GetClientListBloc>().add(FetchGetClientList());
+    _captureLocation();
+  }
+
+  Future<void> _captureLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          currentLocation = 'Location permission denied';
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        currentLat = position.latitude;
+        currentLng = position.longitude;
+        currentLocation = 'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
+      });
+    } catch (e) {
+      setState(() {
+        currentLocation = 'Could not get location';
+      });
+      if (kDebugMode) {
+        print('❌ Error capturing location: $e');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
@@ -77,7 +160,113 @@ class _NewMomScreenState extends State<NewMomScreen> {
                     _buildSection(
                       'CLIENT & LOCATION',
                       [
-                        _buildClientSelector(),
+                        BlocBuilder<GetClientListBloc, GetClientListState>(
+                          builder: (context, state) {
+                            if (kDebugMode) {
+                              print('🔄 clientOptions state: ${state.runtimeType}');
+                            }
+                            if (state is GetClientListLoading && state.showLoader) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            if (state is GetClientListLoaded) {
+                              if (state.response.data != null && state.response.data!.isNotEmpty) {
+                                clientOptions = state.response.data!
+                                    .where((item) => item.id != null && item.firmName != null && item.firmName!.isNotEmpty)
+                                    .map((item) => DropdownOption(
+                                  id: item.id!,
+                                  name: item.firmName!,
+                                  code: item.city,
+                                ))
+                                    .toList();
+
+                                if (kDebugMode) {
+                                  print('✅ Mines loaded: ${clientOptions.length} mines');
+                                }
+                              }
+                              return CustomAutocompleteSection(
+                                title: 'Clients *',
+                                options: clientOptions,
+                                selectedId: selectedClientId,
+                                onSelected: (id, name) {
+                                  setState(() {
+                                    selectedClientId = id;
+                                  });
+                                },
+                                icon: Icons.landscape_outlined,
+                                showTrailing: true,
+
+                              );
+                              // return CustomDropdownSection(
+                              //   title: 'Mines *',
+                              //   options: mineOptions,
+                              //   selectedId: selectedMineId,
+                              //   onChanged: (id, name) {
+                              //     setState(() {
+                              //       selectedMineId = id;
+                              //     });
+                              //   },
+                              //   icon: Icons.landscape_outlined,
+                              //   extraFeature: true,
+                              //   widget: IconButton(
+                              //       color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                              //           ? AppColors.superAdminPrimary
+                              //           : AppColors.primaryDeepBlue,
+                              //       onPressed: () {
+                              //     _openAddMineBottomSheet(context);
+                              //     if (kDebugMode) {
+                              //       print("🔧 Opening Add Mine Bottom Sheet");
+                              //     }
+                              //   }, icon:
+                              //    const Icon(Icons.add)),
+                              // );
+                            } else if (state is GetClientListError) {
+                              if (kDebugMode) {
+                                print('❌ Error loading mines: ${state.message}');
+                              }
+                              return _buildErrorContainer('mines', state.message);
+                            }
+                            return CustomAutocompleteSection(
+                              title: 'Mines *',
+                              options: clientOptions,
+                              selectedId: selectedClientId,
+                              onSelected: (id, name) {
+                                setState(() {
+                                  selectedClientId = id;
+                                });
+                              },
+                              icon: Icons.landscape_outlined,
+                              showTrailing: true,
+
+                            );
+                            // Default state - show dropdown with current options
+                            // return CustomDropdownSection(
+                            //   title: 'Mines *',
+                            //   options: mineOptions,
+                            //   selectedId: selectedMineId,
+                            //   onChanged: (id, name) {
+                            //     setState(() {
+                            //       selectedMineId = id;
+                            //     });
+                            //   },
+                            //   icon: Icons.landscape_outlined,
+                            //   extraFeature: true,
+                            //   widget: IconButton(
+                            //       color:  SessionManager.getUserRole().toString().toLowerCase() == "superadmin"
+                            //           ? AppColors.superAdminPrimary
+                            //           : AppColors.primaryDeepBlue,
+                            //       onPressed: () {
+                            //     _openAddMineBottomSheet(context);
+                            //     if (kDebugMode) {
+                            //       print("🔧 Opening Add Mine Bottom Sheet");
+                            //     }
+                            //   }, icon:
+                            //    const Icon(Icons.add)),
+                            // );
+                          },
+                        ),
+                        // _buildClientSelector(),
                         const SizedBox(height: 16),
                         _buildLocationField(),
                       ],
@@ -86,7 +275,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
                     _buildSection(
                       'CONTACT',
                       [
-                        _buildContactSelector(),
+                        _buildContactSelectorWithClientDetails(),
                         if (contactType == 'other') ...[
                           const SizedBox(height: 16),
                           _buildOtherContactFields(),
@@ -134,7 +323,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
         onPressed: () => Navigator.pop(context),
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
       ),
-      title: Text(
+      title: const Text(
         'New Meeting / MOM',
         style: TextStyle(
           fontSize: 18,
@@ -151,7 +340,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -164,64 +353,6 @@ class _NewMomScreenState extends State<NewMomScreen> {
     );
   }
 
-  Widget _buildClientSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Client',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedClient,
-          decoration: InputDecoration(
-            hintText: 'Select Client',
-            suffixIcon: const Icon(Icons.keyboard_arrow_down),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.grey300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.grey300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryTeal),
-            ),
-          ),
-          items: clients.map((client) {
-            return DropdownMenuItem(
-              value: client,
-              child: Text(client),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedClient = value;
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select a client';
-            }
-            return null;
-          },
-        ),
-      ],
-    );
-  }
 
   Widget _buildLocationField() {
     return Column(
@@ -262,63 +393,38 @@ class _NewMomScreenState extends State<NewMomScreen> {
     );
   }
 
-  Widget _buildContactSelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Contact person',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
-          ],
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<String>(
-          value: selectedContact,
-          decoration: InputDecoration(
-            hintText: 'Select Contact',
-            suffixIcon: const Icon(Icons.keyboard_arrow_down),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.grey300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.grey300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryTeal),
+  // Helper method for error container
+  Widget _buildErrorContainer(String filterName, String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Error loading $filterName',
+            style: const TextStyle(
+              color: Colors.red,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          items: [...contacts, 'Other'].map((contact) {
-            return DropdownMenuItem(
-              value: contact,
-              child: Text(contact),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              selectedContact = value;
-              contactType = value == 'Other' ? 'other' : 'existing';
-            });
-          },
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Please select a contact';
-            }
-            return null;
-          },
-        ),
-      ],
+          const SizedBox(height: 4),
+          Text(
+            message,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ],
+      ),
     );
   }
 
@@ -336,6 +442,230 @@ class _NewMomScreenState extends State<NewMomScreen> {
     );
   }
 
+  Widget _buildContactSelectorWithClientDetails() {
+    if (selectedClientId == null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Text(
+                'Contact person',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              SizedBox(width: 4),
+              Text('*', style: TextStyle(color: AppColors.error)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.grey50,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.grey300),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'Please select a client first',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return BlocProvider(
+      create: (context) => GetClientDetailsBloc()
+        ..add(FetchGetClientDetails(clientId: selectedClientId!, showLoader: false)),
+      child: BlocConsumer<GetClientDetailsBloc, GetClientDetailsState>(
+        listener: (context, state) {
+          if (state is GetClientDetailsLoaded) {
+            if (kDebugMode) {
+              print('✅ Client details loaded');
+            }
+            // Populate contact options from all locations
+            setState(() {
+              contactOptions = [];
+              if (state.response.data?.locations != null) {
+                for (var location in state.response.data!.locations!) {
+                  if (location.contacts != null) {
+                    for (var contact in location.contacts!) {
+                      if (contact.name != null && contact.phone != null) {
+                        contactOptions.add(ContactOption(
+                          id: contact.id ?? '',
+                          name: contact.name!,
+                          phone: contact.phone!,
+                          locationName: location.locationName ?? '',
+                        ));
+                      }
+                    }
+                  }
+                }
+              }
+            });
+          } else if (state is GetClientDetailsError) {
+            if (kDebugMode) {
+              print('❌ Error loading client details: ${state.message}');
+            }
+          }
+        },
+        builder: (context, state) {
+          if (state is GetClientDetailsLoading && state.showLoader) {
+            return const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Contact person',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text('*', style: TextStyle(color: AppColors.error)),
+                  ],
+                ),
+                SizedBox(height: 8),
+                Center(child: CircularProgressIndicator()),
+              ],
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Text(
+                    'Contact person',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Text('*', style: TextStyle(color: AppColors.error)),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              if (contactOptions.isEmpty)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.grey300),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'No contacts found for this client',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Autocomplete<ContactOption>(
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty) {
+                      return contactOptions;
+                    }
+                    return contactOptions.where((ContactOption option) {
+                      return option.name
+                              .toLowerCase()
+                              .contains(textEditingValue.text.toLowerCase()) ||
+                          option.phone.contains(textEditingValue.text);
+                    });
+                  },
+                  displayStringForOption: (ContactOption option) =>
+                      '${option.name} - ${option.phone}',
+                  onSelected: (ContactOption selection) {
+                    setState(() {
+                      selectedContactId = selection.id;
+                      selectedContact = selection.name;
+                      contactType = 'existing';
+                    });
+                    if (kDebugMode) {
+                      print('✅ Selected contact: ${selection.name} - ${selection.phone}');
+                    }
+                  },
+                  fieldViewBuilder: (BuildContext context,
+                      TextEditingController textEditingController,
+                      FocusNode focusNode,
+                      VoidCallback onFieldSubmitted) {
+                    return TextFormField(
+                      controller: textEditingController,
+                      focusNode: focusNode,
+                      decoration: InputDecoration(
+                        hintText: 'Search contact by name or phone',
+                        prefixIcon: const Icon(Icons.person_outline),
+                        suffixIcon: textEditingController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  textEditingController.clear();
+                                  setState(() {
+                                    selectedContactId = null;
+                                    selectedContact = null;
+                                  });
+                                },
+                              )
+                            : const Icon(Icons.keyboard_arrow_down),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppColors.grey300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppColors.grey300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: AppColors.primaryTeal),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (selectedContactId == null || selectedContactId!.isEmpty) {
+                          return 'Please select a contact';
+                        }
+                        return null;
+                      },
+                    );
+                  },
+
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
   Widget _buildTextField(
     String label,
     TextEditingController controller, {
@@ -465,47 +795,114 @@ class _NewMomScreenState extends State<NewMomScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        _buildCheckboxItem('Discussed product', discussedProduct, (value) {
-          setState(() {
-            discussedProduct = value!;
-          });
-        }),
-        _buildCheckboxItem('Price inquiry', priceInquiry, (value) {
-          setState(() {
-            priceInquiry = value!;
-          });
-        }),
-        _buildCheckboxItem('Sample requested', sampleRequested, (value) {
-          setState(() {
-            sampleRequested = value!;
-          });
-        }),
-        _buildCheckboxItem('Follow-up required', followUpRequired, (value) {
-          setState(() {
-            followUpRequired = value!;
-          });
-        }),
+
+        _buildCheckboxItemWithNote(
+          'Discussed product',
+          'discussedProduct',
+          discussedProduct,
+              (value) {
+            setState(() {
+              discussedProduct = value!;
+              if (!value) checklistNotes['discussedProduct']?.clear();
+            });
+          },
+        ),
+
+        _buildCheckboxItemWithNote(
+          'Price inquiry',
+          'priceInquiry',
+          priceInquiry,
+              (value) {
+            setState(() {
+              priceInquiry = value!;
+              if (!value) checklistNotes['priceInquiry']?.clear();
+            });
+          },
+        ),
+
+        _buildCheckboxItemWithNote(
+          'Sample requested',
+          'sampleRequested',
+          sampleRequested,
+              (value) {
+            setState(() {
+              sampleRequested = value!;
+              if (!value) checklistNotes['sampleRequested']?.clear();
+            });
+          },
+        ),
+
+        _buildCheckboxItemWithNote(
+          'Follow-up required',
+          'followUpRequired',
+          followUpRequired,
+              (value) {
+            setState(() {
+              followUpRequired = value!;
+              if (!value) checklistNotes['followUpRequired']?.clear();
+            });
+          },
+        ),
       ],
     );
   }
 
-  Widget _buildCheckboxItem(String title, bool value, Function(bool?) onChanged) {
-    return Row(
+  Widget _buildCheckboxItemWithNote(
+      String title,
+      String key,
+      bool value,
+      Function(bool?) onChanged,
+      ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Checkbox(
-          value: value,
-          onChanged: onChanged,
-          activeColor: AppColors.primaryTeal,
+        Row(
+          children: [
+            Checkbox(
+              value: value,
+              onChanged: onChanged,
+              activeColor: AppColors.primaryTeal,
+            ),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
         ),
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textPrimary,
+
+        /// 🔥 Show only when checkbox is checked
+        if (value)
+          Padding(
+            padding: const EdgeInsets.only(left: 48, right: 16, bottom: 8),
+            child: TextFormField(
+              controller: checklistNotes[key],
+              maxLines: 2,
+              decoration: InputDecoration(
+                hintText: 'Add notes for $title...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.grey300),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.grey300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: AppColors.primaryTeal),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+              ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -751,7 +1148,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
+                child: const Text(
                   'Submit MOM',
                   style: TextStyle(
                     fontSize: 14,
@@ -803,6 +1200,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
     }
   }
 
+
   @override
   void dispose() {
     _clientController.dispose();
@@ -814,6 +1212,13 @@ class _NewMomScreenState extends State<NewMomScreen> {
     _notesController.dispose();
     _followUpDateController.dispose();
     _followUpTimeController.dispose();
+
+    // Dispose checklist note controllers
+    checklistNotes.forEach((key, controller) {
+      controller.dispose();
+    });
+
     super.dispose();
   }
 }
+

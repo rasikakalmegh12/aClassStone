@@ -45,6 +45,7 @@ class _CataloguePageState extends State<CataloguePage>
 
   Timer? _debounce;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _gridScrollController = ScrollController(); // For grid view scroll position
 
   String _search = '';
   Map<String, List<String>> _filters = {};
@@ -68,6 +69,14 @@ class _CataloguePageState extends State<CataloguePage>
   bool _isListView = false; // Toggle between swipeable and list view
   bool _hasFiltersApplied = false; // Track if any filters are currently applied
   bool _usePostSearchApi = false; // Flag to determine which API to use
+
+  // Pagination variables
+  int _currentPage = 1;
+  int _pageSize = 20;
+  bool _hasNextPage = false;
+  bool _isLoadingMore = false;
+  int _totalItems = 0;
+  DateTime? _lastLoadMoreTime; // Track last load more call
 
   String get role => SessionManager.getUserRoleForPermissions();
   bool get isAdmin => role == 'admin' || role == 'superadmin';
@@ -145,15 +154,80 @@ class _CataloguePageState extends State<CataloguePage>
       _filters.clear();
       _search = '';
       _searchController.clear();
+      _currentPage = 1;
+      _hasNextPage = false;
+      _isLoadingMore = false;
+      _products.clear();
+      _lastLoadMoreTime = null;
     });
+
+    // Reset scroll position
+    if (_gridScrollController.hasClients) {
+      _gridScrollController.jumpTo(0);
+    }
 
     // Always trigger GetCatalogueProductListBloc on refresh
     context.read<GetCatalogueProductListBloc>().add(
-      FetchGetCatalogueProductList(page: 1, pageSize: 20, showLoader: false),
+      FetchGetCatalogueProductList(page: 1, pageSize: _pageSize, showLoader: false),
     );
 
     // Wait for the API call to complete
     await Future.delayed(const Duration(milliseconds: 800));
+  }
+
+  /// Load more products (pagination)
+  Future<void> _loadMoreProducts() async {
+    if (_isLoadingMore || !_hasNextPage) return;
+
+    // Debounce: Don't load if called within last 1 second
+    final now = DateTime.now();
+    if (_lastLoadMoreTime != null &&
+        now.difference(_lastLoadMoreTime!) < const Duration(seconds: 1)) {
+      return;
+    }
+
+    setState(() {
+      _isLoadingMore = true;
+      _lastLoadMoreTime = now;
+    });
+
+    final nextPage = _currentPage + 1;
+
+    if (_usePostSearchApi) {
+      // Use PostSearch API with filters
+      context.read<PostSearchBloc>().add(
+        SubmitPostSearch(
+          showLoader: false,
+          requestBody: PostSearchRequestBody(
+            page: nextPage,
+            pageSize: _pageSize,
+            search: _search.isEmpty ? null : _search,
+            sort: 0,
+            productTypeIds: _filters['Product Type']?.map((name) => _productTypeIdMap[name]).whereType<String>().toList() ?? [],
+            colourOptionIds: _filters['Colour']?.map((name) => _colorIdMap[name]).whereType<String>().toList() ?? [],
+            finishOptionIds: _filters['Finish']?.map((name) => _finishIdMap[name]).whereType<String>().toList() ?? [],
+            textureOptionIds: _filters['Texture']?.map((name) => _textureIdMap[name]).whereType<String>().toList() ?? [],
+            naturalColourOptionIds: _filters['Natural Colour']?.map((name) => _naturalColorIdMap[name]).whereType<String>().toList() ?? [],
+            utilityIds: _filters['Utility']?.map((name) => _utilityIdMap[name]).whereType<String>().toList() ?? [],
+            originOptionIds: _filters['Origin']?.map((name) => _originIdMap[name]).whereType<String>().toList() ?? [],
+            stateCountryOptionIds: _filters['State/Country']?.map((name) => _stateCountryIdMap[name]).whereType<String>().toList() ?? [],
+            processingNatureOptionIds: _filters['Processing Nature']?.map((name) => _processingNatureIdMap[name]).whereType<String>().toList() ?? [],
+            materialNaturalityOptionIds: _filters['Material Naturality']?.map((name) => _materialNaturalityIdMap[name]).whereType<String>().toList() ?? [],
+            handicraftTypeOptionIds: _filters['Handicraft']?.map((name) => _handicraftIdMap[name]).whereType<String>().toList() ?? [],
+            priceRangeIds: _filters['Price Range']?.map((name) => _priceRangeIdMap[name]).whereType<String>().toList() ?? [],
+          ),
+        ),
+      );
+    } else {
+      // Use GetCatalogueProductList API
+      context.read<GetCatalogueProductListBloc>().add(
+        FetchGetCatalogueProductList(
+          page: nextPage,
+          pageSize: _pageSize,
+          showLoader: false,
+        ),
+      );
+    }
   }
 
   // Removed old _loadProducts method - now using BLoC
@@ -183,6 +257,7 @@ class _CataloguePageState extends State<CataloguePage>
     _pulseController.dispose();
     _debounce?.cancel();
     _searchController.dispose();
+    _gridScrollController.dispose();
     super.dispose();
   }
 
@@ -236,16 +311,34 @@ class _CataloguePageState extends State<CataloguePage>
           if (searchState is PostSearchSuccess) {
             // Update products with search results
             final apiProducts = searchState.response.data?.items ?? [];
+            final currentPage = searchState.response.data?.page ?? 1;
+            final hasNext = searchState.response.data?.hasNext ?? false;
+            final total = searchState.response.data?.total ?? 0;
+
             setState(() {
               _usePostSearchApi = true; // Mark that we're using PostSearch API
-              if (apiProducts.isNotEmpty) {
-                print("apiProducts.isNotEmpty");
+              _isLoadingMore = false;
+              _currentPage = currentPage;
+              _hasNextPage = hasNext;
+              _totalItems = total;
+
+              if (currentPage == 1) {
+                // First page - replace products
                 _products = apiProducts;
               } else {
-                _products = [];
+                // Subsequent pages - append products
+                // Get existing product IDs to prevent duplicates
+                final existingIds = _products.map((p) => p.id).toSet();
+                final newProducts = apiProducts.where((p) => !existingIds.contains(p.id)).toList();
+                if (newProducts.isNotEmpty) {
+                  _products.addAll(newProducts);
+                }
               }
             });
           } else if (searchState is PostSearchError) {
+            setState(() {
+              _isLoadingMore = false;
+            });
             // Don't change the flag on error, keep showing previous results
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -300,13 +393,34 @@ class _CataloguePageState extends State<CataloguePage>
             // Convert API response to SimpleProduct models (only if not using PostSearch API)
             if (!_usePostSearchApi) {
               final apiProducts = state.response.data?.items ?? [];
+              final currentPage = state.response.data?.page ?? 1;
+              final hasNext = state.response.data?.hasNext ?? false;
+              final total = state.response.data?.total ?? 0;
 
-              if (apiProducts.isNotEmpty) {
-                // _products = apiProducts.map((item) => _convertApiItemToSimpleProduct(item)).toList();
-                _products = apiProducts;
-              } else {
-                _products = []; // Empty list if no products
-              }
+              // Use addPostFrameCallback to avoid setState during build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    _isLoadingMore = false;
+                    _currentPage = currentPage;
+                    _hasNextPage = hasNext;
+                    _totalItems = total;
+
+                    if (currentPage == 1) {
+                      // First page - replace products
+                      _products = apiProducts;
+                    } else {
+                      // Subsequent pages - append products
+                      // Get existing product IDs to prevent duplicates
+                      final existingIds = _products.map((p) => p.id).toSet();
+                      final newProducts = apiProducts.where((p) => !existingIds.contains(p.id)).toList();
+                      if (newProducts.isNotEmpty) {
+                        _products.addAll(newProducts);
+                      }
+                    }
+                  });
+                }
+              });
             }
           }
 
@@ -367,47 +481,82 @@ class _CataloguePageState extends State<CataloguePage>
     final screenWidth = MediaQuery.of(context).size.width;
     final columns = screenWidth > 600 ? 3 : 2;
 
-    return GridView.builder(
-      key: ValueKey('grid_${products.length}_$_search'), // Force rebuild on search change
-      padding: const EdgeInsets.all(12),
-      itemCount: products.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        childAspectRatio: 0.65,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    // Only show extra item if actively loading or has next page
+    final shouldShowExtraItem = _isLoadingMore || (_hasNextPage && !_isLoadingMore);
+    final itemCount = products.length + (shouldShowExtraItem ? 1 : 0);
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification scrollInfo) {
+        // Load more when user scrolls to 90% of content (more conservative)
+        // Only trigger if scrolling down
+        if (!_isLoadingMore &&
+            _hasNextPage &&
+            scrollInfo.metrics.pixels >= scrollInfo.metrics.maxScrollExtent * 0.9 &&
+            scrollInfo.metrics.pixels > 0) {
+          _loadMoreProducts();
+        }
+        return false;
+      },
+      child: GridView.builder(
+        controller: _gridScrollController, // Use controller to maintain scroll position
+        physics: const BouncingScrollPhysics(), // Smooth bouncing physics
+        key: ValueKey('grid_$_search'), // Only rebuild on search change, not on products length
+        padding: const EdgeInsets.all(12),
+        itemCount: itemCount,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: columns,
+          childAspectRatio: 0.65,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemBuilder: (_, i) {
+          // Show loading indicator at the end
+          if (i == products.length && _isLoadingMore) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Center(child: CircularProgressIndicator(color: primary)),
+              ),
+            );
+          }
+
+          // Show "Load More" button at the end if there's more data
+          if (i == products.length && _hasNextPage && !_isLoadingMore) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ElevatedButton.icon(
+                  onPressed: _loadMoreProducts,
+                  icon: const Icon(Icons.arrow_downward),
+                  label: const Text('Load More'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return _productCard(products[i],screenWidth);
+        },
       ),
-      itemBuilder: (_, i) => _productCard(products[i]),
     );
   }
 
   /// Build Swipeable View
   Widget _buildSwipeableView(List<Items> products) {
+    // Only add loading/end card if there's something to show
+    final shouldShowExtraCard = _isLoadingMore || (_hasNextPage && !_isLoadingMore);
+    final displayItemCount = products.length + (shouldShowExtraCard ? 1 : 0);
+
     return Column(
       children: [
-        // Product counter with animated progress bar
-        // Padding(
-        //   padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
-        //   child: Column(
-        //     children: [
-        //       // Progress indicator
-        //       ClipRRect(
-        //         borderRadius: BorderRadius.circular(10),
-        //         child: LinearProgressIndicator(
-        //           value: (products.isEmpty ? 0 : (_currentIndex + 1) / products.length),
-        //           backgroundColor: Colors.grey[300],
-        //           valueColor: AlwaysStoppedAnimation<Color>(primary),
-        //           minHeight: 4,
-        //         ),
-        //       ),
-        //     ],
-        //   ),
-        // ),
         // Swipeable product cards with 3D effect
         Expanded(
           child: PageView.builder(
             controller: _pageController,
-            itemCount: products.length,
+            itemCount: displayItemCount,
             physics: const BouncingScrollPhysics(),
             onPageChanged: (index) {
               setState(() {
@@ -415,8 +564,110 @@ class _CataloguePageState extends State<CataloguePage>
               });
               // Trigger bounce animation on page change
               _bounceController.forward(from: 0);
+
+              // Load more ONLY when user reaches the LAST actual product card
+              // This ensures they can see the "swipe up" message properly
+              if (!_isLoadingMore && _hasNextPage && index == products.length - 1) {
+                // Delay slightly to let user see the current card
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  if (mounted && !_isLoadingMore) {
+                    _loadMoreProducts();
+                  }
+                });
+              }
             },
             itemBuilder: (context, index) {
+              // Show loading card
+              if (index == products.length && _isLoadingMore) {
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(color: primary),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Loading more products...',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              // Show "No more products" or "Load More" card
+              if (index == products.length && !_isLoadingMore) {
+                return Center(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                    padding: const EdgeInsets.all(40),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _hasNextPage ? Icons.arrow_downward : Icons.check_circle_outline,
+                          size: 64,
+                          color: _hasNextPage ? primary : Colors.green,
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _hasNextPage ? 'Load More Products' : 'You\'ve seen all products!',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[800],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (_hasNextPage) ...[
+                          const SizedBox(height: 20),
+                          ElevatedButton.icon(
+                            onPressed: _loadMoreProducts,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Load More'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                );
+              }
+
               return AnimatedBuilder(
                 animation: _pageController,
                 builder: (context, child) {
@@ -492,7 +743,7 @@ class _CataloguePageState extends State<CataloguePage>
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Text(
-                  '${_currentIndex + 1} / ${products.length}',
+                  '${_currentIndex + 1} / ${_totalItems > 0 ? _totalItems : products.length}',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -537,6 +788,10 @@ class _CataloguePageState extends State<CataloguePage>
                     setState(() {
                       _search = '';
                       _currentIndex = 0;
+                      _currentPage = 1;
+                      _hasNextPage = false;
+                      _isLoadingMore = false;
+                      _products.clear();
                       // If no filters are applied, switch back to GetCatalogueProductList
                       if (!_hasFiltersApplied) {
                         _usePostSearchApi = false;
@@ -545,6 +800,10 @@ class _CataloguePageState extends State<CataloguePage>
                     // Reset page controller if in swipeable view
                     if (!_isListView && _pageController.hasClients) {
                       _pageController.jumpToPage(0);
+                    }
+                    // Reset grid scroll position if in list view
+                    if (_isListView && _gridScrollController.hasClients) {
+                      _gridScrollController.jumpTo(0);
                     }
                     // Call appropriate API
                     if (_hasFiltersApplied) {
@@ -555,7 +814,7 @@ class _CataloguePageState extends State<CataloguePage>
                       context.read<GetCatalogueProductListBloc>().add(
                         FetchGetCatalogueProductList(
                           page: 1,
-                          pageSize: 20,
+                          pageSize: _pageSize,
                           showLoader: false,
                           search: null,
                         ),
@@ -583,11 +842,20 @@ class _CataloguePageState extends State<CataloguePage>
           setState(() {
             _search = v;
             _currentIndex = 0;
+            _currentPage = 1;
+            _hasNextPage = false;
+            _isLoadingMore = false;
+            _products.clear();
           });
 
           // Reset page controller if in swipeable view
           if (!_isListView && _pageController.hasClients) {
             _pageController.jumpToPage(0);
+          }
+
+          // Reset grid scroll position if in list view
+          if (_isListView && _gridScrollController.hasClients) {
+            _gridScrollController.jumpTo(0);
           }
 
           // Cancel previous timer
@@ -606,7 +874,7 @@ class _CataloguePageState extends State<CataloguePage>
               context.read<GetCatalogueProductListBloc>().add(
                 FetchGetCatalogueProductList(
                   page: 1,
-                  pageSize: 20,
+                  pageSize: _pageSize,
                   showLoader: false,
                   search: v.trim().isEmpty ? null : v.trim(),
                 ),
@@ -698,7 +966,7 @@ class _CataloguePageState extends State<CataloguePage>
         showLoader: false,
         requestBody: PostSearchRequestBody(
           page: 1,
-          pageSize: 20,
+          pageSize: _pageSize,
           search: searchQuery,
 
 
@@ -1195,7 +1463,7 @@ class _CataloguePageState extends State<CataloguePage>
     );
   }
 
-  Widget _productCard(Items p) {
+  Widget _productCard(Items p, double screenWidth) {
     return GestureDetector(
       key: ValueKey('product_card_${p.id}'), // Unique key for proper rebuild
       onTap: () => _openDetails(p),
@@ -1215,7 +1483,7 @@ class _CataloguePageState extends State<CataloguePage>
                 LayoutBuilder(
                   builder: (context, constraints) {
                     return AspectRatio(
-                      aspectRatio: 1.1,
+                      aspectRatio: screenWidth>600 ?0.8: 1.1,
                       child: p.primaryImageUrl == null
                           ? Container(
                         color: Colors.grey[200],
@@ -1346,7 +1614,8 @@ class _CataloguePageState extends State<CataloguePage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '₹${p.lowestPricePerSqft?.toInt()}',
+                            // '₹${p.lowestPricePerSqft?.toInt()}',
+                            '₹${(p.lowestPricePerSqft ?? 0).toInt()}',
                             style: TextStyle(
                               color: primary,
                               fontWeight: FontWeight.w800,
@@ -1535,6 +1804,9 @@ class _CataloguePageState extends State<CataloguePage>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width,
+      ),
       backgroundColor: Colors.transparent,
       builder: (bottomSheetContext) => BlocProvider<GetCatalogueProductDetailsBloc>.value(
         value: detailsBloc,
@@ -2580,13 +2852,26 @@ class _CataloguePageState extends State<CataloguePage>
                               _filters.clear();
                               _hasFiltersApplied = false;
                               _usePostSearchApi = false;
+                              _currentPage = 1;
+                              _hasNextPage = false;
+                              _isLoadingMore = false;
+                              _products.clear();
                             });
                             Navigator.pop(sheetContext);
+
+                            // Reset scroll position
+                            if (!_isListView && _pageController.hasClients) {
+                              _pageController.jumpToPage(0);
+                            }
+                            if (_isListView && _gridScrollController.hasClients) {
+                              _gridScrollController.jumpTo(0);
+                            }
+
                             // Always call GetCatalogueProductList when clearing all filters
                             context.read<GetCatalogueProductListBloc>().add(
                               FetchGetCatalogueProductList(
                                 page: 1,
-                                pageSize: 20,
+                                pageSize: _pageSize,
                                 showLoader: false,
                                 search: _search.isEmpty ? null : _search,
                               ),
@@ -2897,7 +3182,19 @@ class _CataloguePageState extends State<CataloguePage>
 
                       setState(() {
                         _hasFiltersApplied = hasFilters;
+                        _currentPage = 1;
+                        _hasNextPage = false;
+                        _isLoadingMore = false;
+                        _products.clear();
                       });
+
+                      // Reset scroll position
+                      if (!_isListView && _pageController.hasClients) {
+                        _pageController.jumpToPage(0);
+                      }
+                      if (_isListView && _gridScrollController.hasClients) {
+                        _gridScrollController.jumpTo(0);
+                      }
 
                       if (hasFilters) {
                         // Filters are applied: use PostSearchBloc
@@ -2913,7 +3210,7 @@ class _CataloguePageState extends State<CataloguePage>
                         context.read<GetCatalogueProductListBloc>().add(
                           FetchGetCatalogueProductList(
                             page: 1,
-                            pageSize: 20,
+                            pageSize: _pageSize,
                             showLoader: false,
                             search: _search.isEmpty ? null : _search,
                           ),

@@ -1,6 +1,7 @@
 import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
+import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:apclassstone/presentation/screens/attendance/attendance_tracking.dart';
@@ -20,7 +21,10 @@ import '../../core/services/repository_provider.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
 import '../../presentation/screens/attendance/attendance_monthly_tracking.dart';
+import '../../presentation/screens/executive/clients/add_client_screen.dart';
 import '../../presentation/screens/executive/clients/clients_list_screen.dart';
+import '../../presentation/screens/executive/meetings/meetings_list_screen.dart';
+import '../../presentation/screens/executive/meetings/new_mom_screen.dart';
 import '../../presentation/screens/executive_history/executive_history_tracking_screen.dart';
 import '../../presentation/screens/executive_history/executive_tracking.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
@@ -352,13 +356,12 @@ class AppRouter {
         name: 'clientsListScreen',
         builder: (context, state) {
 
-
-
-          return
-            MultiBlocProvider(
+          return MultiBlocProvider(
               providers: [
                 BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
                 BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+                BlocProvider<PostClientAddContactBloc>(create: (context) => PostClientAddContactBloc(),),
+                BlocProvider<PostClientAddLocationBloc>(create: (context) => PostClientAddLocationBloc(),),
               ],
               child: const ClientsListScreen(),
             );
@@ -366,23 +369,65 @@ class AppRouter {
         },
       ),
 
-
-      // Meeting Routes
       GoRoute(
-        path: '/meetings',
-        name: 'meetings',
-        builder: (context, state) => const MeetingListScreen(),
-        routes: [
-          GoRoute(
-            path: ':meetingId',
-            name: 'meeting-detail',
-            builder: (context, state) {
-              final meetingId = state.pathParameters['meetingId']!;
-              return MeetingDetailScreen(meetingId: meetingId);
-            },
-          ),
-        ],
+        path: '/addClientScreen',
+        name: 'addClientScreen',
+        builder: (context, state) {
+
+
+
+          return
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+                BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+                BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              ],
+              child: const AddClientScreen(),
+            );
+
+        },
       ),
+
+
+
+      GoRoute(
+        path: '/momScreen',
+        name: 'momScreen',
+        builder: (context, state) {
+
+
+
+          return
+            MultiBlocProvider(
+              providers: [
+                BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+                BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+                BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              ],
+              child: const NewMomScreen(),
+            );
+
+        },
+      ),
+
+      GoRoute(
+        path: '/momDetailsScreen',
+        name: 'momDetailsScreen',
+        builder: (context, state) {
+
+          return  MultiBlocProvider(
+            providers: [
+              BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+              BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+            ],
+            child: const MeetingsListScreen(),
+          );
+        },
+      ),
+      // Meeting Routes
+
 
 
       GoRoute(

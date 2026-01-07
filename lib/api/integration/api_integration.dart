@@ -4,6 +4,9 @@ import 'dart:io';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostClientAddContactRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostClientAddLocationRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostClientAddRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostMinesEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
@@ -24,6 +27,8 @@ import 'package:apclassstone/api/models/response/GetFinishesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetHandicraftsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetMaterialNatureResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetMinesOptionResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetMomIdDetailsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetMomResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetNaturalColorResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetOriginsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetPriceRangeResponseBody.dart';
@@ -33,7 +38,10 @@ import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.d
 import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostCatalogueCommonResponseBody.dart';
+import 'package:apclassstone/api/models/response/PostClientAddContactResponseBody.dart';
+import 'package:apclassstone/api/models/response/PostClientAddLocationResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostMinesEntryResponseBody.dart';
+import 'package:apclassstone/api/models/response/PostMomEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
@@ -52,6 +60,8 @@ import '../models/response/GetColorsResponseBody.dart';
 import '../models/response/GetProductTypeResponseBody.dart';
 import '../models/response/GetUtilitiesTypeResponseBody.dart';
 import '../models/response/PendingRegistrationResponseBody.dart';
+import '../models/response/PostClientAddResponseBody.dart';
+import '../models/response/PostMomImageUploadResponseBody.dart';
 import '../models/response/RegistrationResponseBody.dart';
 import '../models/request/PunchInOutRequestBody.dart';
 import '../network/api_client.dart';
@@ -1816,7 +1826,17 @@ class ApiIntegration {
 
     //--------Client -----------
 
-  static Future<GetClientListResponseBody> getClientList() async {
+  static Future<GetClientListResponseBody> getClientList(String? search, String? clientTypeCode) async {
+    // Build query params outside try block so it's accessible in catch blocks
+    final queryParams = <String>[];
+    if (search != null && search.isNotEmpty) {
+      queryParams.add('search=$search');
+    }
+    if (clientTypeCode != null && clientTypeCode.isNotEmpty) {
+      queryParams.add('clientTypeCode=$clientTypeCode');
+    }
+    final queryString = queryParams.isNotEmpty ? '&${queryParams.join('&')}' : '';
+
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -1848,7 +1868,7 @@ class ApiIntegration {
       }
 
       // Online - fetch from API
-      final url = Uri.parse(ApiConstants.getClientsList);
+      final url = Uri.parse("${ApiConstants.getClientsList}$queryString");
 
       if (kDebugMode) {
         print('📤 Sending getClientsList request to: $url');
@@ -1881,7 +1901,7 @@ class ApiIntegration {
           if (result.status == true && result.data != null) {
             await AppBlocProvider.cacheRepository.saveCachedResponse(
               _createCachedResponse(
-                ApiConstants.getClientsList,
+                "${ApiConstants.getClientsList}$queryString",
                 result,
                 200,
               ),
@@ -1914,7 +1934,7 @@ class ApiIntegration {
       // Try to return cached data on network error
       try {
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse(ApiConstants.getClientsList);
+            .getCachedResponse("${ApiConstants.getClientsList}$queryString");
         if (cachedData?.responseData != null) {
           print('📍 Network error - Falling back to cached data');
           final jsonData = jsonDecode(cachedData!.responseData!);
@@ -1937,7 +1957,7 @@ class ApiIntegration {
       // Try to return cached data on error
       try {
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse(ApiConstants.getClientsList);
+            .getCachedResponse("${ApiConstants.getClientsList}${search!=null?"&search=$search":""}");
         if (cachedData?.responseData != null) {
           print('📍 Error occurred - Falling back to cached data');
           final jsonData = jsonDecode(cachedData!.responseData!);
@@ -2088,6 +2108,288 @@ class ApiIntegration {
       }
 
       return GetClientIdDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+
+    //--------MOM -----------
+
+  static Future<GetMomResponseBody> getMomList() async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading MOM List from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getMomList);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetMomResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached MOM List: $e');
+            return GetMomResponseBody(
+              status: false,
+              message: 'Failed to load cached MOM List: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetMomResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse(ApiConstants.getMomList);
+
+      if (kDebugMode) {
+        print('📤 Sending get MOM List request to: $url');
+        print('📤 Sending get MOM List header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getMOMList status: ${response.statusCode}');
+        print('Response getMOMList body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetMomResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getMOMList successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                ApiConstants.getMomList,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getMOMList response');
+          }
+        } catch (e) {
+          print('Error caching getMOMList: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getMOMList failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetMomResponseBody.fromJson(jsonResponse);
+        return GetMomResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getMomList);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetMomResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetMomResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getMomList);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetMomResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetMomResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+
+  static Future<GetMomIdDetailsResponseBody> getMomIdDetails(String momId) async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Mom List from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getMomDetails}/$momId");
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetMomIdDetailsResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached MOM Details: $e');
+            return GetMomIdDetailsResponseBody(
+              status: false,
+              message: 'Failed to load cached MOM Details: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetMomIdDetailsResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse("${ApiConstants.getMomDetails}/$momId");
+
+      if (kDebugMode) {
+        print('📤 Sending MOM Details request to: $url');
+        print('📤 Sending getMOM Details header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getMOM Details status: ${response.statusCode}');
+        print('Response getMOM Details body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetMomIdDetailsResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getMOM Details successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                "${ApiConstants.getMomDetails}/$momId" ,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getMOMDetails response');
+          }
+        } catch (e) {
+          print('Error caching getMom Details: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ get MOM Details failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetMomIdDetailsResponseBody.fromJson(jsonResponse);
+        return GetMomIdDetailsResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getMomDetails}/$momId");
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetMomIdDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetMomIdDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getMomDetails}/$momId");
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetMomIdDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetMomIdDetailsResponseBody(
         status: false,
         message: errorMsg,
       );
@@ -3060,6 +3362,81 @@ class ApiIntegration {
     }
   }
 
+  static Future<PostMomImageUploadResponseBody> postMomImageUpload({
+    required String momId,
+    required File imageFile,
+    required String? caption,
+    int sortOrder = 0,
+  }) async {
+    try {
+      final url = Uri.parse('${ApiConstants.postMomImage}/$momId/images');
+
+      if (kDebugMode) {
+        print('📤 Sending postMomImageUpload request to: $url');
+      }
+
+      /// Create multipart request
+      final request = http.MultipartRequest('POST', url);
+
+      /// Add headers (Authorization token)
+      final headers = ApiConstants.headerWithToken();
+      request.headers.addAll({
+        'Authorization': headers['Authorization'] ?? '',
+      });
+
+      /// Add image file
+      final multipartFile = await http.MultipartFile.fromPath(
+        'File', // MUST match backend key
+        imageFile.path,
+      );
+      request.files.add(multipartFile);
+
+      /// Add form fields
+      request.fields['Caption'] = caption ?? "";
+      request.fields['SortOrder'] = sortOrder.toString();
+
+      if (kDebugMode) {
+        print('📤 Upload details:');
+        print('   - File: ${imageFile.path}');
+        print('   - Size: ${await imageFile.length()} bytes');
+        print('   - Caption: $caption');
+        print('   - SortOrder: $sortOrder');
+      }
+
+      /// Send request
+      final streamedResponse = await request.send().timeout(_timeout);
+
+      /// Convert stream to response
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (kDebugMode) {
+        print('📥 postMomImageUpload status: ${response.statusCode}');
+        print('📥 postMomImageUpload body: ${response.body}');
+      }
+
+      /// Handle success
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostMomImageUploadResponseBody.fromJson(jsonResponse);
+      }
+
+      /// Handle failure
+      final jsonResponse = jsonDecode(response.body);
+      return PostMomImageUploadResponseBody(
+        status: false,
+        message: jsonResponse['message'] ?? 'MOM image upload failed',
+        statusCode: response.statusCode,
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ postMomImageUpload error: $e');
+      }
+      return PostMomImageUploadResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
 
 
   static Future<GetCatalogueProductResponseBody> postSearch({
@@ -3099,6 +3476,181 @@ class ApiIntegration {
     } catch (e) {
       if (kDebugMode) print('❌ postSearch error: $e');
       return GetCatalogueProductResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<PostMomEntryResponseBody> postMomEntry({
+    required PostSearchRequestBody requestBody,
+  })
+  async {
+    try {
+      final url = Uri.parse(ApiConstants.postMomEntry);
+      if (kDebugMode) print('📤 Sending postMomEntry request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postMomEntry status: ${response.statusCode}');
+        print('📥 postMomEntry request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postMomEntry body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostMomEntryResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostMomEntryResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postMomEntry error: $e');
+      return PostMomEntryResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<PostClientAddResponseBody> postClientAdd({
+    required PostClientAddRequestBody requestBody,
+  })
+  async {
+    try {
+      final url = Uri.parse(ApiConstants.postClients);
+      if (kDebugMode) print('📤 Sending postClients request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postClients status: ${response.statusCode}');
+        print('📥 postClients request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postClients body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postClients error: $e');
+      return PostClientAddResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<PostClientAddContactResponseBody> postClientAddContact({
+    required PostClientAddContactRequestBody requestBody,
+    required String clientId,
+    required String locationId
+  })
+  async {
+    try {
+      final url = Uri.parse("${ApiConstants.postClients}/$clientId/locations/$locationId/contacts");
+      if (kDebugMode) print('📤 Sending postClients contacts request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postClients contacts status: ${response.statusCode}');
+        print('📥 postClients contacts request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postClients contacts body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddContactResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddContactResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postClients contacts error: $e');
+      return PostClientAddContactResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  static Future<PostClientAddLocationResponseBody> postClientAddLocation({
+    required PostClientAddLocationRequestBody requestBody,
+    required String clientId,
+  })
+  async {
+    try {
+      final url = Uri.parse("${ApiConstants.postClients}/$clientId/locations");
+      if (kDebugMode) print('📤 Sending postClients locations request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 postClients locations status: ${response.statusCode}');
+        print('📥 postClients locations request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postClients locations body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddLocationResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddLocationResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ postClients locations error: $e');
+      return PostClientAddLocationResponseBody(
         status: false,
         message: e.toString(),
       );

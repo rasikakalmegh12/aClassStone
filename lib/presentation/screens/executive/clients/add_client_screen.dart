@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 
+import '../../../../api/models/request/PostClientAddRequestBody.dart';
+import '../../../../bloc/client/post_client/post_client_bloc.dart';
+import '../../../../bloc/client/post_client/post_client_event.dart';
+import '../../../../bloc/client/post_client/post_client_state.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../widgets/app_bar.dart';
+import '../../../widgets/custom_loader.dart';
+
 
 class AddClientScreen extends StatefulWidget {
   final Map<String, dynamic>? existingClient;
@@ -26,6 +34,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
   final _instagramController = TextEditingController();
   final _facebookController = TextEditingController();
   final _websiteController = TextEditingController();
+  final _locationNameController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _cityController = TextEditingController();
 
   // Form State
   String? selectedClientType;
@@ -33,6 +44,10 @@ class _AddClientScreenState extends State<AddClientScreen> {
   String? selectedState;
   String currentLocation = 'Captured automatically';
   bool showDuplicateWarning = false;
+
+  // GPS Coordinates
+  double? _gpsLat;
+  double? _gpsLng;
 
   final List<String> clientTypes = [
     'Builder',
@@ -71,6 +86,51 @@ class _AddClientScreenState extends State<AddClientScreen> {
   void initState() {
     super.initState();
     _initializeForm();
+    _getCurrentLocation();
+  }
+
+  // Convert client type display name to API code
+  String _getClientTypeCode(String displayName) {
+    final Map<String, String> typeCodeMap = {
+      'Builder': 'BUILDER',
+      'Architect': 'ARCHITECT',
+      'Interior Designer': 'INTERIOR_DESIGNER',
+      'Contractor': 'CONTRACTOR',
+      'Dealer': 'DEALER',
+      'Other': 'OTHER',
+    };
+    return typeCodeMap[displayName] ?? 'OTHER';
+  }
+
+  Future<void> _getCurrentLocation() async {
+    try {
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          currentLocation = 'Location permission denied';
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best,
+      );
+
+      setState(() {
+        _gpsLat = position.latitude;
+        _gpsLng = position.longitude;
+        currentLocation = '${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}';
+      });
+    } catch (e) {
+      setState(() {
+        currentLocation = 'Unable to get location';
+      });
+    }
   }
 
   void _initializeForm() {
@@ -98,90 +158,117 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: _buildAppBar(),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSection(
-                      'BASIC INFO',
-                      [
-                        _buildClientTypeDropdown(),
-                        const SizedBox(height: 16),
-                        _buildTextField('Client name', _clientNameController, isRequired: true),
-                        const SizedBox(height: 16),
-                        _buildTextField('Firm / company name', _firmNameController, isRequired: true),
-                        const SizedBox(height: 16),
-                        _buildTextField('Trader name (optional)', _traderNameController),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSection(
-                      'LOCATION',
-                      [
-                        _buildCityDropdown(),
-                        const SizedBox(height: 16),
-                        _buildStateDropdown(),
-                        const SizedBox(height: 16),
-                        _buildLocationField(),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildSection(
-                      'CONTACT & OTHER',
-                      [
-                        _buildTextField('Owner name', _ownerNameController, isRequired: true),
-                        const SizedBox(height: 16),
-                        _buildPhoneField(),
-                        const SizedBox(height: 16),
-                        _buildTextField('Email', _emailController, keyboardType: TextInputType.emailAddress),
-                        const SizedBox(height: 16),
-                        _buildTextField('GST No (optional)', _gstController),
-                        const SizedBox(height: 16),
-                        _buildSocialHandlesSection(),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildInfoBanner(),
-                    const SizedBox(height: 80), // Space for bottom button
-                  ],
+    return BlocListener<PostClientAddBloc, PostClientAddState>(
+      listener: (context, state) {
+        if (state is PostClientAddLoading && state.showLoader) {
+          showCustomProgressDialog(context);
+        } else if (state is PostClientAddLoaded) {
+          dismissCustomProgressDialog(context);
+
+          if (state.response.status == true) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(widget.existingClient != null
+                    ? 'Client updated successfully'
+                    : 'Client added successfully'),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            Navigator.pop(context, true); // Return true to refresh the list
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.response.message ?? 'Failed to save client'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        } else if (state is PostClientAddError) {
+          dismissCustomProgressDialog(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        appBar:
+        // _buildAppBar(),
+        PreferredSize(
+            preferredSize: const Size.fromHeight(56),
+            child: CoolAppCard(title: widget.existingClient != null ? 'Edit Client' : 'Add Client',)
+        ),
+        body: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSection(
+                        'BASIC INFO',
+                        [
+                          _buildClientTypeDropdown(),
+                          const SizedBox(height: 10),
+                          // _buildTextField('Client name', _clientNameController, isRequired: true),
+                          // const SizedBox(height: 16),
+                          _buildTextField('Firm / company name', _firmNameController, isRequired: true),
+                          const SizedBox(height: 10),
+                          _buildTextField('Trader name (optional)', _traderNameController),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSection(
+                        'LOCATION',
+                        [
+                          _buildTextField('Location Name', _locationNameController,isRequired: true),
+                          const SizedBox(height: 10),
+                          _buildTextField('State', _stateController,isRequired: true),
+                          // _buildCityDropdown(),
+                          const SizedBox(height: 10),
+                          _buildTextField('City', _cityController,isRequired: true),
+                          // _buildStateDropdown(),
+                          const SizedBox(height: 10),
+                          _buildLocationField(),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildSection(
+                        'CONTACT & OTHER',
+                        [
+                          _buildTextField('Owner name', _ownerNameController, isRequired: true),
+                          const SizedBox(height: 10),
+                          _buildPhoneField(),
+                          const SizedBox(height: 10),
+                          _buildTextField('Email', _emailController, keyboardType: TextInputType.emailAddress),
+                          const SizedBox(height: 10),
+                          _buildTextField('GST No (optional)', _gstController),
+                          const SizedBox(height: 10),
+                          _buildSocialHandlesSection(),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      _buildInfoBanner(),
+                      const SizedBox(height: 80), // Space for bottom button
+                    ],
+                  ),
                 ),
               ),
-            ),
-            _buildBottomButton(),
-          ],
+              _buildBottomButton(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: AppColors.white,
-      elevation: 1,
-      shadowColor: AppColors.grey200,
-      leading: IconButton(
-        onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
-      ),
-      title: Text(
-        widget.existingClient != null ? 'Edit Client' : 'Add Client',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildSection(String title, List<Widget> children) {
     return Column(
@@ -189,7 +276,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       children: [
         Text(
           title,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: AppColors.textSecondary,
@@ -206,7 +293,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
             Text(
               'Client type',
@@ -216,13 +303,13 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
+            SizedBox(width: 4),
+            Text('*', style: TextStyle(color: AppColors.error)),
           ],
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: selectedClientType,
+          initialValue: selectedClientType,
           decoration: InputDecoration(
             hintText: 'Select client type',
             suffixIcon: const Icon(Icons.keyboard_arrow_down),
@@ -265,7 +352,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
             Text(
               'City',
@@ -275,13 +362,13 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
+            SizedBox(width: 4),
+            Text('*', style: TextStyle(color: AppColors.error)),
           ],
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: selectedCity,
+          initialValue: selectedCity,
           decoration: InputDecoration(
             hintText: 'Select city',
             suffixIcon: const Icon(Icons.keyboard_arrow_down),
@@ -324,7 +411,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
             Text(
               'State',
@@ -334,13 +421,13 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
+            SizedBox(width: 4),
+            Text('*', style: TextStyle(color: AppColors.error)),
           ],
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: selectedState,
+          initialValue: selectedState,
           decoration: InputDecoration(
             hintText: 'Select state',
             suffixIcon: const Icon(Icons.keyboard_arrow_down),
@@ -383,7 +470,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Location coordinates',
           style: TextStyle(
             fontSize: 14,
@@ -406,7 +493,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               const SizedBox(width: 8),
               Text(
                 currentLocation,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textSecondary,
                 ),
@@ -422,7 +509,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
             Text(
               'Phone',
@@ -432,15 +519,17 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
+            SizedBox(width: 4),
+            Text('*', style: TextStyle(color: AppColors.error)),
           ],
         ),
         const SizedBox(height: 8),
         TextFormField(
           controller: _phoneController,
           keyboardType: TextInputType.phone,
+          maxLength: 10,
           decoration: InputDecoration(
+            counterText: "",
             hintText: 'Phone number',
             prefixText: '+91 ',
             border: OutlineInputBorder(
@@ -477,7 +566,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Social handles (optional)',
           style: TextStyle(
             fontSize: 14,
@@ -570,7 +659,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -621,11 +710,11 @@ class _AddClientScreenState extends State<AddClientScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.accentAmber.withOpacity(0.1),
+        color: AppColors.accentAmber.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.accentAmber.withOpacity(0.3)),
+        border: Border.all(color: AppColors.accentAmber.withValues(alpha: 0.3)),
       ),
-      child: Row(
+      child: const Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(
@@ -633,7 +722,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
             color: AppColors.accentAmber,
             size: 20,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Expanded(
             child: Text(
               'App will check for duplicate client using firm name, GST, phone and email.',
@@ -677,7 +766,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
             ),
             child: Text(
               widget.existingClient != null ? 'Update Client' : 'Save Client',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -693,7 +782,6 @@ class _AddClientScreenState extends State<AddClientScreen> {
     final firmName = _firmNameController.text.toLowerCase();
     final phone = _phoneController.text;
     final email = _emailController.text.toLowerCase();
-    final gst = _gstController.text;
 
     // Check against some mock existing clients
     final existingClients = ['a class stone', 'patwari marble', 'sangam granites'];
@@ -716,7 +804,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
+          title: const Text(
             'Potential Duplicate Found',
             style: TextStyle(
               fontWeight: FontWeight.bold,
@@ -726,7 +814,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Similar clients found:',
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
@@ -739,7 +827,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                   color: AppColors.grey50,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -762,7 +850,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(
+              child: const Text(
                 'Continue Anyway',
                 style: TextStyle(
                   color: AppColors.textSecondary,
@@ -774,7 +862,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
                 Navigator.of(context).pop();
                 // You can add logic to prefill with existing client data
               },
-              child: Text(
+              child: const Text(
                 'Use Existing',
                 style: TextStyle(
                   color: AppColors.primaryTeal,
@@ -790,14 +878,67 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
   void _saveClient() {
     if (_formKey.currentState!.validate()) {
-      final action = widget.existingClient != null ? 'updated' : 'saved';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Client $action successfully'),
-          backgroundColor: AppColors.success,
+      // Validate required fields
+      if (selectedClientType == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please select client type'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
+      // if (selectedCity == null) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(
+      //       content: Text('Please select city'),
+      //       backgroundColor: AppColors.error,
+      //     ),
+      //   );
+      //   return;
+      // }
+      //
+      // if (selectedState == null) {
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(
+      //       content: Text('Please select state'),
+      //       backgroundColor: AppColors.error,
+      //     ),
+      //   );
+      //   return;
+      // }
+
+      // Prepare the request body
+      final requestBody = PostClientAddRequestBody(
+        clientTypeCode: _getClientTypeCode(selectedClientType!),
+        firmName: _firmNameController.text.trim(),
+        gstn: _gstController.text.trim().isEmpty ? "" : _gstController.text.trim(),
+        traderName: _traderNameController.text.trim().isEmpty ? "" : _traderNameController.text.trim(),
+        facebookUrl: _facebookController.text.trim().isEmpty ? "" : _facebookController.text.trim(),
+        instagramUrl: _instagramController.text.trim().isEmpty ? "" : _instagramController.text.trim(),
+        twitterUrl: _websiteController.text.trim().isEmpty ? "" : _websiteController.text.trim(),
+        initialLocation: InitialLocation(
+          locationName: _locationNameController.text.toString(), // Default location name
+          state: _stateController.text.trim().isEmpty ? "" : _stateController.text.trim(),
+          city: _cityController.text.trim().isEmpty ? "" : _cityController.text.trim(),
+          gpsLat: _gpsLat,
+          gpsLng: _gpsLng,
+        ),
+        ownerContact: OwnerContact(
+          name: _ownerNameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim().isEmpty ? "" : _emailController.text.trim(),
         ),
       );
-      Navigator.pop(context);
+
+      // Dispatch the event
+      context.read<PostClientAddBloc>().add(
+        FetchPostClientAdd(
+          showLoader: true,
+          requestBody: requestBody,
+        ),
+      );
     }
   }
 

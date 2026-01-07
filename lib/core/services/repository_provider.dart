@@ -2,6 +2,7 @@ import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/api/network/network_service.dart';
 import 'package:apclassstone/api/network/offline_api_wrapper.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
+import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
 import 'package:apclassstone/data/local/cache_repository.dart';
 import 'package:apclassstone/data/local/queue_repository.dart';
 import 'package:apclassstone/bloc/queue/queue_bloc.dart';
@@ -49,6 +50,9 @@ class AppBlocProvider {
   static late GetClientDetailsBloc _getClientDetailsBloc;
   static late GetClientListBloc _getClientListBloc;
   static late ActiveSessionBloc _activeSessionBloc;
+  static late PostClientAddBloc _postClientAddBloc;
+  static late PostClientAddLocationBloc _postClientAddLocationBloc;
+  static late PostClientAddContactBloc _postClientAddContactBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -102,7 +106,7 @@ class AppBlocProvider {
     // Initialize location ping bloc
     _locationPingBloc = LocationPingBloc();
     _executiveTrackingBloc = ExecutiveTrackingBloc();
-
+    _postClientAddBloc=PostClientAddBloc();
     // Initialize catalogue BLoCs
     _getProductTypeBloc = GetProductTypeBloc();
     _getUtilitiesBloc = GetUtilitiesBloc();
@@ -119,6 +123,8 @@ class AppBlocProvider {
     _getMinesOptionBloc = GetMinesOptionBloc();
     _postSearchBloc = PostSearchBloc();
     _attendanceTrackingMonthlyBloc = AttendanceTrackingMonthlyBloc();
+    _postClientAddLocationBloc=PostClientAddLocationBloc();
+    _postClientAddContactBloc=PostClientAddContactBloc();
 
     _getClientDetailsBloc = GetClientDetailsBloc();
     _getClientListBloc=GetClientListBloc();
@@ -167,6 +173,9 @@ class AppBlocProvider {
   static AttendanceTrackingMonthlyBloc get attendanceTrackingMonthlyBloc => _attendanceTrackingMonthlyBloc;
   static GetClientDetailsBloc get getClientDetailsBloc => _getClientDetailsBloc;
   static GetClientListBloc get getClientListBloc => _getClientListBloc;
+  static PostClientAddBloc get postClientAddBloc => _postClientAddBloc;
+  static PostClientAddLocationBloc get postClientAddLocationBloc => _postClientAddLocationBloc;
+  static PostClientAddContactBloc get postClientAddContactBloc => _postClientAddContactBloc;
 
   // Service getters for direct access
   static ConnectivityService get connectivityService => _connectivityService;
@@ -189,6 +198,9 @@ class AppBlocProvider {
     _locationPingBloc.close();
     _executiveTrackingBloc.close();
     _activeSessionBloc.close();
+    _postClientAddBloc.close();
+    _postClientAddLocationBloc.close();
+    _postClientAddContactBloc.close();
 
     // Dispose catalogue BLoCs
     _getProductTypeBloc.close();

@@ -1,13 +1,16 @@
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_event.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_state.dart';
+import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
 import 'package:apclassstone/core/session/session_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
+import 'package:go_router/go_router.dart';
+import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'add_client_screen.dart';
+import 'add_location_screen.dart';
 
 class ClientsListScreen extends StatefulWidget {
   const ClientsListScreen({super.key});
@@ -19,58 +22,58 @@ class ClientsListScreen extends StatefulWidget {
 class _ClientsListScreenState extends State<ClientsListScreen> {
   String selectedFilter = 'All';
   final List<String> filters = ['All', 'Builder', 'Architect', 'Interior', 'Other'];
+  final List<Data> clients =[];
+  // final List<Map<String, dynamic>> clients = [
+  //   {
+  //     'name': 'A Class Stone',
+  //     'type': 'Builder',
+  //     'location': 'Jaipur, Rajasthan',
+  //     'ownerPhone': '+91-98xxx xxxxx',
+  //     'ownerName': 'Jitendra Singh',
+  //     'gstNumber': 'GST123456789',
+  //     'email': 'contact@aclassstone.com',
+  //   },
+  //   {
+  //     'name': 'Patwari Marble',
+  //     'type': 'Builder',
+  //     'location': 'Udaipur, Rajasthan',
+  //     'ownerPhone': '+91-99xxx xxxxx',
+  //     'ownerName': 'Rajkumar Patwari',
+  //     'gstNumber': 'GST987654321',
+  //     'email': 'info@patwarimarble.com',
+  //   },
+  //   {
+  //     'name': 'Sangam Granites',
+  //     'type': 'Architect',
+  //     'location': 'Jodhpur, Rajasthan',
+  //     'ownerPhone': '+91-97xxx xxxxx',
+  //     'ownerName': 'Priya Sharma',
+  //     'gstNumber': 'GST456789123',
+  //     'email': 'sangam@granites.co.in',
+  //   },
+  //   {
+  //     'name': 'Royal Interiors',
+  //     'type': 'Interior',
+  //     'location': 'Ajmer, Rajasthan',
+  //     'ownerPhone': '+91-96xxx xxxxx',
+  //     'ownerName': 'Vikram Rajput',
+  //     'gstNumber': 'GST789123456',
+  //     'email': 'royal@interiors.com',
+  //   },
+  //   {
+  //     'name': 'Desert Stones',
+  //     'type': 'Other',
+  //     'location': 'Bikaner, Rajasthan',
+  //     'ownerPhone': '+91-95xxx xxxxx',
+  //     'ownerName': 'Mahesh Kumar',
+  //     'gstNumber': '',
+  //     'email': '',
+  //   },
+  // ];
 
-  final List<Map<String, dynamic>> clients = [
-    {
-      'name': 'A Class Stone',
-      'type': 'Builder',
-      'location': 'Jaipur, Rajasthan',
-      'ownerPhone': '+91-98xxx xxxxx',
-      'ownerName': 'Jitendra Singh',
-      'gstNumber': 'GST123456789',
-      'email': 'contact@aclassstone.com',
-    },
-    {
-      'name': 'Patwari Marble',
-      'type': 'Builder',
-      'location': 'Udaipur, Rajasthan',
-      'ownerPhone': '+91-99xxx xxxxx',
-      'ownerName': 'Rajkumar Patwari',
-      'gstNumber': 'GST987654321',
-      'email': 'info@patwarimarble.com',
-    },
-    {
-      'name': 'Sangam Granites',
-      'type': 'Architect',
-      'location': 'Jodhpur, Rajasthan',
-      'ownerPhone': '+91-97xxx xxxxx',
-      'ownerName': 'Priya Sharma',
-      'gstNumber': 'GST456789123',
-      'email': 'sangam@granites.co.in',
-    },
-    {
-      'name': 'Royal Interiors',
-      'type': 'Interior',
-      'location': 'Ajmer, Rajasthan',
-      'ownerPhone': '+91-96xxx xxxxx',
-      'ownerName': 'Vikram Rajput',
-      'gstNumber': 'GST789123456',
-      'email': 'royal@interiors.com',
-    },
-    {
-      'name': 'Desert Stones',
-      'type': 'Other',
-      'location': 'Bikaner, Rajasthan',
-      'ownerPhone': '+91-95xxx xxxxx',
-      'ownerName': 'Mahesh Kumar',
-      'gstNumber': '',
-      'email': '',
-    },
-  ];
-
-  List<Map<String, dynamic>> get filteredClients {
+  List<Data> get filteredClients {
     if (selectedFilter == 'All') return clients;
-    return clients.where((client) => client['type'] == selectedFilter).toList();
+    return clients.where((client) => client.clientTypeCode == selectedFilter).toList();
   }
 @override
   void initState() {
@@ -96,10 +99,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AddClientScreen()),
-          );
+        context.pushNamed("addClientScreen");
         },
         backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
         AppColors.adminPrimary :AppColors.primaryTealDark,
@@ -235,7 +235,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                 children: filteredClients
                     .asMap()
                     .entries
-                    .map((e) => _buildClientCard(e.value, e.key))
+                    .map((e) => _buildClientCardFromData(e.value, e.key))
                     .toList(),
               ),
             );
@@ -294,7 +294,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
             children: filteredClients
                 .asMap()
                 .entries
-                .map((e) => _buildClientCard(e.value, e.key))
+                .map((e) => _buildClientCardFromData(e.value, e.key))
                 .toList(),
           ),
         );
@@ -303,7 +303,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
   }
 
   // Render an API client item (GetClientListResponseBody.Data)
-  Widget _buildClientCardFromData(dynamic client, int index) {
+  Widget _buildClientCardFromData(Data client, int index) {
     // client is expected to have fields: firmName, clientTypeCode, city, id
     final name = (client.firmName ?? 'Unknown').toString();
     final type = (client.clientTypeCode ?? 'Other').toString();
@@ -664,12 +664,66 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                                           if (details.locations != null &&
                                               details.locations!.isNotEmpty) ...[
                                             const SizedBox(height: 8),
-                                            const Text(
-                                              'Locations',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w700,
-                                              ),
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                const Text(
+                                                  'Locations',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w700,
+                                                  ),
+                                                ),
+                                                OutlinedButton.icon(
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) => MultiBlocProvider(
+                                                          providers: [
+                                                            BlocProvider(
+                                                              create: (context) => PostClientAddLocationBloc(),
+                                                            ),
+                                                            BlocProvider(
+                                                              create: (context) => PostClientAddContactBloc(),
+                                                            ),
+                                                          ],
+                                                          child: AddLocationScreen(
+                                                            clientId: clientId,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ).then((refresh) {
+                                                      if (refresh == true) {
+                                                        // Reload client details
+                                                        context.read<GetClientDetailsBloc>().add(
+                                                          FetchGetClientDetails(
+                                                            clientId: clientId,
+                                                            showLoader: false,
+                                                          ),
+                                                        );
+                                                      }
+                                                    });
+                                                  },
+                                                  icon: const Icon(Icons.add_location_outlined, size: 16),
+                                                  label: const Text('Add Location', style: TextStyle(fontSize: 12)),
+                                                  style: OutlinedButton.styleFrom(
+                                                    foregroundColor: SessionManager.getUserRole() == "superadmin"
+                                                        ? AppColors.superAdminPrimary
+                                                        : SessionManager.getUserRole() == "admin"
+                                                        ? AppColors.adminPrimary
+                                                        : AppColors.primaryTealDark,
+                                                    side: BorderSide(
+                                                      color: SessionManager.getUserRole() == "superadmin"
+                                                          ? AppColors.superAdminPrimary
+                                                          : SessionManager.getUserRole() == "admin"
+                                                          ? AppColors.adminPrimary
+                                                          : AppColors.primaryTealDark,
+                                                    ),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                             const SizedBox(height: 12),
 
@@ -696,9 +750,50 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
 
                                                     if (loc.contacts?.isNotEmpty == true) ...[
                                                       const SizedBox(height: 12),
-                                                      const Text(
-                                                        'Contacts',
-                                                        style: TextStyle(fontWeight: FontWeight.w600),
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          const Text(
+                                                            'Contacts',
+                                                            style: TextStyle(fontWeight: FontWeight.w600),
+                                                          ),
+                                                          TextButton.icon(
+                                                            onPressed: () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (context) => BlocProvider(
+                                                                    create: (context) => PostClientAddContactBloc(),
+                                                                    child: AddContactScreen(
+                                                                      clientId: clientId,
+                                                                      locationId: loc.id ?? '',
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ).then((refresh) {
+                                                                if (refresh == true) {
+                                                                  // Reload client details
+                                                                  context.read<GetClientDetailsBloc>().add(
+                                                                    FetchGetClientDetails(
+                                                                      clientId: clientId,
+                                                                      showLoader: false,
+                                                                    ),
+                                                                  );
+                                                                }
+                                                              });
+                                                            },
+                                                            icon: const Icon(Icons.add, size: 14),
+                                                            label: const Text('Add', style: TextStyle(fontSize: 11)),
+                                                            style: TextButton.styleFrom(
+                                                              foregroundColor: SessionManager.getUserRole() == "superadmin"
+                                                                  ? AppColors.superAdminPrimary
+                                                                  : SessionManager.getUserRole() == "admin"
+                                                                  ? AppColors.adminPrimary
+                                                                  : AppColors.primaryTealDark,
+                                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                            ),
+                                                          ),
+                                                        ],
                                                       ),
                                                       ...loc.contacts!.map(
                                                             (c) => ListTile(
@@ -715,6 +810,62 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                                                               _callClient(c.phone ?? '');
                                                             },
                                                           ),
+                                                        ),
+                                                      ),
+                                                    ] else ...[
+                                                      const SizedBox(height: 12),
+                                                      Row(
+                                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                        children: [
+                                                          const Text(
+                                                            'Contacts',
+                                                            style: TextStyle(fontWeight: FontWeight.w600),
+                                                          ),
+                                                          TextButton.icon(
+                                                            onPressed: () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (context) => BlocProvider(
+                                                                    create: (context) => PostClientAddContactBloc(),
+                                                                    child: AddContactScreen(
+                                                                      clientId: clientId,
+                                                                      locationId: loc.id ?? '',
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ).then((refresh) {
+                                                                if (refresh == true) {
+                                                                  // Reload client details
+                                                                  context.read<GetClientDetailsBloc>().add(
+                                                                    FetchGetClientDetails(
+                                                                      clientId: clientId,
+                                                                      showLoader: false,
+                                                                    ),
+                                                                  );
+                                                                }
+                                                              });
+                                                            },
+                                                            icon: const Icon(Icons.add, size: 14),
+                                                            label: const Text('Add Contact', style: TextStyle(fontSize: 11)),
+                                                            style: TextButton.styleFrom(
+                                                              foregroundColor: SessionManager.getUserRole() == "superadmin"
+                                                                  ? AppColors.superAdminPrimary
+                                                                  : SessionManager.getUserRole() == "admin"
+                                                                  ? AppColors.adminPrimary
+                                                                  : AppColors.primaryTealDark,
+                                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      const SizedBox(height: 8),
+                                                      Text(
+                                                        'No contacts added yet',
+                                                        style: TextStyle(
+                                                          color: Colors.grey.shade600,
+                                                          fontSize: 13,
+                                                          fontStyle: FontStyle.italic,
                                                         ),
                                                       ),
                                                     ],
@@ -1133,14 +1284,14 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
   }
 
   // Original _buildClientCard method to render local sample items (fallback UI)
-  Widget _buildClientCard(Map<String, dynamic> client, int index) {
-    final name = client['name'] ?? 'N/A';
-    final type = client['type'] ?? 'Other';
-    final location = client['location'] ?? 'Unknown';
-    final ownerPhone = client['ownerPhone'] ?? '';
-    final ownerName = client['ownerName'] ?? 'N/A';
-    final gstNumber = client['gstNumber'] ?? '';
-    final email = client['email'] ?? '';
+  Widget _buildClientCard(Data client, int index) {
+    final name = client.firmName ?? 'N/A';
+    final type = client.clientTypeCode ?? 'Other';
+    final location = client.city?? 'Unknown';
+    // final ownerPhone = client['ownerPhone'] ?? '';
+    // final ownerName = client['ownerName'] ?? 'N/A';
+    // final gstNumber = client['gstNumber'] ?? '';
+    // final email = client['email'] ?? '';
 
     Color typeColor;
     switch (type) {
@@ -1202,22 +1353,22 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         const SizedBox(width: 12),
                         Text(location, style: const TextStyle(color: Colors.grey)),
                       ]),
-                      const SizedBox(height: 12),
-                      Text('Owner: $ownerName'),
-                      Text('Phone: $ownerPhone'),
-                      if (email.isNotEmpty) Text('Email: $email'),
-                      if (gstNumber.isNotEmpty) Text('GST: $gstNumber'),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryTeal,
-                          ),
-                          child: const Text('Close'),
-                        ),
-                      ),
+                      // const SizedBox(height: 12),
+                      // Text('Owner: $ownerName'),
+                      // Text('Phone: $ownerPhone'),
+                      // if (email.isNotEmpty) Text('Email: $email'),
+                      // if (gstNumber.isNotEmpty) Text('GST: $gstNumber'),
+                      // const SizedBox(height: 12),
+                      // Align(
+                      //   alignment: Alignment.centerRight,
+                      //   child: ElevatedButton(
+                      //     onPressed: () => Navigator.pop(context),
+                      //     style: ElevatedButton.styleFrom(
+                      //       backgroundColor: AppColors.primaryTeal,
+                      //     ),
+                      //     child: const Text('Close'),
+                      //   ),
+                      // ),
                     ],
                   ),
                 );

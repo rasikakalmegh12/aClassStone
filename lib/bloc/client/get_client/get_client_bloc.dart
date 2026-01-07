@@ -14,7 +14,7 @@ class GetClientListBloc extends Bloc<GetClientListEvent, GetClientListState> {
       emit(GetClientListLoading(showLoader: event.showLoader));
 
       try {
-        final response = await ApiIntegration.getClientList();
+        final response = await ApiIntegration.getClientList(event.search, event.clientTypeCode);
 
         if (response.status == true) {
           emit(GetClientListLoaded(response: response));

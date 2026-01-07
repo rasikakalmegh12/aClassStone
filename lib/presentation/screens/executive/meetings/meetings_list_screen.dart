@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -71,10 +72,11 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const NewMomScreen()),
-          );
+          context.pushNamed("momScreen");
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const NewMomScreen()),
+          // );
         },
         backgroundColor: AppColors.primaryTeal,
         child: const Icon(Icons.add, color: AppColors.white),

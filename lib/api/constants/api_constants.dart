@@ -89,6 +89,17 @@ class ApiConstants {
   static const String postClients = "${baseUrl}marketing/clients";
   static const String getClientsDetails = "${baseUrl}marketing/clients";
   static const String getClientsList = "${baseUrl}marketing/clients";
+  static const String clientAddContact = "${baseUrl}marketing/clients";
+  static const String clientAddLocation = "${baseUrl}marketing/clients";
+
+
+
+  // MOMs Apis
+
+  static const String postMomEntry = "${baseUrl}marketing/moms";
+  static const String getMomDetails = "${baseUrl}marketing/moms";
+  static const String getMomList = "${baseUrl}marketing/moms";
+  static const String postMomImage = "${baseUrl}marketing/moms";
 
 
 

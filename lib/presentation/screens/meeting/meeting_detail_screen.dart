@@ -29,9 +29,9 @@ class MeetingDetailScreen extends StatelessWidget {
               color: Colors.grey,
             ),
             const SizedBox(height: 16),
-            Text(
+            const Text(
               'Meeting Details',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),

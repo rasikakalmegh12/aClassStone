@@ -2,10 +2,11 @@
 
 abstract class GetClientListEvent {}
 class FetchGetClientList extends GetClientListEvent {
-
+  final String? search;
+  final String? clientTypeCode;
   final bool showLoader; // new: whether the UI should show a full-page loader
 
-  FetchGetClientList({this.showLoader = false});
+  FetchGetClientList({this.showLoader = false, this.search, this.clientTypeCode});
 }
 
 

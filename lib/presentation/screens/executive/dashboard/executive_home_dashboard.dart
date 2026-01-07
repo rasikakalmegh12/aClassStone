@@ -887,10 +887,11 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   label: 'Log MOM',
                   icon: Icons.assignment_outlined,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MeetingsListScreen()),
-                    );
+                    context.pushNamed("momDetailsScreen");
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(builder: (context) => const MeetingsListScreen()),
+                    // );
                   },
                 ),
               ),
