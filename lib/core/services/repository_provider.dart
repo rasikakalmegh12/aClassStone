@@ -12,6 +12,7 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import '../../bloc/mom/mom_bloc.dart';
 import 'connectivity_service.dart';
 import 'sync_service.dart';
 
@@ -53,6 +54,9 @@ class AppBlocProvider {
   static late PostClientAddBloc _postClientAddBloc;
   static late PostClientAddLocationBloc _postClientAddLocationBloc;
   static late PostClientAddContactBloc _postClientAddContactBloc;
+  static late PostMomEntryBloc _postMomEntryBloc;
+  static late GetMomListBloc _getMomListBloc;
+  static late GetMomDetailsBloc _getMomDetailsBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -125,9 +129,13 @@ class AppBlocProvider {
     _attendanceTrackingMonthlyBloc = AttendanceTrackingMonthlyBloc();
     _postClientAddLocationBloc=PostClientAddLocationBloc();
     _postClientAddContactBloc=PostClientAddContactBloc();
-
+    _postMomEntryBloc=PostMomEntryBloc();
     _getClientDetailsBloc = GetClientDetailsBloc();
     _getClientListBloc=GetClientListBloc();
+    _getMomListBloc=GetMomListBloc();
+    _getMomDetailsBloc=GetMomDetailsBloc();
+
+
   }
 
   /// ✅ ADD THIS
@@ -176,6 +184,10 @@ class AppBlocProvider {
   static PostClientAddBloc get postClientAddBloc => _postClientAddBloc;
   static PostClientAddLocationBloc get postClientAddLocationBloc => _postClientAddLocationBloc;
   static PostClientAddContactBloc get postClientAddContactBloc => _postClientAddContactBloc;
+  static PostMomEntryBloc get postMomEntryBloc => _postMomEntryBloc;
+  static GetMomListBloc get getMomListBloc => _getMomListBloc;
+  static GetMomDetailsBloc get getMomDetailsBloc => _getMomDetailsBloc;
+
 
   // Service getters for direct access
   static ConnectivityService get connectivityService => _connectivityService;
@@ -201,6 +213,11 @@ class AppBlocProvider {
     _postClientAddBloc.close();
     _postClientAddLocationBloc.close();
     _postClientAddContactBloc.close();
+    _postMomEntryBloc.close();
+    _getMomListBloc.close();
+    _getMomDetailsBloc.close();
+    _getClientDetailsBloc.close();
+
 
     // Dispose catalogue BLoCs
     _getProductTypeBloc.close();
@@ -223,4 +240,5 @@ class AppBlocProvider {
     _connectivityService.dispose();
     _syncService.dispose();
   }
+
 }

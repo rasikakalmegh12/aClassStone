@@ -7,6 +7,7 @@ import '../../../../bloc/client/post_client/post_client_bloc.dart';
 import '../../../../bloc/client/post_client/post_client_event.dart';
 import '../../../../bloc/client/post_client/post_client_state.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/session/session_manager.dart';
 import '../../../widgets/app_bar.dart';
 import '../../../widgets/custom_loader.dart';
 
@@ -199,7 +200,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
         // _buildAppBar(),
         PreferredSize(
             preferredSize: const Size.fromHeight(56),
-            child: CoolAppCard(title: widget.existingClient != null ? 'Edit Client' : 'Add Client',)
+            child: CoolAppCard(title: widget.existingClient != null ? 'Edit Client' : 'Add Client',backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+            AppColors.adminPrimaryDark :AppColors.primaryTealDark,)
         ),
         body: Form(
           key: _formKey,
@@ -756,7 +758,8 @@ class _AddClientScreenState extends State<AddClientScreen> {
           child: ElevatedButton(
             onPressed: _saveClient,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryTeal,
+              backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+              AppColors.adminPrimaryDark :AppColors.primaryTealDark,
               foregroundColor: AppColors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(

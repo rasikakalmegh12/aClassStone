@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
@@ -95,7 +96,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
         onPressed: () => Navigator.pop(context),
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
       ),
-      title: Text(
+      title: const Text(
         'Work Plans',
         style: TextStyle(
           fontSize: 18,
@@ -106,13 +107,15 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
       actions: [
         TextButton.icon(
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CreateWorkPlanScreen()),
-            );
+            context.pushNamed("createWorkPlan");
+
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(builder: (context) => const CreateWorkPlanScreen()),
+            // );
           },
           icon: const Icon(Icons.add, color: AppColors.primaryTeal, size: 20),
-          label: Text(
+          label: const Text(
             'New',
             style: TextStyle(
               fontSize: 14,
@@ -209,7 +212,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   workPlan['type'] == 'range'
                       ? '${workPlan['dateRange']} · ${workPlan['city']}'
                       : '${workPlan['date']} · ${workPlan['city']}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -222,7 +225,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
           if (workPlan['type'] == 'range')
             Text(
               'Clients: ${workPlan['clientCount']}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
               ),
@@ -233,7 +236,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
               children: [
                 Text(
                   'Clients: ${workPlan['clients'].join(', ')}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
@@ -242,7 +245,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   const SizedBox(height: 4),
                   Text(
                     '+${workPlan['additionalCount']} more',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -253,7 +256,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Text(
+              const Text(
                 'Status: ',
                 style: TextStyle(
                   fontSize: 13,
@@ -290,7 +293,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                     ),
                     minimumSize: const Size(0, 0),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
@@ -300,8 +303,8 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_forward_ios, size: 10),
+                      SizedBox(width: 4),
+                      Icon(Icons.arrow_forward_ios, size: 10),
                     ],
                   ),
                 ),
@@ -328,7 +331,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
             children: [
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'Work Plan Details',
                       style: TextStyle(
@@ -369,7 +372,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                           foregroundColor: AppColors.primaryTeal,
                           side: const BorderSide(color: AppColors.primaryTeal),
                         ),
-                        child: Text(
+                        child: const Text(
                           'Edit Plan',
                           style: TextStyle(fontWeight: FontWeight.w500),
                         ),
@@ -417,7 +420,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
             width: 80,
             child: Text(
               '$label:',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,
@@ -427,7 +430,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
           Expanded(
             child: Text(
               value,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textPrimary,
               ),

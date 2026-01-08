@@ -83,6 +83,8 @@ class Items {
   String? meetingType;
   String? meetingAt;
   String? meetingAtDisplay;
+  bool? followUpRequired;
+  bool? isConvertedToLead;
   String? shortNotes;
 
   Items(
@@ -95,6 +97,8 @@ class Items {
         this.meetingType,
         this.meetingAt,
         this.meetingAtDisplay,
+        this.followUpRequired,
+        this.isConvertedToLead,
         this.shortNotes});
 
   Items.fromJson(Map<String, dynamic> json) {
@@ -107,6 +111,8 @@ class Items {
     meetingType = json['meetingType'];
     meetingAt = json['meetingAt'];
     meetingAtDisplay = json['meetingAtDisplay'];
+    followUpRequired = json['followUpRequired'];
+    isConvertedToLead = json['isConvertedToLead'];
     shortNotes = json['shortNotes'];
   }
 
@@ -121,8 +127,9 @@ class Items {
     data['meetingType'] = this.meetingType;
     data['meetingAt'] = this.meetingAt;
     data['meetingAtDisplay'] = this.meetingAtDisplay;
+    data['followUpRequired'] = this.followUpRequired;
+    data['isConvertedToLead'] = this.isConvertedToLead;
     data['shortNotes'] = this.shortNotes;
     return data;
   }
 }
-

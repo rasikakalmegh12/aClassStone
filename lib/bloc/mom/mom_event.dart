@@ -1,6 +1,8 @@
 // ========================= Mom Image Upload Events =========================
 import 'dart:io';
 
+import '../../api/models/request/PostMomEntryRequestBody.dart';
+
 abstract class MomImageUploadEvent {}
 
 class UploadMomImage extends MomImageUploadEvent {
@@ -15,6 +17,49 @@ class UploadMomImage extends MomImageUploadEvent {
     required this.imageFile,
     required this.caption,
     this.sortOrder = 0,
+    this.showLoader = false,
+  });
+}
+
+
+// ========================= Post MOM Entry Events =========================
+abstract class PostMomEntryEvent {}
+
+class SubmitMomEntry extends PostMomEntryEvent {
+  final PostMomEntryRequestBody requestBody;
+  final bool showLoader;
+
+  SubmitMomEntry({
+    required this.requestBody,
+    this.showLoader = false,
+  });
+}
+
+
+// ========================= Get MOM List Events =========================
+abstract class GetMomListEvent {}
+
+class FetchMomList extends GetMomListEvent {
+  final bool showLoader;
+  final String? search;
+  final bool? isConvertedToLead;
+
+  FetchMomList({
+    this.showLoader = false,
+    this.search,
+    this.isConvertedToLead,
+  });
+}
+
+// ========================= Get MOM Details Events =========================
+abstract class GetMomDetailsEvent {}
+
+class FetchMomDetails extends GetMomDetailsEvent {
+  final String momId;
+  final bool showLoader;
+
+  FetchMomDetails({
+    required this.momId,
     this.showLoader = false,
   });
 }

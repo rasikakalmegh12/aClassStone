@@ -1,13 +1,21 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../../../api/models/request/PostMomEntryRequestBody.dart';
 import '../../../../bloc/client/get_client/get_client_bloc.dart';
 import '../../../../bloc/client/get_client/get_client_event.dart';
 import '../../../../bloc/client/get_client/get_client_state.dart';
+import '../../../../bloc/mom/mom_bloc.dart';
+import '../../../../bloc/mom/mom_event.dart';
+import '../../../../bloc/mom/mom_state.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../widgets/app_bar.dart';
 import '../../../widgets/autocomplete_container.dart';
 import '../../../widgets/dropdown_widget.dart';
 
@@ -65,21 +73,39 @@ class _NewMomScreenState extends State<NewMomScreen> {
   String currentLocation = 'Fetching location...';
   double? currentLat;
   double? currentLng;
+  final List<File> _capturedImages = [];
+  bool _isUploadingImages = false;
 
-  // Checklist notes
+
+  final List<Map<String, String>> meetingTypes = [
+    {'display': 'First Introduction', 'value': 'FIRST_INTRO'},
+    {'display': 'Follow-up', 'value': 'FOLLOW_UP'},
+    {'display': 'Negotiation', 'value': 'NEGOTIATION'},
+    {'display': 'Product Demo', 'value': 'PRODUCT_DEMO'},
+    {'display': 'Sample Display', 'value': 'SAMPLE_DISPLAY'},
+    {'display': 'Site Visit', 'value': 'SITE_VISIT'},
+    {'display': 'Project Discussion', 'value': 'PROJECT_DISCUSSION'},
+  ];
+
+// Replace checklistNotes map
   Map<String, TextEditingController> checklistNotes = {
-    'discussedProduct': TextEditingController(),
-    'priceInquiry': TextEditingController(),
-    'sampleRequested': TextEditingController(),
-    'followUpRequired': TextEditingController(),
-  };
-  Map<String, bool> showChecklistNotes = {
-    'discussedProduct': false,
-    'priceInquiry': false,
-    'sampleRequested': false,
-    'followUpRequired': false,
+    'INTRO_OBJECTIVE': TextEditingController(),
+    'PRODUCT': TextEditingController(),
+    'PRICE': TextEditingController(),
+    'DEALERSHIP': TextEditingController(),
+    'COMMISSION': TextEditingController(),
+    'PAYMENT_TERMS': TextEditingController(),
+    'RELATIONS_REFERRALS': TextEditingController(),
   };
 
+
+  bool introObjective = false;
+  bool product = false;
+  bool price = false;
+  bool dealership = false;
+  bool commission = false;
+  bool paymentTerms = false;
+  bool relationsReferrals = false;
   final List<String> clients = [
     'A Class Stone',
     'Patwari Marble',
@@ -93,13 +119,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
     'Priya M.',
   ];
 
-  final List<String> meetingTypes = [
-    'First Introduction',
-    'Follow-up',
-    'Negotiation',
-    'Product Demo',
-    'Site Visit',
-  ];
+
 
   @override
   void initState() {
@@ -144,9 +164,43 @@ class _NewMomScreenState extends State<NewMomScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
-      appBar: _buildAppBar(),
+    return BlocConsumer<PostMomEntryBloc, PostMomEntryState>(
+        listener: (context, state) async {
+          if (state is PostMomEntryLoading && state.showLoader) {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder: (_) => const Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (state is PostMomEntrySuccess) {
+            final momId = state.response.data!.momId;
+
+            if (_capturedImages.isNotEmpty) {
+              await _uploadMomImages(state.response.data!.id!);
+            }
+
+            Navigator.of(context, rootNavigator: true).pop(); // close loader
+            Navigator.pop(context, true); // SUCCESS POP
+          }
+
+          if (state is PostMomEntryError) {
+            Navigator.of(context, rootNavigator: true).pop();
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(state.message)));
+          }
+        },
+        builder: (context, state) {
+          return Scaffold(
+
+          backgroundColor: AppColors.backgroundLight,
+      appBar:
+      PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: CoolAppCard(title: "New MOM Entry",)
+      ),
+      // _buildAppBar(),
       body: Form(
         key: _formKey,
         child: Column(
@@ -297,7 +351,9 @@ class _NewMomScreenState extends State<NewMomScreen> {
                     _buildSection(
                       'ATTACHMENTS & FOLLOW-UP',
                       [
-                        _buildPhotoSection(),
+                        // _buildAddPhotoTile(),
+                        _buildCapturedImages(),
+                        // _buildPhotoSection(),
                         const SizedBox(height: 16),
                         _buildFollowUpSection(),
                       ],
@@ -312,7 +368,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
         ),
       ),
     );
-  }
+  });}
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
@@ -680,7 +736,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
           children: [
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textPrimary,
@@ -727,7 +783,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        const Row(
           children: [
             Text(
               'Meeting type',
@@ -737,15 +793,15 @@ class _NewMomScreenState extends State<NewMomScreen> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(width: 4),
-            const Text('*', style: TextStyle(color: AppColors.error)),
+            SizedBox(width: 4),
+            Text('*', style: TextStyle(color: AppColors.error)),
           ],
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
           value: selectedMeetingType,
           decoration: InputDecoration(
-            hintText: 'First Introduction',
+            hintText: 'Select meeting type',
             suffixIcon: const Icon(Icons.keyboard_arrow_down),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -762,8 +818,8 @@ class _NewMomScreenState extends State<NewMomScreen> {
           ),
           items: meetingTypes.map((type) {
             return DropdownMenuItem(
-              value: type,
-              child: Text(type),
+              value: type['value'],
+              child: Text(type['display']!),
             );
           }).toList(),
           onChanged: (value) {
@@ -782,11 +838,12 @@ class _NewMomScreenState extends State<NewMomScreen> {
     );
   }
 
+
   Widget _buildChecklist() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Checklist',
           style: TextStyle(
             fontSize: 14,
@@ -797,55 +854,92 @@ class _NewMomScreenState extends State<NewMomScreen> {
         const SizedBox(height: 8),
 
         _buildCheckboxItemWithNote(
-          'Discussed product',
-          'discussedProduct',
-          discussedProduct,
+          'Introduction & Objective',
+          'INTRO_OBJECTIVE',
+          introObjective,
               (value) {
             setState(() {
-              discussedProduct = value!;
-              if (!value) checklistNotes['discussedProduct']?.clear();
+              introObjective = value!;
+              if (!value) checklistNotes['INTRO_OBJECTIVE']?.clear();
             });
           },
         ),
 
         _buildCheckboxItemWithNote(
-          'Price inquiry',
-          'priceInquiry',
-          priceInquiry,
+          'Product Discussion',
+          'PRODUCT',
+          product,
               (value) {
             setState(() {
-              priceInquiry = value!;
-              if (!value) checklistNotes['priceInquiry']?.clear();
+              product = value!;
+              if (!value) checklistNotes['PRODUCT']?.clear();
             });
           },
         ),
 
         _buildCheckboxItemWithNote(
-          'Sample requested',
-          'sampleRequested',
-          sampleRequested,
+          'Price Inquiry',
+          'PRICE',
+          price,
               (value) {
             setState(() {
-              sampleRequested = value!;
-              if (!value) checklistNotes['sampleRequested']?.clear();
+              price = value!;
+              if (!value) checklistNotes['PRICE']?.clear();
             });
           },
         ),
 
         _buildCheckboxItemWithNote(
-          'Follow-up required',
-          'followUpRequired',
-          followUpRequired,
+          'Dealership',
+          'DEALERSHIP',
+          dealership,
               (value) {
             setState(() {
-              followUpRequired = value!;
-              if (!value) checklistNotes['followUpRequired']?.clear();
+              dealership = value!;
+              if (!value) checklistNotes['DEALERSHIP']?.clear();
+            });
+          },
+        ),
+
+        _buildCheckboxItemWithNote(
+          'Commission',
+          'COMMISSION',
+          commission,
+              (value) {
+            setState(() {
+              commission = value!;
+              if (!value) checklistNotes['COMMISSION']?.clear();
+            });
+          },
+        ),
+
+        _buildCheckboxItemWithNote(
+          'Payment Terms',
+          'PAYMENT_TERMS',
+          paymentTerms,
+              (value) {
+            setState(() {
+              paymentTerms = value!;
+              if (!value) checklistNotes['PAYMENT_TERMS']?.clear();
+            });
+          },
+        ),
+
+        _buildCheckboxItemWithNote(
+          'Relations & Referrals',
+          'RELATIONS_REFERRALS',
+          relationsReferrals,
+              (value) {
+            setState(() {
+              relationsReferrals = value!;
+              if (!value) checklistNotes['RELATIONS_REFERRALS']?.clear();
             });
           },
         ),
       ],
     );
   }
+
 
   Widget _buildCheckboxItemWithNote(
       String title,
@@ -866,7 +960,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textPrimary,
                 ),
@@ -911,7 +1005,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Notes',
           style: TextStyle(
             fontSize: 14,
@@ -947,7 +1041,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Photos (max 3)',
           style: TextStyle(
             fontSize: 14,
@@ -1015,7 +1109,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Follow-up required',
           style: TextStyle(
             fontSize: 14,
@@ -1114,29 +1208,29 @@ class _NewMomScreenState extends State<NewMomScreen> {
       child: SafeArea(
         child: Row(
           children: [
+            // Expanded(
+            //   child: OutlinedButton(
+            //     onPressed: _saveOffline,
+            //     style: OutlinedButton.styleFrom(
+            //       foregroundColor: AppColors.textSecondary,
+            //       side: const BorderSide(color: AppColors.grey300),
+            //       padding: const EdgeInsets.symmetric(vertical: 12),
+            //       shape: RoundedRectangleBorder(
+            //         borderRadius: BorderRadius.circular(8),
+            //       ),
+            //     ),
+            //     child: const Text(
+            //       'Save Offline',
+            //       style: TextStyle(
+            //         fontSize: 14,
+            //         fontWeight: FontWeight.w500,
+            //       ),
+            //     ),
+            //   ),
+            // ),
+            // const SizedBox(width: 12),
             Expanded(
-              child: OutlinedButton(
-                onPressed: _saveOffline,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textSecondary,
-                  side: const BorderSide(color: AppColors.grey300),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  'Save Offline',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 2,
+              // flex: 2,
               child: ElevatedButton(
                 onPressed: _submitMom,
                 style: ElevatedButton.styleFrom(
@@ -1161,6 +1255,141 @@ class _NewMomScreenState extends State<NewMomScreen> {
         ),
       ),
     );
+  }
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _captureImage() async {
+    if (_capturedImages.length >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Maximum 3 images allowed'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final XFile? image = await _picker.pickImage(
+      source: ImageSource.camera,
+      imageQuality: 70,
+    );
+
+    if (image != null) {
+      setState(() {
+        _capturedImages.add(File(image.path));
+      });
+    }
+  }
+
+
+  Widget _buildAddPhotoTile() {
+    return GestureDetector(
+      onTap: _captureImage,
+      child: Container(
+        height: 80,
+        width: 80,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.grey300),
+          color: AppColors.grey50,
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.camera_alt, color: AppColors.primaryTeal),
+            SizedBox(height: 6),
+            Text(
+              'Add Photo',
+              style: TextStyle(
+                fontSize: 11,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCapturedImages() {
+    return SizedBox(
+      height: 90,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _capturedImages.length + 1,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, index) {
+          /// 📸 First item = Camera tile (only show if less than 3 images)
+          if (index == 0) {
+            if (_capturedImages.length >= 3) {
+              return const SizedBox.shrink(); // Hide camera tile if 3 images already captured
+            }
+            return _buildAddPhotoTile();
+          }
+
+          final image = _capturedImages[index - 1];
+
+          return Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(
+                  image,
+                  width: 80,
+                  height: 80,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 4,
+                right: 4,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _capturedImages.removeAt(index - 1);
+                    });
+                  },
+                  child: const CircleAvatar(
+                    radius: 12,
+                    backgroundColor: Colors.black54,
+                    child: Icon(Icons.close, size: 14, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+
+  Future<void> _uploadMomImages(String momId) async {
+    final imageBloc = context.read<MomImageUploadBloc>();
+
+    for (int i = 0; i < _capturedImages.length; i++) {
+      final completer = Completer<void>();
+      late final StreamSubscription sub;
+
+      sub = imageBloc.stream.listen((state) {
+        if (state is MomImageUploadSuccess || state is MomImageUploadError) {
+          completer.complete();
+          sub.cancel();
+        }
+      });
+
+      imageBloc.add(
+        UploadMomImage(
+          momId: momId,
+          imageFile: _capturedImages[i],
+          caption: 'Image ${i + 1}',
+          sortOrder: i,
+          showLoader: false,
+        ),
+      );
+
+      await completer.future;
+    }
   }
 
   void _addPhoto() async {
@@ -1189,6 +1418,68 @@ class _NewMomScreenState extends State<NewMomScreen> {
   }
 
   void _submitMom() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final requestBody = PostMomEntryRequestBody(
+      momId: "MOM-${DateTime.now().year}${DateTime.now().millisecondsSinceEpoch}",
+
+      clientId: selectedClientId!,
+      clientContactId: selectedContactId!,
+      meetingType: selectedMeetingType!,
+      gpsLat: currentLat,
+      gpsLng: currentLng,
+      gpsAccuracyM: 10,
+      detailedNotes: _notesController.text,
+      followUpRequired: needsFollowUp,
+      checklistItems: [
+        if (introObjective)
+          ChecklistItems(
+            itemKey: 'INTRO_OBJECTIVE',
+            notes: checklistNotes['INTRO_OBJECTIVE']!.text,
+          ),
+        if (product)
+          ChecklistItems(
+            itemKey: 'PRODUCT',
+            notes: checklistNotes['PRODUCT']!.text,
+          ),
+        if (price)
+          ChecklistItems(
+            itemKey: 'PRICE',
+            notes: checklistNotes['PRICE']!.text,
+          ),
+        if (dealership)
+          ChecklistItems(
+            itemKey: 'DEALERSHIP',
+            notes: checklistNotes['DEALERSHIP']!.text,
+          ),
+        if (commission)
+          ChecklistItems(
+            itemKey: 'COMMISSION',
+            notes: checklistNotes['COMMISSION']!.text,
+          ),
+        if (paymentTerms)
+          ChecklistItems(
+            itemKey: 'PAYMENT_TERMS',
+            notes: checklistNotes['PAYMENT_TERMS']!.text,
+          ),
+        if (relationsReferrals)
+          ChecklistItems(
+            itemKey: 'RELATIONS_REFERRALS',
+            notes: checklistNotes['RELATIONS_REFERRALS']!.text,
+          ),
+      ],
+    );
+
+    context.read<PostMomEntryBloc>().add(
+      SubmitMomEntry(
+        requestBody: requestBody,
+        showLoader: true,
+      ),
+    );
+  }
+
+
+  void _submitMom1() {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

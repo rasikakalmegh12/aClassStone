@@ -40,8 +40,8 @@ class Data {
   String? meetingType;
   String? meetingAt;
   String? meetingAtDisplay;
-  int? gpsLat;
-  int? gpsLng;
+  double? gpsLat;
+  double? gpsLng;
   int? gpsAccuracyM;
   String? detailedNotes;
   List<ChecklistItems>? checklistItems;

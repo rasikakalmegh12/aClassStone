@@ -9,6 +9,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../widgets/app_bar.dart';
 import 'add_client_screen.dart';
 import 'add_location_screen.dart';
 
@@ -21,65 +22,55 @@ class ClientsListScreen extends StatefulWidget {
 
 class _ClientsListScreenState extends State<ClientsListScreen> {
   String selectedFilter = 'All';
-  final List<String> filters = ['All', 'Builder', 'Architect', 'Interior', 'Other'];
-  final List<Data> clients =[];
-  // final List<Map<String, dynamic>> clients = [
-  //   {
-  //     'name': 'A Class Stone',
-  //     'type': 'Builder',
-  //     'location': 'Jaipur, Rajasthan',
-  //     'ownerPhone': '+91-98xxx xxxxx',
-  //     'ownerName': 'Jitendra Singh',
-  //     'gstNumber': 'GST123456789',
-  //     'email': 'contact@aclassstone.com',
-  //   },
-  //   {
-  //     'name': 'Patwari Marble',
-  //     'type': 'Builder',
-  //     'location': 'Udaipur, Rajasthan',
-  //     'ownerPhone': '+91-99xxx xxxxx',
-  //     'ownerName': 'Rajkumar Patwari',
-  //     'gstNumber': 'GST987654321',
-  //     'email': 'info@patwarimarble.com',
-  //   },
-  //   {
-  //     'name': 'Sangam Granites',
-  //     'type': 'Architect',
-  //     'location': 'Jodhpur, Rajasthan',
-  //     'ownerPhone': '+91-97xxx xxxxx',
-  //     'ownerName': 'Priya Sharma',
-  //     'gstNumber': 'GST456789123',
-  //     'email': 'sangam@granites.co.in',
-  //   },
-  //   {
-  //     'name': 'Royal Interiors',
-  //     'type': 'Interior',
-  //     'location': 'Ajmer, Rajasthan',
-  //     'ownerPhone': '+91-96xxx xxxxx',
-  //     'ownerName': 'Vikram Rajput',
-  //     'gstNumber': 'GST789123456',
-  //     'email': 'royal@interiors.com',
-  //   },
-  //   {
-  //     'name': 'Desert Stones',
-  //     'type': 'Other',
-  //     'location': 'Bikaner, Rajasthan',
-  //     'ownerPhone': '+91-95xxx xxxxx',
-  //     'ownerName': 'Mahesh Kumar',
-  //     'gstNumber': '',
-  //     'email': '',
-  //   },
-  // ];
+  final List<Map<String, String>> filters = [
+    {'display': 'All', 'code': ''},
+    {'display': 'Builder', 'code': 'BUILDER'},
+    {'display': 'Architect', 'code': 'ARCHITECT'},
+    {'display': 'Interior Designer', 'code': 'INTERIOR_DESIGNER'},
+    {'display': 'Other', 'code': 'OTHER'},
+  ];
+
+  final TextEditingController _searchController = TextEditingController();
+  final List<Data> clients = [];
 
   List<Data> get filteredClients {
     if (selectedFilter == 'All') return clients;
     return clients.where((client) => client.clientTypeCode == selectedFilter).toList();
   }
-@override
+
+  @override
   void initState() {
-    // TODO: implement initState
     super.initState();
-    context.read<GetClientListBloc>().add(FetchGetClientList());
+    _searchController.addListener(() {
+      setState(() {}); // Rebuild to show/hide clear button
+    });
+    _loadClientList(showLoader: true);
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _loadClientList({bool showLoader = false}) {
+    // Get the client type code for the selected filter
+    String? clientTypeCode;
+    if (selectedFilter != 'All') {
+      final filterItem = filters.firstWhere(
+        (f) => f['display'] == selectedFilter,
+        orElse: () => {'display': 'All', 'code': ''},
+      );
+      clientTypeCode = filterItem['code']!.isEmpty ? null : filterItem['code'];
+    }
+
+    context.read<GetClientListBloc>().add(
+      FetchGetClientList(
+        showLoader: showLoader,
+        search: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
+        clientTypeCode: clientTypeCode,
+      ),
+    );
   }
 
 
@@ -88,7 +79,13 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
     return Scaffold(
 
       backgroundColor: AppColors.backgroundLight,
-      appBar: _buildAppBar(),
+      appBar:
+      PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: CoolAppCard(title: 'Clients',      backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+          AppColors.adminPrimaryDark :AppColors.primaryTealDark,)
+      ),
+      // _buildAppBar(),
       body: Column(
         children: [
           _buildSearchAndFilters(),
@@ -102,7 +99,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
         context.pushNamed("addClientScreen");
         },
         backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
-        AppColors.adminPrimary :AppColors.primaryTealDark,
+        AppColors.adminPrimaryDark :AppColors.primaryTealDark,
         child: const Icon(Icons.add, color: AppColors.white),
       ),
     );
@@ -143,16 +140,34 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.grey200),
             ),
-            child: const TextField(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                // Debounce search - trigger after user stops typing
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  if (_searchController.text == value) {
+                    _loadClientList(showLoader: false);
+                  }
+                });
+              },
               decoration: InputDecoration(
-                hintText: 'Search client',
-                hintStyle: TextStyle(
+                hintText: 'Search client name, contact, or location',
+                hintStyle: const TextStyle(
                   fontSize: 14,
                   color: AppColors.textLight,
                 ),
-                prefixIcon: Icon(Icons.search, color: AppColors.textLight),
+                prefixIcon: const Icon(Icons.search, color: AppColors.textLight),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: AppColors.textLight),
+                        onPressed: () {
+                          _searchController.clear();
+                          _loadClientList(showLoader: false);
+                        },
+                      )
+                    : null,
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -164,7 +179,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: filters.length,
               itemBuilder: (context, index) {
-                final filter = filters[index];
+                final filter = filters[index]['display']!;
                 final isSelected = filter == selectedFilter;
 
                 return Padding(
@@ -174,16 +189,28 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       setState(() {
                         selectedFilter = filter;
                       });
+                      // Trigger API call with new filter
+                      _loadClientList(showLoader: false);
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                       decoration: BoxDecoration(
-                        color: isSelected ? SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
-                        AppColors.adminPrimary :AppColors.primaryTealDark: AppColors.white,
+                        color: isSelected
+                            ? (SessionManager.getUserRole() == "superadmin"
+                                ? AppColors.superAdminPrimary
+                                : SessionManager.getUserRole() == "admin"
+                                    ? AppColors.adminPrimary
+                                    : AppColors.primaryTealDark)
+                            : AppColors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected ? SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
-                          AppColors.adminPrimary :AppColors.primaryTealDark : AppColors.grey300,
+                          color: isSelected
+                              ? (SessionManager.getUserRole() == "superadmin"
+                                  ? AppColors.superAdminPrimary
+                                  : SessionManager.getUserRole() == "admin"
+                                      ? AppColors.adminPrimary
+                                      : AppColors.primaryTealDark)
+                              : AppColors.grey300,
                         ),
                       ),
                       child: Text(
@@ -221,22 +248,41 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
           final items = state.response.data ?? [];
 
           if (items.isEmpty) {
-            // Fallback to sample data UI if API returned empty
+            // No clients found
             return RefreshIndicator(
               color: SessionManager.getUserRole() == "superadmin"
                   ? AppColors.superAdminPrimary
                   : AppColors.primaryTeal,
               onRefresh: () async {
-                context.read<GetClientListBloc>().add(FetchGetClientList(showLoader: false));
+                _loadClientList(showLoader: false);
               },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
-                children: filteredClients
-                    .asMap()
-                    .entries
-                    .map((e) => _buildClientCardFromData(e.value, e.key))
-                    .toList(),
+                children: const [
+                  Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.people_outline,
+                            size: 64,
+                            color: AppColors.grey300,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No clients found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -246,7 +292,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                 ? AppColors.superAdminPrimary
                 : AppColors.primaryTeal,
             onRefresh: () async {
-              context.read<GetClientListBloc>().add(FetchGetClientList(showLoader: false));
+              _loadClientList(showLoader: false);
             },
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
@@ -265,14 +311,31 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text('Error: ${state.message}'),
-                const SizedBox(height: 12),
+                const Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppColors.error,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${state.message}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 16),
                 ElevatedButton.icon(
-                  onPressed: () => context.read<GetClientListBloc>().add(FetchGetClientList(showLoader: true)),
+                  onPressed: () => _loadClientList(showLoader: true),
                   icon: const Icon(Icons.refresh),
                   label: const Text('Retry'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryTeal,
+                    backgroundColor: SessionManager.getUserRole() == "superadmin"
+                        ? AppColors.superAdminPrimary
+                        : SessionManager.getUserRole() == "admin"
+                            ? AppColors.adminPrimary
+                            : AppColors.primaryTealDark,
+                    foregroundColor: AppColors.white,
                   ),
                 ),
               ],
@@ -280,23 +343,9 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
           );
         }
 
-        // Initial / fallback - show local sample list with refresh
-        return RefreshIndicator(
-          color: SessionManager.getUserRole() == "superadmin"
-              ? AppColors.superAdminPrimary
-              : AppColors.primaryTeal,
-          onRefresh: () async {
-            context.read<GetClientListBloc>().add(FetchGetClientList(showLoader: false));
-          },
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            children: filteredClients
-                .asMap()
-                .entries
-                .map((e) => _buildClientCardFromData(e.value, e.key))
-                .toList(),
-          ),
+        // Initial state
+        return const Center(
+          child: CircularProgressIndicator(),
         );
       },
     );
@@ -331,7 +380,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -372,7 +421,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: typeColor.withOpacity(0.1),
+                        color: typeColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -556,16 +605,16 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
-                                              const SizedBox(height: 6),
-                                              if (details.clientTypeCode != null)
-                                                Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                      horizontal: 10, vertical: 4),
-                                                  decoration: BoxDecoration(
-                                                    color: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary.withOpacity(0.1):SessionManager.getUserRole() =="admin"?
-                                                    AppColors.adminPrimary.withOpacity(0.1) :AppColors.primaryTealDark.withOpacity(0.1),
-                                                    borderRadius: BorderRadius.circular(10),
-                                                  ),
+                              const SizedBox(height: 6),
+                              if (details.clientTypeCode != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary.withValues(alpha: 0.1):SessionManager.getUserRole() =="admin"?
+                                    AppColors.adminPrimary.withValues(alpha: 0.1) :AppColors.primaryTealDark.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
                                                   child: Text(
                                                     details.clientTypeCode!,
                                                     style: TextStyle(
@@ -1143,7 +1192,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1315,7 +1364,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.04),
+            color: AppColors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1345,7 +1394,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: typeColor.withOpacity(0.1),
+                            color: typeColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(type, style: TextStyle(color: typeColor, fontWeight: FontWeight.w600)),
@@ -1396,7 +1445,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: typeColor.withOpacity(0.1),
+                        color: typeColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(

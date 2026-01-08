@@ -8,6 +8,7 @@ import 'package:apclassstone/api/models/request/PostClientAddContactRequestBody.
 import 'package:apclassstone/api/models/request/PostClientAddLocationRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostClientAddRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostMinesEntryRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostMomEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
@@ -1835,7 +1836,7 @@ class ApiIntegration {
     if (clientTypeCode != null && clientTypeCode.isNotEmpty) {
       queryParams.add('clientTypeCode=$clientTypeCode');
     }
-    final queryString = queryParams.isNotEmpty ? '&${queryParams.join('&')}' : '';
+    final queryString = queryParams.isNotEmpty ? '?${queryParams.join('&')}' : '';
 
     try {
       // Check connectivity first
@@ -2118,16 +2119,33 @@ class ApiIntegration {
 
     //--------MOM -----------
 
-  static Future<GetMomResponseBody> getMomList() async {
+  static Future<GetMomResponseBody> getMomList({
+    String? search,
+    bool? isConvertedToLead,
+  }) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
+
+      // Build query parameters
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) {
+        queryParams['Search'] = search;
+      }
+      if (isConvertedToLead != null) {
+        queryParams['IsConvertedToLead'] = isConvertedToLead.toString();
+      }
+
+      // Create cache key with params
+      final cacheKey = queryParams.isEmpty
+          ? ApiConstants.getMomList
+          : '${ApiConstants.getMomList}?${Uri(queryParameters: queryParams).query}';
 
       // If offline, try to load from cache
       if (!hasConnection) {
         print('📍 No connectivity - Loading MOM List from local cache');
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse(ApiConstants.getMomList);
+            .getCachedResponse(cacheKey);
 
         if (cachedData?.responseData != null) {
           try {
@@ -2149,17 +2167,19 @@ class ApiIntegration {
         );
       }
 
-      // Online - fetch from API
-      final url = Uri.parse(ApiConstants.getMomList);
+      // Online - fetch from API with query params
+      final uri = Uri.parse(ApiConstants.getMomList).replace(
+        queryParameters: queryParams.isEmpty ? null : queryParams,
+      );
 
       if (kDebugMode) {
-        print('📤 Sending get MOM List request to: $url');
+        print('📤 Sending get MOM List request to: $uri');
         print('📤 Sending get MOM List header: ${ApiConstants.headerWithToken}');
       }
 
       final response = await ApiClient.send(() {
         return http.get(
-          url,
+          uri,
           headers: ApiConstants.headerWithToken(),
 
         ).timeout(_timeout);
@@ -2183,7 +2203,7 @@ class ApiIntegration {
           if (result.status == true && result.data != null) {
             await AppBlocProvider.cacheRepository.saveCachedResponse(
               _createCachedResponse(
-                ApiConstants.getMomList,
+                cacheKey,
                 result,
                 200,
               ),
@@ -3367,7 +3387,8 @@ class ApiIntegration {
     required File imageFile,
     required String? caption,
     int sortOrder = 0,
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse('${ApiConstants.postMomImage}/$momId/images');
 
@@ -3483,7 +3504,7 @@ class ApiIntegration {
   }
 
   static Future<PostMomEntryResponseBody> postMomEntry({
-    required PostSearchRequestBody requestBody,
+    required PostMomEntryRequestBody requestBody,
   })
   async {
     try {

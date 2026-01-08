@@ -3,6 +3,7 @@ import 'package:apclassstone/bloc/auth/auth_state.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
+import 'package:apclassstone/bloc/mom/mom_bloc.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:apclassstone/presentation/screens/attendance/attendance_tracking.dart';
 import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
@@ -25,6 +26,8 @@ import '../../presentation/screens/executive/clients/add_client_screen.dart';
 import '../../presentation/screens/executive/clients/clients_list_screen.dart';
 import '../../presentation/screens/executive/meetings/meetings_list_screen.dart';
 import '../../presentation/screens/executive/meetings/new_mom_screen.dart';
+import '../../presentation/screens/executive/work_plans/create_work_plan_screen.dart';
+import '../../presentation/screens/executive/work_plans/work_plans_list_screen.dart';
 import '../../presentation/screens/executive_history/executive_history_tracking_screen.dart';
 import '../../presentation/screens/executive_history/executive_tracking.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
@@ -316,7 +319,6 @@ class AppRouter {
           }
       ),
 
-
       // Executive Tracking Routes
       GoRoute(
         path: '/executiveHistoryTracking',
@@ -331,6 +333,7 @@ class AppRouter {
               );
         }
       ),
+
       GoRoute(
         path: '/executiveTracking',
         name: 'executiveTracking',
@@ -389,21 +392,17 @@ class AppRouter {
         },
       ),
 
-
-
       GoRoute(
         path: '/momScreen',
         name: 'momScreen',
         builder: (context, state) {
-
-
-
           return
             MultiBlocProvider(
               providers: [
                 BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
                 BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
-                BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+                BlocProvider<PostMomEntryBloc>(create: (context) => PostMomEntryBloc(),),
+                BlocProvider(create: (_) => MomImageUploadBloc()),
               ],
               child: const NewMomScreen(),
             );
@@ -421,14 +420,50 @@ class AppRouter {
               BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
               BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
               BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
+              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
             ],
             child: const MeetingsListScreen(),
           );
         },
       ),
+
+      GoRoute(
+        path: '/createWorkPlan',
+        name: 'createWorkPlan',
+        builder: (context, state) {
+
+          return  MultiBlocProvider(
+            providers: [
+              BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+              BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
+              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+            ],
+            child: const CreateWorkPlanScreen(),
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/workPlanDetails',
+        name: 'workPlanDetails',
+        builder: (context, state) {
+
+          return  MultiBlocProvider(
+            providers: [
+              BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+              BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
+              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+            ],
+            child: const WorkPlansListScreen(),
+          );
+        },
+      ),
       // Meeting Routes
-
-
 
       GoRoute(
         path: '/cataloguePage',

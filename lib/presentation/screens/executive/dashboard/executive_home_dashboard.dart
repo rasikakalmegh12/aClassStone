@@ -932,9 +932,10 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               const SizedBox(width: 12),
               Expanded(
                 child: _buildQuickActionButton(
-                  label: 'More',
+                  label: 'Work Plan',
                   icon: Icons.more_horiz,
                   onTap: () {
+                    context.pushNamed("workPlanDetails");
                     // Show more options
                   },
                 ),

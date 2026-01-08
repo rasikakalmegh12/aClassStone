@@ -42,3 +42,111 @@ class MomImageUploadBloc
     );
   }
 }
+
+
+
+// ========================= Post MOM Entry BLoC =========================
+class PostMomEntryBloc
+    extends Bloc<PostMomEntryEvent, PostMomEntryState> {
+
+  PostMomEntryBloc() : super(PostMomEntryInitial()) {
+    on<SubmitMomEntry>(
+          (SubmitMomEntry event, Emitter<PostMomEntryState> emit) async {
+
+        emit(PostMomEntryLoading(showLoader: event.showLoader));
+
+        try {
+          final response = await ApiIntegration.postMomEntry(
+            requestBody: event.requestBody,
+          );
+
+          if (response.status == true) {
+            emit(PostMomEntrySuccess(response: response));
+          } else {
+            emit(
+              PostMomEntryError(
+                message: response.message ?? 'Failed to submit MOM entry',
+              ),
+            );
+          }
+        } catch (e) {
+          emit(
+            PostMomEntryError(
+              message: 'Error: ${e.toString()}',
+            ),
+          );
+        }
+      },
+    );
+  }
+}
+
+// ========================= Get MOM List BLoC =========================
+class GetMomListBloc extends Bloc<GetMomListEvent, GetMomListState> {
+  GetMomListBloc() : super(GetMomListInitial()) {
+    on<FetchMomList>(
+          (FetchMomList event, Emitter<GetMomListState> emit) async {
+        emit(GetMomListLoading(showLoader: event.showLoader));
+
+        try {
+          final response = await ApiIntegration.getMomList(
+            search: event.search,
+            isConvertedToLead: event.isConvertedToLead,
+          );
+
+          if (response.status == true) {
+            emit(GetMomListSuccess(response: response));
+          } else {
+            emit(
+              GetMomListError(
+                message: response.message ?? 'Failed to fetch MOM list',
+              ),
+            );
+          }
+        } catch (e) {
+          emit(
+            GetMomListError(
+              message: 'Error: ${e.toString()}',
+            ),
+          );
+        }
+      },
+    );
+  }
+}
+
+
+
+// ========================= Get MOM Details BLoC =========================
+class GetMomDetailsBloc
+    extends Bloc<GetMomDetailsEvent, GetMomDetailsState> {
+  GetMomDetailsBloc() : super(GetMomDetailsInitial()) {
+    on<FetchMomDetails>(
+          (FetchMomDetails event, Emitter<GetMomDetailsState> emit) async {
+        emit(GetMomDetailsLoading(showLoader: event.showLoader));
+
+        try {
+          final response =
+          await ApiIntegration.getMomIdDetails(event.momId);
+
+          if (response.status == true) {
+            emit(GetMomDetailsSuccess(response: response));
+          } else {
+            emit(
+              GetMomDetailsError(
+                message:
+                response.message ?? 'Failed to fetch MOM details',
+              ),
+            );
+          }
+        } catch (e) {
+          emit(
+            GetMomDetailsError(
+              message: 'Error: ${e.toString()}',
+            ),
+          );
+        }
+      },
+    );
+  }
+}
