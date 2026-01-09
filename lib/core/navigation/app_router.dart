@@ -4,6 +4,7 @@ import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
 import 'package:apclassstone/bloc/mom/mom_bloc.dart';
+import 'package:apclassstone/bloc/work_plan/work_plan_bloc.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:apclassstone/presentation/screens/attendance/attendance_tracking.dart';
 import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
@@ -423,9 +424,9 @@ class AppRouter {
             providers: [
               BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
               BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
-              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
-              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
-              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+              BlocProvider<PostWorkPlanBloc>(create: (context) => PostWorkPlanBloc(),),
+              BlocProvider<GetWorkPlanDetailsBloc>(create: (context) => GetWorkPlanDetailsBloc(),),
+              BlocProvider<GetWorkPlanListBloc>(create: (context) => GetWorkPlanListBloc(),),
             ],
             child: const MeetingsListScreen(),
           );
@@ -441,9 +442,9 @@ class AppRouter {
             providers: [
               BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
               BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
-              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
-              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
-              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+              BlocProvider<PostWorkPlanBloc>(create: (context) => PostWorkPlanBloc(),),
+              BlocProvider<GetWorkPlanDetailsBloc>(create: (context) => GetWorkPlanDetailsBloc(),),
+              BlocProvider<GetWorkPlanListBloc>(create: (context) => GetWorkPlanListBloc(),),
             ],
             child: const CreateWorkPlanScreen(),
           );
