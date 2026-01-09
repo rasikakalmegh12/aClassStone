@@ -907,10 +907,11 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   label: 'Leads',
                   icon: Icons.star_outline,
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const LeadsListScreen()),
-                    );
+                    context.pushNamed("leadScreenList");
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(builder: (context) => const LeadsListScreen()),
+                    // );
                   },
                 ),
               ),
@@ -1021,10 +1022,11 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             MaterialPageRoute(builder: (context) => const MeetingsListScreen()),
           );
         } else if (label == 'Leads') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const LeadsListScreen()),
-          );
+          context.pushNamed("leadScreenList");
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const LeadsListScreen()),
+          // );
         } else if (label == 'Clients') {
           Navigator.push(
             context,

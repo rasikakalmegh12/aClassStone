@@ -101,7 +101,9 @@ class ApiConstants {
   static const String getMomList = "${baseUrl}marketing/moms";
   static const String postMomImage = "${baseUrl}marketing/moms";
 
-
+  static const String getWorkPlanDetails = "${baseUrl}marketing/work-plans";
+  static const String getWorkPlanList = "${baseUrl}marketing/work-plans";
+  static const String postWorkPlan = "${baseUrl}marketing/work-plans";
 
   // Common Headers
   static const Map<String, String> defaultHeaders = {

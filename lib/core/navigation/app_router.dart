@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../api/models/response/GetCatalogueProductResponseBody.dart';
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
@@ -24,6 +25,9 @@ import '../../presentation/catalog/catalogue_entry.dart';
 import '../../presentation/screens/attendance/attendance_monthly_tracking.dart';
 import '../../presentation/screens/executive/clients/add_client_screen.dart';
 import '../../presentation/screens/executive/clients/clients_list_screen.dart';
+import '../../presentation/screens/executive/leads/add_to_lead.dart';
+import '../../presentation/screens/executive/leads/leads_list_screen.dart';
+import '../../presentation/screens/executive/leads/new_lead_screen.dart';
 import '../../presentation/screens/executive/meetings/meetings_list_screen.dart';
 import '../../presentation/screens/executive/meetings/new_mom_screen.dart';
 import '../../presentation/screens/executive/work_plans/create_work_plan_screen.dart';
@@ -463,7 +467,50 @@ class AppRouter {
           );
         },
       ),
+      GoRoute(
+        path: '/leadScreenList',
+        name: 'leadScreenList',
+        builder: (context, state) {
+
+          return  MultiBlocProvider(
+            providers: [
+              BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+              BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
+              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+            ],
+            child: const LeadsListScreen(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/newLeadScreen',
+        name: 'newLeadScreen',
+        builder: (context, state) {
+          final leadData = state.extra as Map<String, dynamic>?;
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<GetCatalogueProductListBloc>(
+                create: (context) => GetCatalogueProductListBloc(),
+              ),
+            ],
+            child: NewLeadScreen(
+              existingLead: leadData, // Pass the extra data
+            ),
+          );
+        },
+      ),
+
       // Meeting Routes
+      GoRoute(
+        name: 'addToLead',
+        path: '/addToLead',
+        builder: (context, state) {
+          final selected = state.extra as List<Items>;
+          return AddToLeadPage(selectedProducts: selected);
+        },
+      ),
 
       GoRoute(
         path: '/cataloguePage',

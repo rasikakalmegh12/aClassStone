@@ -10,6 +10,7 @@ import 'package:apclassstone/api/models/request/PostClientAddRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostMinesEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostMomEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
+import 'package:apclassstone/api/models/request/PostWorkPlanRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
 import 'package:apclassstone/api/models/response/ActiveSessionResponseBody.dart';
@@ -37,12 +38,15 @@ import 'package:apclassstone/api/models/response/GetProcessingNaturesResponseBod
 import 'package:apclassstone/api/models/response/GetProfileResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetStateCountriesResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetTextureResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetWorkPlanDetailsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetWorkPlanResponseBody.dart';
 import 'package:apclassstone/api/models/response/LoginResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostCatalogueCommonResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostClientAddContactResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostClientAddLocationResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostMinesEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostMomEntryResponseBody.dart';
+import 'package:apclassstone/api/models/response/PostWorkPlanResponseBody.dart';
 import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
@@ -2122,7 +2126,8 @@ class ApiIntegration {
   static Future<GetMomResponseBody> getMomList({
     String? search,
     bool? isConvertedToLead,
-  }) async {
+  }) async
+  {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2410,6 +2415,370 @@ class ApiIntegration {
       }
 
       return GetMomIdDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  //--------WORK PLAN -----------
+
+  static Future<GetWorkPlanResponseBody> getWorkPlanList({
+    String? search,
+    bool? isConvertedToLead,
+  }) async
+  {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // Build query parameters
+      final queryParams = <String, String>{};
+      if (search != null && search.isNotEmpty) {
+        queryParams['Search'] = search;
+      }
+      if (isConvertedToLead != null) {
+        queryParams['IsConvertedToLead'] = isConvertedToLead.toString();
+      }
+
+      // Create cache key with params
+      final cacheKey = queryParams.isEmpty
+          ? ApiConstants.getWorkPlanList
+          : '${ApiConstants.getWorkPlanList}?${Uri(queryParameters: queryParams).query}';
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Work Plan List from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(cacheKey);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetWorkPlanResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached Work Plan List: $e');
+            return GetWorkPlanResponseBody(
+              status: false,
+              message: 'Failed to load cached Work Plan List: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetWorkPlanResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API with query params
+      final uri = Uri.parse(ApiConstants.getWorkPlanList).replace(
+        queryParameters: queryParams.isEmpty ? null : queryParams,
+      );
+
+      if (kDebugMode) {
+        print('📤 Sending get Work Plan List request to: $uri');
+        print('📤 Sending get Work Plan List header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          uri,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getWorkPlanList status: ${response.statusCode}');
+        print('Response getWorkPlanList body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetWorkPlanResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getWorkPlanList successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                cacheKey,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getWorkPlanList response');
+          }
+        } catch (e) {
+          print('Error caching getWorkPlanList: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getWorkPlanList failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetWorkPlanResponseBody.fromJson(jsonResponse);
+        return GetWorkPlanResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getWorkPlanList);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetWorkPlanResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetWorkPlanResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getWorkPlanList);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetWorkPlanResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetWorkPlanResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+
+
+  static Future<GetWorkPlanDetailsResponseBody> getWorkPlanIdDetails(String workPlanId) async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Work Plan Details from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetWorkPlanDetailsResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached Work Plan Details: $e');
+            return GetWorkPlanDetailsResponseBody(
+              status: false,
+              message: 'Failed to load cached Work Plan Details: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetWorkPlanDetailsResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+
+      if (kDebugMode) {
+        print('📤 Sending Work Plan Details request to: $url');
+        print('📤 Sending getWorkPlan Details header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getWorkPlan Details status: ${response.statusCode}');
+        print('Response getWorkPlan Details body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetWorkPlanDetailsResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getWorkPlan Details successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                "${ApiConstants.getWorkPlanDetails}/$workPlanId",
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getWorkPlanDetails response');
+          }
+        } catch (e) {
+          print('Error caching getWorkPlan Details: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ get Work Plan Details failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetWorkPlanDetailsResponseBody.fromJson(jsonResponse);
+        return GetWorkPlanDetailsResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetWorkPlanDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetWorkPlanDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetWorkPlanDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetWorkPlanDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  static Future<PostWorkPlanResponseBody> postWorkPlan(PostWorkPlanRequestBody requestBody) async {
+    try {
+      final url = Uri.parse(ApiConstants.postWorkPlan);
+
+      if (kDebugMode) {
+        print('📤 Sending postWorkPlan request to: $url');
+        print('📤 Sending postWorkPlan header: ${ApiConstants.headerWithToken}');
+        print('📤 postWorkPlan request: ${jsonEncode(requestBody.toJson())}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response postWorkPlan status: ${response.statusCode}');
+        print('📥 postWorkPlan body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = PostWorkPlanResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ postWorkPlan successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ postWorkPlan failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = PostWorkPlanResponseBody.fromJson(jsonResponse);
+        return PostWorkPlanResponseBody(
+          status: false,
+          message: result.message ?? 'Failed to create work plan',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return PostWorkPlanResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return PostWorkPlanResponseBody(
         status: false,
         message: errorMsg,
       );

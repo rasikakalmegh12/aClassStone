@@ -17,15 +17,18 @@ class WorkPlanDay {
   String dayNote;
   List<String> clientIds;
   List<Prospects> prospects;
+  bool isSaved;
 
   WorkPlanDay({
     required this.planDate,
     this.dayNote = '',
     List<String>? clientIds,
     List<Prospects>? prospects,
+    this.isSaved = false,
   })  : clientIds = clientIds ?? [],
         prospects = prospects ?? [];
 }
+
 
 
 class CreateWorkPlanScreen extends StatefulWidget {
@@ -52,6 +55,10 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
   DateTime _singleDate = DateTime.now();
   DateTimeRange? _dateRange;
 
+  bool get _isRange => dateType == 'range';
+
+  bool get _workflowComplete =>
+      workPlanDays.isNotEmpty && workPlanDays.every((d) => d.isSaved);
 
   // Form State
   String dateType = 'single';
@@ -158,7 +165,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDateTypeSection(),
-                    const SizedBox(height: 24),
+
 
                     _buildDateSection(),
                     const SizedBox(height: 24),
@@ -166,8 +173,8 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                     _buildCitySection(),
                     const SizedBox(height: 24),
 
-                    _buildClientsSection(),
-                    const SizedBox(height: 16),
+                    // _buildClientsSection(),
+                    // const SizedBox(height: 16),
 
                     // _buildDayWisePlans(),   // 👈 ADD HERE
                     _buildActiveDayEditor(),
@@ -231,11 +238,24 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                   onChanged: (value) {
                     setState(() {
                       dateType = value!;
+                      _buildWorkPlanDays();
+
+                      // Reset the step flow
+                      currentDayIndex = 0;
+                      isEditing = false;
+                      editingIndex = null;
+                      _resetDayForm();
                     });
                   },
+
+                  // onChanged: (value) {
+                  //   setState(() {
+                  //     dateType = value!;
+                  //   });
+                  // },
                   activeColor: AppColors.primaryTeal,
                 ),
-                Text(
+                const Text(
                   'Single day',
                   style: TextStyle(
                     fontSize: 14,
@@ -253,11 +273,25 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
                   onChanged: (value) {
                     setState(() {
                       dateType = value!;
+                      _buildWorkPlanDays();
+
+                      // Reset the step flow
+                      currentDayIndex = 0;
+                      isEditing = false;
+                      editingIndex = null;
+                      _resetDayForm();
                     });
                   },
+
+
+                  // onChanged: (value) {
+                  //   setState(() {
+                  //     dateType = value!;
+                  //   });
+                  // },
                   activeColor: AppColors.primaryTeal,
                 ),
-                Text(
+                const Text(
                   'Date range',
                   style: TextStyle(
                     fontSize: 14,
@@ -667,6 +701,10 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
   }
   Widget _buildActiveDayEditor() {
     final day = workPlanDays[currentDayIndex];
+    final isLastDay = currentDayIndex == workPlanDays.length - 1;
+
+    // Hide prospects only when workflow complete AND not editing old day
+    final hideProspects = _workflowComplete && !isEditing;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -675,10 +713,31 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// Plan Date
-            Text(
-              'Plan Date: ${formatDateDdMmmYyyy(day.planDate!)}',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+            /// Header row: Plan Date + progress for range
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Plan Date: ${formatDateDdMmmYyyy(day.planDate)}',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                if (_isRange)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryTeal.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${currentDayIndex + 1}/${workPlanDays.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryTeal,
+                      ),
+                    ),
+                  ),
+              ],
             ),
 
             const SizedBox(height: 12),
@@ -686,33 +745,93 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
             /// Day Note
             TextField(
               controller: dayNoteController,
-              decoration: const InputDecoration(
-                labelText: 'Day Note',
-              ),
+              decoration: const InputDecoration(labelText: 'Day Note'),
             ),
 
             const SizedBox(height: 12),
 
-            /// Clients (reuse your checkbox list)
+            /// Clients
             _buildClientsSection(),
 
             const SizedBox(height: 12),
 
-            /// Prospects
-            _buildProspectsSection(),
+            /// Prospects (hidden only after last day is saved)
+            if (!hideProspects) ...[
+              _buildProspectsSection(),
+              const SizedBox(height: 16),
+            ] else ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.10),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.green.withOpacity(0.3)),
+                ),
+                child: const Text(
+                  'All days saved. Prospects section is now closed.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.green,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
 
-            const SizedBox(height: 16),
-
-            /// Save Button
-            ElevatedButton(
-              onPressed: _saveCurrentDay,
-              child: Text(isEditing ? 'Update Day' : 'Save Day'),
+            /// Save Button (disabled only when completed and not editing)
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (_workflowComplete && !isEditing) ? null : _saveCurrentDay,
+                child: Text(
+                  (_workflowComplete && !isEditing)
+                      ? 'Days Saved'
+                      : (isEditing ? 'Update Day' : (isLastDay ? 'Save Day (Finish)' : 'Save Day')),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
   }
+
+
+  // Widget _buildProspectsSection() {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       const Text(
+  //         'Prospects',
+  //         style: TextStyle(
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.w600,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //
+  //       ListView.builder(
+  //         shrinkWrap: true,
+  //         physics: const NeverScrollableScrollPhysics(),
+  //         itemCount: currentProspects.length,
+  //         itemBuilder: (context, index) {
+  //           return _prospectCard(index);
+  //         },
+  //       ),
+  //
+  //       const SizedBox(height: 8),
+  //
+  //       TextButton.icon(
+  //         onPressed: _addProspect,
+  //         icon: const Icon(Icons.add),
+  //         label: const Text('Add Prospect'),
+  //       ),
+  //     ],
+  //   );
+  // }
+
   Widget _buildProspectsSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -736,12 +855,19 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
         ),
 
         const SizedBox(height: 8),
+    TextButton.icon(
+      onPressed: () {
+        setState(() {
+          // Add empty Prospects directly
+          currentProspects.add(Prospects());
+        });
+      },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Prospect'),
+          ),
+        // Direct add button - no dialog
 
-        TextButton.icon(
-          onPressed: _addProspect,
-          icon: const Icon(Icons.add),
-          label: const Text('Add Prospect'),
-        ),
+
       ],
     );
   }
@@ -796,6 +922,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
       ),
     );
   }
+
   Widget _textField({
     String? initialValue,
     required String label,
@@ -820,6 +947,89 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
         ),
         onChanged: onChanged,
       ),
+    );
+  }
+
+  Widget _buildSavedDaysSummary() {
+    final savedDays = workPlanDays.where((d) => d.isSaved).toList();
+    if (savedDays.isEmpty) return const SizedBox();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Saved days',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: savedDays.length,
+          itemBuilder: (context, i) {
+            final day = savedDays[i];
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.grey200),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          formatDateDdMmmYyyy(day.planDate),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Clients: ${day.clientIds.length}   •   Prospects: ${day.prospects.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        if ((day.dayNote).trim().isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            day.dayNote.trim(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20),
+                    onPressed: () {
+                      final index = workPlanDays.indexOf(day);
+                      _editDay(index);
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -851,6 +1061,40 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     );
   }
   void _saveCurrentDay() {
+    final day = workPlanDays[currentDayIndex];
+
+    // Basic validation: require at least one client
+    if (selectedClientIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one client for this day'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    day.dayNote = dayNoteController.text;
+    day.clientIds = selectedClientIds.toList();
+    day.prospects = List<Prospects>.from(currentProspects);
+    day.isSaved = true;
+
+    setState(() {
+      isEditing = false;
+      editingIndex = null;
+
+      // Move to next day if exists, else finish & hide prospects (handled in UI)
+      if (currentDayIndex < workPlanDays.length - 1) {
+        currentDayIndex++;
+        _resetDayForm();
+      } else {
+        // last day saved -> clear current form so it doesn't look editable
+        _resetDayForm();
+      }
+    });
+  }
+
+  void _saveCurrentDay1() {
     final day = workPlanDays[currentDayIndex];
 
     day.dayNote = dayNoteController.text;

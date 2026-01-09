@@ -13,6 +13,7 @@ import '../../bloc/auth/auth_event.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import '../../bloc/mom/mom_bloc.dart';
+import '../../bloc/work_plan/work_plan_bloc.dart';
 import 'connectivity_service.dart';
 import 'sync_service.dart';
 
@@ -57,6 +58,9 @@ class AppBlocProvider {
   static late PostMomEntryBloc _postMomEntryBloc;
   static late GetMomListBloc _getMomListBloc;
   static late GetMomDetailsBloc _getMomDetailsBloc;
+  static late GetWorkPlanListBloc _getWorkPlanListBloc;
+  static late GetWorkPlanDetailsBloc _getWorkPlanDetailsBloc;
+  static late PostWorkPlanBloc _postWorkPlanBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -134,6 +138,9 @@ class AppBlocProvider {
     _getClientListBloc=GetClientListBloc();
     _getMomListBloc=GetMomListBloc();
     _getMomDetailsBloc=GetMomDetailsBloc();
+    _getWorkPlanListBloc = GetWorkPlanListBloc();
+    _getWorkPlanDetailsBloc = GetWorkPlanDetailsBloc();
+    _postWorkPlanBloc = PostWorkPlanBloc();
 
 
   }
@@ -187,6 +194,9 @@ class AppBlocProvider {
   static PostMomEntryBloc get postMomEntryBloc => _postMomEntryBloc;
   static GetMomListBloc get getMomListBloc => _getMomListBloc;
   static GetMomDetailsBloc get getMomDetailsBloc => _getMomDetailsBloc;
+  static GetWorkPlanListBloc get getWorkPlanListBloc => _getWorkPlanListBloc;
+  static GetWorkPlanDetailsBloc get getWorkPlanDetailsBloc => _getWorkPlanDetailsBloc;
+  static PostWorkPlanBloc get postWorkPlanBloc => _postWorkPlanBloc;
 
 
   // Service getters for direct access

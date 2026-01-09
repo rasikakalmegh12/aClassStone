@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 
+import '../../../../api/models/response/GetCatalogueProductResponseBody.dart';
+import '../../../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
+import '../../../../bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
+import '../../../../bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../widgets/app_bar.dart';
 
 class NewLeadScreen extends StatefulWidget {
   final Map<String, dynamic>? existingLead;
@@ -54,15 +60,22 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
   @override
   void initState() {
     super.initState();
+    context.read<GetCatalogueProductListBloc>().add(
+        FetchGetCatalogueProductList(
+
+          showLoader: true,
+        ),
+    );
     _initializeForm();
+
   }
 
   void _initializeForm() {
     if (widget.existingLead != null) {
       // Initialize with existing lead data
       final lead = widget.existingLead!;
-      leadNumber = lead['leadNumber'];
-      clientName = lead['clientName'];
+      // leadNumber = lead['leadNumber'];
+      // clientName = lead['clientName'];
       selectedProducts = List<String>.from(lead['products'] ?? []);
 
       // Update available products selection
@@ -86,7 +99,12 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: _buildAppBar(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        // pass headerColor to the custom app bar
+        child: CoolAppCard(title:  widget.existingLead != null ? 'Update Lead' : 'New Lead',),
+      ),
+      // appBar: _buildAppBar(),
       body: Form(
         key: _formKey,
         child: Column(
@@ -131,7 +149,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
       ),
       title: Text(
         widget.existingLead != null ? 'Update Lead' : 'New Lead',
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -157,7 +175,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'LEAD CONTEXT',
             style: TextStyle(
               fontSize: 11,
@@ -184,7 +202,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
             width: 80,
             child: Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),
@@ -192,7 +210,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           ),
           Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -203,6 +221,158 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
     );
   }
 
+  // Widget _buildProductsSection() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: AppColors.white,
+  //       borderRadius: BorderRadius.circular(12),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: AppColors.black.withOpacity(0.04),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: BlocBuilder<GetCatalogueProductListBloc, GetCatalogueProductListState>(
+  //       builder: (context, state) {
+  //         if (state is GetCatalogueProductListLoading) {
+  //           return const Center(child: CircularProgressIndicator());
+  //         }
+  //
+  //         if (state is GetCatalogueProductListLoaded) {
+  //           final products = state.response.data?.items ?? [];
+  //           return Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               const Row(
+  //                 children: [
+  //                   Text(
+  //                     'PRODUCTS',
+  //                     style: TextStyle(
+  //                       fontSize: 11,
+  //                       fontWeight: FontWeight.w600,
+  //                       color: AppColors.textSecondary,
+  //                       letterSpacing: 0.8,
+  //                     ),
+  //                   ),
+  //                   SizedBox(width: 4),
+  //                   Text('*', style: TextStyle(color: AppColors.error)),
+  //                 ],
+  //               ),
+  //               const SizedBox(height: 12),
+  //               Text(
+  //                 'Selected from Catalogue (${products.length})',
+  //                 style: const TextStyle(
+  //                   fontSize: 14,
+  //                   fontWeight: FontWeight.w500,
+  //                   color: AppColors.textPrimary,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 12),
+  //
+  //               // Pre-selected products (from AddToLeadPage)
+  //               if (widget.existingLead?['products'] != null)
+  //                 ...widget.existingLead!['products']!.map<Widget>((productId) {
+  //                   final product = products.firstWhere(
+  //                         (p) => p.id == productId,
+  //                     orElse: () => Items(name: 'Product $productId'),
+  //                   );
+  //                   return _buildSelectedProductTile(product, true);
+  //                 }).toList(),
+  //
+  //               // Show more products from catalogue
+  //               if (products.isNotEmpty) ...[
+  //                 const Divider(),
+  //                 TextButton.icon(
+  //                   onPressed: () {
+  //                     context.read<GetCatalogueProductListBloc>().add(
+  //                       FetchGetCatalogueProductList(),
+  //                     );
+  //                   },
+  //                   icon: const Icon(Icons.refresh),
+  //                   label: const Text('Refresh Catalogue'),
+  //                 ),
+  //                 SizedBox(
+  //                   height: 265,
+  //                   child: ListView.builder(
+  //                     itemCount: products.length,
+  //                     itemBuilder: (context, index) {
+  //                       final product = products[index];
+  //                       final isPreSelected = widget.existingLead?['products']
+  //                           ?.contains(product.id) ?? false;
+  //                       return _buildSelectedProductTile(product, isPreSelected);
+  //                     },
+  //                   ),
+  //                 ),
+  //               ],
+  //             ],
+  //           );
+  //         }
+  //
+  //         return const Text('Load catalogue products');
+  //       },
+  //     ),
+  //   );
+  // }
+  // Widget _buildSelectedProductTile(Items product, bool isPreSelected) {
+  //   return Container(
+  //     margin: const EdgeInsets.only(bottom: 5),
+  //     padding: const EdgeInsets.all(12),
+  //     decoration: BoxDecoration(
+  //       color: isPreSelected ? Colors.green.withOpacity(0.1) : Colors.grey[50],
+  //       borderRadius: BorderRadius.circular(8),
+  //       border: Border.all(
+  //         color: isPreSelected ? Colors.green : Colors.transparent,
+  //         width: 1.5,
+  //       ),
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Checkbox(
+  //           value: isPreSelected,
+  //           onChanged: isPreSelected ? null : (value) {
+  //             setState(() {
+  //               if (value == true) {
+  //                 selectedProducts.add(product.name ?? '');
+  //               } else {
+  //                 selectedProducts.remove(product.name);
+  //               }
+  //             });
+  //           },
+  //           activeColor: AppColors.primaryTeal,
+  //         ),
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Text(
+  //                 product.name ?? 'Unnamed',
+  //                 style: const TextStyle(
+  //                   fontWeight: FontWeight.w600,
+  //                   fontSize: 14,
+  //                 ),
+  //               ),
+  //               Text(
+  //                 'Code: ${product.productCode ?? 'N/A'}',
+  //                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+  //               ),
+  //               if (product.lowestPricePerSqft != null)
+  //                 Text(
+  //                   '₹${product.lowestPricePerSqft}/sqft',
+  //                   style: const TextStyle(
+  //                     color: Colors.green,
+  //                     fontWeight: FontWeight.w500,
+  //                   ),
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
   Widget _buildProductsSection() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -217,91 +387,305 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+      child: BlocBuilder<GetCatalogueProductListBloc, GetCatalogueProductListState>(
+        builder: (context, state) {
+          if (state is GetCatalogueProductListLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (state is GetCatalogueProductListLoaded) {
+            final products = state.response.data?.items ?? [];
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Text(
+                      'PRODUCTS',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Text('*', style: TextStyle(color: AppColors.error)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Selected from Catalogue (${products.length})',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Pre-selected products (green background)
+                if (widget.existingLead?['products'] != null &&
+                    widget.existingLead!['products']!.isNotEmpty)
+                  ...widget.existingLead!['products']!.map<Widget>((productId) {
+                    final product = products.firstWhere(
+                          (p) => p.id == productId,
+                      orElse: () => Items(id: productId, name: 'Product $productId'),
+                    );
+                    return _buildSelectedProductTile(product, true);
+                  }).toList(),
+
+                // All catalogue products (selectable)
+                if (products.isNotEmpty) ...[
+                  if (widget.existingLead?['products'] != null) const Divider(),
+                  TextButton.icon(
+                    onPressed: () {
+                      context.read<GetCatalogueProductListBloc>().add(
+                         FetchGetCatalogueProductList(),
+                      );
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh Catalogue'),
+                  ),
+                  SizedBox(
+                    height: 265,
+                    child: ListView.builder(
+                      itemCount: products.length,
+                      itemBuilder: (context, index) {
+                        final product = products[index];
+                        final isPreSelected = widget.existingLead?['products']
+                            ?.contains(product.id) ?? false;
+                        return _buildSelectedProductTile(product, isPreSelected);
+                      },
+                    ),
+                  ),
+                ] else ...[
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        Icon(Icons.inventory_2, size: 48, color: Colors.grey),
+                        SizedBox(height: 8),
+                        Text('No products available'),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'PRODUCTS',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                  letterSpacing: 0.8,
-                ),
+              const Row(
+                children: [
+                  Text(
+                    'PRODUCTS',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  SizedBox(width: 4),
+                  Text('*', style: TextStyle(color: AppColors.error)),
+                ],
               ),
-              const SizedBox(width: 4),
-              const Text('*', style: TextStyle(color: AppColors.error)),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  context.read<GetCatalogueProductListBloc>().add(
+                    FetchGetCatalogueProductList(),
+                  );
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Load Catalogue Products'),
+              ),
             ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSelectedProductTile(Items product, bool isPreSelected) {
+    // Check if currently selected (pre-selected OR manually selected)
+    final isCurrentlySelected =
+    (isPreSelected || selectedProducts.contains(product.id ?? product.name ?? ''));
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isCurrentlySelected) {
+            selectedProducts.remove(product.id ?? product.name ?? '');
+          } else {
+            selectedProducts.add(product.id ?? product.name ?? '');
+          }
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 5),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isCurrentlySelected ? Colors.green.withOpacity(0.15) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isCurrentlySelected ? Colors.green : Colors.transparent,
+            width: 2,
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Select products',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...availableProducts.map((product) {
-            return CheckboxListTile(
-              title: Text(
-                product['name'],
-                style: TextStyle(
-                  fontSize: 14,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              value: product['selected'],
+        ),
+        child: Row(
+          children: [
+            Checkbox(
+              value: isCurrentlySelected,
               onChanged: (value) {
                 setState(() {
-                  product['selected'] = value!;
-                  if (value) {
-                    selectedProducts.add(product['name']);
+                  if (value == true) {
+                    selectedProducts.add(product.id ?? product.name ?? '');
                   } else {
-                    selectedProducts.remove(product['name']);
+                    selectedProducts.remove(product.id ?? product.name ?? '');
                   }
                 });
               },
               activeColor: AppColors.primaryTeal,
-              controlAffinity: ListTileControlAffinity.leading,
-              contentPadding: EdgeInsets.zero,
-            );
-          }),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
-            onPressed: _selectMoreProducts,
-            icon: const Icon(Icons.add, size: 18),
-            label: Text(
-              'Select more from catalogue',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    product.name ?? 'Unnamed',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                      color: isCurrentlySelected ? Colors.green[800] : null,
+                    ),
+                  ),
+                  if (product.productCode != null)
+                    Text(
+                      'Code: ${product.productCode}',
+                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                  if (product.lowestPricePerSqft != null)
+                    Text(
+                      '₹${product.lowestPricePerSqft}/sqft',
+                      style: TextStyle(
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
               ),
             ),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primaryTeal,
-              side: const BorderSide(color: AppColors.primaryTeal),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-          if (selectedProducts.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                'Please select at least one product',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.error,
-                ),
-              ),
-            ),
-        ],
+            if (isCurrentlySelected)
+              const Icon(Icons.check_circle, color: Colors.green, size: 20),
+          ],
+        ),
       ),
     );
   }
+
+  // Widget _buildProductsSection() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: AppColors.white,
+  //       borderRadius: BorderRadius.circular(12),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: AppColors.black.withOpacity(0.04),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         Row(
+  //           children: [
+  //             Text(
+  //               'PRODUCTS',
+  //               style: TextStyle(
+  //                 fontSize: 11,
+  //                 fontWeight: FontWeight.w600,
+  //                 color: AppColors.textSecondary,
+  //                 letterSpacing: 0.8,
+  //               ),
+  //             ),
+  //             const SizedBox(width: 4),
+  //             const Text('*', style: TextStyle(color: AppColors.error)),
+  //           ],
+  //         ),
+  //         const SizedBox(height: 12),
+  //         Text(
+  //           'Select products',
+  //           style: TextStyle(
+  //             fontSize: 14,
+  //             fontWeight: FontWeight.w500,
+  //             color: AppColors.textPrimary,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         ...availableProducts.map((product) {
+  //           return CheckboxListTile(
+  //             title: Text(
+  //               product['name'],
+  //               style: TextStyle(
+  //                 fontSize: 14,
+  //                 color: AppColors.textPrimary,
+  //               ),
+  //             ),
+  //             value: product['selected'],
+  //             onChanged: (value) {
+  //               setState(() {
+  //                 product['selected'] = value!;
+  //                 if (value) {
+  //                   selectedProducts.add(product['name']);
+  //                 } else {
+  //                   selectedProducts.remove(product['name']);
+  //                 }
+  //               });
+  //             },
+  //             activeColor: AppColors.primaryTeal,
+  //             controlAffinity: ListTileControlAffinity.leading,
+  //             contentPadding: EdgeInsets.zero,
+  //           );
+  //         }),
+  //         const SizedBox(height: 8),
+  //         OutlinedButton.icon(
+  //           onPressed: _selectMoreProducts,
+  //           icon: const Icon(Icons.add, size: 18),
+  //           label: Text(
+  //             'Select more from catalogue',
+  //             style: TextStyle(
+  //               fontSize: 12,
+  //               fontWeight: FontWeight.w500,
+  //             ),
+  //           ),
+  //           style: OutlinedButton.styleFrom(
+  //             foregroundColor: AppColors.primaryTeal,
+  //             side: const BorderSide(color: AppColors.primaryTeal),
+  //             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+  //           ),
+  //         ),
+  //         if (selectedProducts.isEmpty)
+  //           Padding(
+  //             padding: const EdgeInsets.only(top: 8),
+  //             child: Text(
+  //               'Please select at least one product',
+  //               style: TextStyle(
+  //                 fontSize: 12,
+  //                 color: AppColors.error,
+  //               ),
+  //             ),
+  //           ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildQuantitySection() {
     return Container(

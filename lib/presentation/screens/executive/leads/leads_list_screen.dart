@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../widgets/app_bar.dart';
 import 'new_lead_screen.dart';
 
 class LeadsListScreen extends StatefulWidget {
@@ -64,7 +66,17 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: _buildAppBar(),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(56),
+        // pass headerColor to the custom app bar
+        child: CoolAppCard(title: 'My Leads',  action:
+          IconButton(
+            onPressed: _showSortOptions,
+            icon: const Icon(Icons.sort, color: AppColors.textSecondary),
+          ),
+        ),
+      ),
+      // appBar: _buildAppBar(),
       body: Column(
         children: [
           _buildSearchAndFilters(),
@@ -75,10 +87,11 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const NewLeadScreen()),
-          );
+          context.pushNamed("newLeadScreen");
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(builder: (context) => const NewLeadScreen()),
+          // );
         },
         backgroundColor: AppColors.primaryTeal,
         child: const Icon(Icons.add, color: AppColors.white),
@@ -95,8 +108,8 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
         onPressed: () => Navigator.pop(context),
         icon: const Icon(Icons.arrow_back_ios, color: AppColors.textPrimary),
       ),
-      title: Text(
-        'My Leads',
+      title: const Text(
+       'My Leads',
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
