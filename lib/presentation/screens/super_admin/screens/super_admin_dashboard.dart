@@ -15,10 +15,14 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../api/models/request/ApproveRequestBody.dart';
+import '../../../../api/models/response/AllUsersResponseBody.dart' as AllUser;
 import '../../../../api/models/response/PendingRegistrationResponseBody.dart';
 import '../../../../bloc/auth/auth_bloc.dart';
 import '../../../../bloc/auth/auth_event.dart';
 import '../../../../bloc/auth/auth_state.dart';
+import '../../../../bloc/user_management/user_management_bloc.dart';
+import '../../../../bloc/user_management/user_management_event.dart';
+import '../../../../bloc/user_management/user_management_state.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../auth/login_screen.dart';
@@ -394,27 +398,30 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               itemBuilder: (context, index) {
                 final user = visibleItems[index];
                 // You can reuse same layout as registration item or create a simpler one
-                return ListTile(
-                  leading: CircleAvatar(
-                    child: Text(
-                      (user.fullName ?? '?').isNotEmpty
-                          ? user.fullName![0].toUpperCase()
-                          : '?',
+                return InkWell(
+                  onTap: () => _showUserProfileBottomSheet(context, user),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      child: Text(
+                        (user.fullName ?? '?').isNotEmpty
+                            ? user.fullName![0].toUpperCase()
+                            : '?',
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    user.fullName ?? '-',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1A365D),
+                    title: Text(
+                      user.fullName ?? '-',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1A365D),
+                      ),
                     ),
-                  ),
-                  subtitle: Text(
-                    user.email ?? '',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF718096),
+                    subtitle: Text(
+                      user.email ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF718096),
+                      ),
                     ),
                   ),
                 );
@@ -499,8 +506,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     bool isLoading = false,
   }) {
     return Container(
-      height: 65,
-      margin: const EdgeInsets.symmetric(vertical: 4),
+      // height: 65,
+      margin: const EdgeInsets.symmetric(vertical: 3),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           // use withAlpha instead of withOpacity to avoid analyzer precision warnings
@@ -2061,4 +2068,470 @@ IntrinsicHeight(
     );
   }
 
+
+  /// Show User Profile Details Bottom Sheet
+  void _showUserProfileBottomSheet(BuildContext listContext, AllUser.Data user) {
+    showModalBottomSheet(
+      context: listContext,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width,
+      ),
+      builder: (bottomSheetContext) {
+        return BlocProvider(
+          create: (context) => UserManagementBloc()
+            ..add(FetchUserProfileDetails(
+              userId: user.id ?? '',
+              showLoader: true,
+            )),
+          child: BlocConsumer<UserManagementBloc, UserManagementState>(
+            listener: (context, state) {
+              if (state is ChangeRoleSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.response.message ?? 'Role changed successfully'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                // Refresh user details
+                context.read<UserManagementBloc>().add(
+                  FetchUserProfileDetails(userId: user.id ?? '', showLoader: false),
+                );
+                // Refresh the main list
+                this.context.read<AllUsersBloc>().add(GetAllUsers());
+              } else if (state is ChangeRoleError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              } else if (state is ChangeStatusSuccess) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.response.message ?? 'Status changed successfully'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                // Refresh user details
+                context.read<UserManagementBloc>().add(
+                  FetchUserProfileDetails(userId: user.id ?? '', showLoader: false),
+                );
+                // Refresh the main list
+                this.context.read<AllUsersBloc>().add(GetAllUsers());
+              } else if (state is ChangeStatusError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
+            },
+            builder: (context, state) {
+              return DraggableScrollableSheet(
+                initialChildSize: 0.75,
+                maxChildSize: 0.85,
+                minChildSize: 0.5,
+                builder: (context, scrollController) {
+                  return Container(
+                    width: double.infinity, // Use double.infinity to take full width
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    child: Column(
+                      children: [
+                        // Header
+                        Container(
+                          width: double.infinity, // Ensure header also takes full width
+                          height: 60,
+                          padding: const EdgeInsets.all(16),
+                          decoration: const BoxDecoration(
+                            color: AppColors.superAdminPrimary,
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.person, color: Colors.white, size: 24),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'User Profile Details',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Content
+                        Expanded(
+                          child: _buildBottomSheetContent(context, state, scrollController, user),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  /// Build bottom sheet content based on state
+  Widget _buildBottomSheetContent(
+      BuildContext context,
+      UserManagementState state,
+      ScrollController scrollController,
+      AllUser.Data initialUser,)
+  {
+    if (state is UserProfileDetailsLoading && state.showLoader) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.superAdminPrimary),
+      );
+    }
+
+    if (state is UserProfileDetailsError) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
+            const SizedBox(height: 16),
+            Text(
+              state.message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.error),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                context.read<UserManagementBloc>().add(
+                  FetchUserProfileDetails(userId: initialUser.id ?? ''),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.superAdminPrimary,
+              ),
+              child: const Text('Retry', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Use loaded data if available, otherwise use initial user data
+    final userData = state is UserProfileDetailsLoaded
+        ? state.response.data
+        : null;
+
+    final displayName = userData?.fullName ?? initialUser.fullName ?? 'Unknown';
+    final displayEmail = userData?.email ?? initialUser.email ?? '-';
+    final displayPhone = userData?.phone ?? '-'; // From UserProfileDetailsResponseBody
+    final displayRole = userData?.roles?.first.role ??
+        (initialUser.roles?.isNotEmpty == true
+            ? initialUser.roles!.first.role
+            : '-') ?? '-';
+    final displayIsActive = userData?.isActive ?? initialUser.isActive ?? false;
+    final displayUserId = userData?.id ?? initialUser.id ?? '';
+
+    return ListView(
+      controller: scrollController,
+      padding: const EdgeInsets.all(16),
+      children: [
+        // Avatar Section
+        Center(
+          child: Stack(
+            children: [
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [
+                      AppColors.superAdminPrimary,
+                      AppColors.superAdminLight,
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Center(
+                  child: Text(
+                    displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 40,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: displayIsActive ? AppColors.success : AppColors.error,
+                    border: Border.all(color: Colors.white, width: 3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Name
+        Center(
+          child: Text(
+            displayName,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1A202C),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+
+        // Role Badge
+        Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.superAdminPrimary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.superAdminPrimary),
+            ),
+            child: Text(
+              displayRole.toString().toUpperCase(),
+              style: const TextStyle(
+                color: AppColors.superAdminPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Contact Information Section
+        _buildSectionTitle('Contact Information'),
+        const SizedBox(height: 12),
+        _buildInfoCard(Icons.email, 'Email', displayEmail),
+        const SizedBox(height: 8),
+        _buildInfoCard(Icons.phone, 'Phone', displayPhone),
+        const SizedBox(height: 24),
+
+        // Account Status Section
+        _buildSectionTitle('Account Status'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    displayIsActive ? Icons.check_circle : Icons.cancel,
+                    color: displayIsActive ? AppColors.success : AppColors.error,
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Status',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        displayIsActive ? 'Active' : 'Inactive',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: displayIsActive ? AppColors.success : AppColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Switch(
+                value: displayIsActive,
+                activeTrackColor: AppColors.success.withValues(alpha: 0.5),
+                thumbColor: WidgetStateProperty.all(
+                  displayIsActive ? AppColors.success : Colors.grey,
+                ),
+                onChanged: (value) {
+                  context.read<UserManagementBloc>().add(
+                    ChangeUserStatus(
+                      userId: displayUserId,
+                      isActive: value,
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // Change Role Section
+        _buildSectionTitle('Change Role'),
+        const SizedBox(height: 12),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[50],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[200]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Select New Role',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final role in [
+                    'EXECUTIVE',
+                    'ADMIN',
+                    if (SessionManager.getUserRole() == "superadmin") 'SUPERADMIN',
+                  ])
+                    ChoiceChip(
+                      label: Text(role),
+                      selected: role == displayRole.toString().toUpperCase(),
+                      selectedColor: AppColors.superAdminPrimary,
+                      labelStyle: TextStyle(
+                        color: role == displayRole.toString().toUpperCase() ? Colors.white : Colors.black87,
+                        fontWeight: role == displayRole.toString().toUpperCase() ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                      onSelected: (selected) {
+                        final isCurrentRole = role == displayRole.toString().toUpperCase();
+                        if (selected && !isCurrentRole) {
+                          showDialog(
+                            context: context,
+                            builder: (dialogContext) => AlertDialog(
+                              title: const Text('Confirm Role Change'),
+                              content: Text('Are you sure you want to change the role from $displayRole to $role?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(dialogContext);
+                                    context.read<UserManagementBloc>().add(
+                                      ChangeUserRole(
+                                        userId: displayUserId,
+                                        role: role,
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.superAdminPrimary,
+                                  ),
+                                  child: const Text('Confirm', style: TextStyle(color: Colors.white)),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1A202C),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard(IconData icon, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: AppColors.superAdminPrimary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1A202C),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
+
+

@@ -103,6 +103,9 @@ class _AllUsersScreenState extends State<AllUsersScreen> {
       context: listContext,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: BoxConstraints(
+        maxWidth: MediaQuery.of(context).size.width,
+      ),
       builder: (bottomSheetContext) {
         return BlocProvider(
           create: (context) => UserManagementBloc()
@@ -217,8 +220,8 @@ class _AllUsersScreenState extends State<AllUsersScreen> {
     BuildContext context,
     UserManagementState state,
     ScrollController scrollController,
-    Data initialUser,
-  ) {
+    Data initialUser,)
+  {
     if (state is UserProfileDetailsLoading && state.showLoader) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.superAdminPrimary),
