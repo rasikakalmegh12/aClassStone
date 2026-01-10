@@ -105,6 +105,12 @@ class ApiConstants {
   static const String getWorkPlanList = "${baseUrl}marketing/work-plans";
   static const String postWorkPlan = "${baseUrl}marketing/work-plans";
 
+
+  static const String getLeadDetails = "${baseUrl}marketing/leads";
+  static const String getLeadList = "${baseUrl}marketing/leads/list";
+  static const String postLeadEntry = "${baseUrl}marketing/leads";
+  static const String leadsAssign = "${baseUrl}marketing/leads/assignees";
+
   // Common Headers
   static const Map<String, String> defaultHeaders = {
     'Content-Type': 'application/json',

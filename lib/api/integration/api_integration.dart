@@ -60,10 +60,15 @@ import '../../core/services/repository_provider.dart';
 import '../../data/models/cached_response.dart';
 import '../constants/api_constants.dart';
 import '../models/request/GetProfileRequestBody.dart';
+import '../models/request/PostNewLeadRequestBody.dart';
 import '../models/request/RegistrationRequestBody.dart';
 import '../models/response/GetColorsResponseBody.dart';
+import '../models/response/GetLeadDetailsResponseBody.dart';
+import '../models/response/GetLeadListResponseBody.dart';
 import '../models/response/GetProductTypeResponseBody.dart';
 import '../models/response/GetUtilitiesTypeResponseBody.dart';
+import '../models/response/LeadAssignResponseBody.dart';
+import '../models/response/NewLeadResponseBody.dart';
 import '../models/response/PendingRegistrationResponseBody.dart';
 import '../models/response/PostClientAddResponseBody.dart';
 import '../models/response/PostMomImageUploadResponseBody.dart';
@@ -93,7 +98,8 @@ class ApiIntegration {
   ///     "phone": "phone_number"
   ///   }
   /// }
-  static Future<RegistrationResponseBody> register(RegistrationRequestBody requestBody,) async {
+  static Future<RegistrationResponseBody> register(
+      RegistrationRequestBody requestBody,) async {
     try {
       final url = Uri.parse(ApiConstants.register);
 
@@ -135,7 +141,7 @@ class ApiIntegration {
       print('❌ $errorMsg');
       return RegistrationResponseBody(
         status: false,
-        message:errorMsg,
+        message: errorMsg,
       );
     } catch (e) {
       final errorMsg = 'Error: ${e.toString()}';
@@ -146,7 +152,6 @@ class ApiIntegration {
       );
     }
   }
-
 
 
   /// Login user with username and password
@@ -164,7 +169,8 @@ class ApiIntegration {
   /// "refreshTokenExpiresAt": "2025-12-21T13:14:53.9756553Z"
   /// }
   /// }
-  static Future<LoginResponseBody> login(String username, String password) async {
+  static Future<LoginResponseBody> login(String username,
+      String password) async {
     try {
       final url = Uri.parse(ApiConstants.loginWithPassword);
 
@@ -204,7 +210,8 @@ class ApiIntegration {
           print('❌ Login failed with status ${response.statusCode}');
           return LoginResponseBody(
             status: false,
-            message: result.message ?? 'Login failed with status ${response.statusCode}',
+            message: result.message ??
+                'Login failed with status ${response.statusCode}',
             statusCode: response.statusCode,
           );
         } catch (parseError) {
@@ -227,7 +234,8 @@ class ApiIntegration {
         message: errorMsg,
       );
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e.toString()}';
+      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e
+          .toString()}';
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
@@ -289,7 +297,8 @@ class ApiIntegration {
           }
           return ApiCommonResponseBody(
             status: false,
-            message: result.message ?? 'refreshToken failed with status ${response.statusCode}',
+            message: result.message ??
+                'refreshToken failed with status ${response.statusCode}',
             statusCode: response.statusCode,
           );
         } catch (parseError) {
@@ -314,7 +323,8 @@ class ApiIntegration {
         message: errorMsg,
       );
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e.toString()}';
+      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e
+          .toString()}';
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
@@ -377,7 +387,8 @@ class ApiIntegration {
           }
           return LoginResponseBody(
             status: false,
-            message: result.message ?? 'refreshToken failed with status ${response.statusCode}',
+            message: result.message ??
+                'refreshToken failed with status ${response.statusCode}',
             statusCode: response.statusCode,
           );
         } catch (parseError) {
@@ -402,7 +413,8 @@ class ApiIntegration {
         message: errorMsg,
       );
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e.toString()}';
+      final errorMsg = 'Network error: Unable to reach the server. Please check your internet connection. ${e
+          .toString()}';
       if (kDebugMode) {
         print('❌ $errorMsg');
       }
@@ -425,8 +437,8 @@ class ApiIntegration {
 
   /// ------------------GET METHOD --------------------------
 
-    static Future<ActiveSessionResponseBody> getActiveSession() async {
-      try {
+  static Future<ActiveSessionResponseBody> getActiveSession() async {
+    try {
       final url = Uri.parse(ApiConstants.activeSession);
 
       print('📤 Sending activeSession request to: $url');
@@ -467,22 +479,22 @@ class ApiIntegration {
         //   statusCode: response.statusCode,
         // );
       }
-      } on http.ClientException catch (e) {
-        final errorMsg = 'Network error in active Session: ${e.toString()}';
-        print('❌ $errorMsg');
-        return ActiveSessionResponseBody(
-          status: false,
-          message: errorMsg,
-        );
-      } catch (e) {
-        final errorMsg = 'Error: ${e.toString()}';
-        print('❌ $errorMsg');
-        return ActiveSessionResponseBody(
-          status: false,
-          message: errorMsg,
-        );
-      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error in active Session: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ActiveSessionResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ActiveSessionResponseBody(
+        status: false,
+        message: errorMsg,
+      );
     }
+  }
 
   static Future<GetProfileResponseBody> getProfile() async {
     try {
@@ -551,7 +563,8 @@ class ApiIntegration {
 
       // If offline, try to load from cache
       if (!hasConnection) {
-        print('📍 No connectivity - Loading pending registrations from local cache');
+        print(
+            '📍 No connectivity - Loading pending registrations from local cache');
         final cachedData = await AppBlocProvider.cacheRepository
             .getCachedResponse(ApiConstants.pendingRegistrations);
 
@@ -821,46 +834,47 @@ class ApiIntegration {
     }
   }
 
-  static Future<ExecutiveAttendanceResponseBody> executiveAttendance(String date) async {
+  static Future<ExecutiveAttendanceResponseBody> executiveAttendance(
+      String date) async {
     try {
-    final url = Uri.parse("${ApiConstants.executiveAttendance}?date=$date");
+      final url = Uri.parse("${ApiConstants.executiveAttendance}?date=$date");
 
-    print('📤 Sending executiveAttendance request to: $url');
+      print('📤 Sending executiveAttendance request to: $url');
 
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body: ${response.body}');
-
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+      print('📥 Response status: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ executiveAttendance successful: ${result.message}');
+        print('Response body: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ executiveAttendance failed with status ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ executiveAttendance successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ExecutiveAttendanceResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ executiveAttendance failed with status ${response
+              .statusCode}');
+        }
+        return ExecutiveAttendanceResponseBody(
+          status: false,
+          message: 'Executive Attendance failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
       }
-      return ExecutiveAttendanceResponseBody(
-        status: false,
-        message: 'Executive Attendance failed. Status: ${result.message}',
-        statusCode: response.statusCode,
-      );
-    }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error Executive Attendance: ${e.toString()}';
       print('❌ $errorMsg');
@@ -878,46 +892,51 @@ class ApiIntegration {
     }
   }
 
-  static Future<ExecutiveTrackingByDaysResponse> executiveTrackingByDays(String userId, String date) async {
+  static Future<ExecutiveTrackingByDaysResponse> executiveTrackingByDays(
+      String userId, String date) async {
     try {
-    final url = Uri.parse("${ApiConstants.executiveTrackingByDays}/$userId/days/$date");
+      final url = Uri.parse(
+          "${ApiConstants.executiveTrackingByDays}/$userId/days/$date");
 
-    print('📤 Sending executiveTrackingByDays request to: $url');
+      print('📤 Sending executiveTrackingByDays request to: $url');
 
-    print('headers executiveTrackingByDays: ${ApiConstants.headerWithToken()}');
+      print(
+          'headers executiveTrackingByDays: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status executiveTrackingByDays: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body executiveTrackingByDays: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = ExecutiveTrackingByDaysResponse.fromJson(jsonResponse);
+      print(
+          '📥 Response status executiveTrackingByDays: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ executiveTrackingByDays successful: ${result.message}');
+        print('Response body executiveTrackingByDays: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = ExecutiveTrackingByDaysResponse.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ executiveTrackingByDays  failed with status ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ExecutiveTrackingByDaysResponse.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ executiveTrackingByDays successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ExecutiveTrackingByDaysResponse.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ executiveTrackingByDays  failed with status ${response
+              .statusCode}');
+        }
+        return ExecutiveTrackingByDaysResponse(
+          status: false,
+          message: 'Executive Tracking failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
       }
-      return ExecutiveTrackingByDaysResponse(
-        status: false,
-        message: 'Executive Tracking failed. Status: ${result.message}',
-        statusCode: response.statusCode,
-      );
-    }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error executiveTrackingByDays: ${e.toString()}';
       print('❌ $errorMsg');
@@ -935,9 +954,12 @@ class ApiIntegration {
     }
   }
 
-  static Future<ExecutiveAttendanceMonthlyResponseBody> executiveAttendanceMonthly(String userId,String fromDate,String toDate) async {
+  static Future<
+      ExecutiveAttendanceMonthlyResponseBody> executiveAttendanceMonthly(
+      String userId, String fromDate, String toDate) async {
     try {
-      final url = Uri.parse("${ApiConstants.executiveAttendanceDateWise}/$userId/attendance?from=$fromDate&to=$toDate");
+      final url = Uri.parse("${ApiConstants
+          .executiveAttendanceDateWise}/$userId/attendance?from=$fromDate&to=$toDate");
 
       print('📤 Sending executiveAttendanceMonthly request to: $url');
 
@@ -953,30 +975,34 @@ class ApiIntegration {
       print('📥 Response status: ${response.statusCode}');
       if (kDebugMode) {
         print('Response body: ${response.body}');
-
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
-        final result = ExecutiveAttendanceMonthlyResponseBody.fromJson(jsonResponse);
+        final result = ExecutiveAttendanceMonthlyResponseBody.fromJson(
+            jsonResponse);
         if (kDebugMode) {
           print('✅ executiveAttendanceMonthly successful: ${result.message}');
         }
         return result;
       } else {
         final jsonResponse = jsonDecode(response.body);
-        final result = ExecutiveAttendanceMonthlyResponseBody.fromJson(jsonResponse);
+        final result = ExecutiveAttendanceMonthlyResponseBody.fromJson(
+            jsonResponse);
         if (kDebugMode) {
-          print('❌ executiveAttendanceMonthly failed with status ${response.statusCode}');
+          print('❌ executiveAttendanceMonthly failed with status ${response
+              .statusCode}');
         }
         return ExecutiveAttendanceMonthlyResponseBody(
           status: false,
-          message: 'Executive Attendance Monthly failed. Status: ${result.message}',
+          message: 'Executive Attendance Monthly failed. Status: ${result
+              .message}',
           statusCode: response.statusCode,
         );
       }
     } on http.ClientException catch (e) {
-      final errorMsg = 'Network error Executive Attendance Monthly : ${e.toString()}';
+      final errorMsg = 'Network error Executive Attendance Monthly : ${e
+          .toString()}';
       print('❌ $errorMsg');
       return ExecutiveAttendanceMonthlyResponseBody(
         status: false,
@@ -995,46 +1021,46 @@ class ApiIntegration {
 
   static Future<GetProductTypeResponseBody> getProductType() async {
     try {
-    final url = Uri.parse(ApiConstants.getProductType);
+      final url = Uri.parse(ApiConstants.getProductType);
 
-    print('📤 Sending getProductType request to: $url');
+      print('📤 Sending getProductType request to: $url');
 
-    print('headers getProductType: ${ApiConstants.headerWithToken()}');
+      print('headers getProductType: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getProductType: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getProductType: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetProductTypeResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getProductType: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getProductType successful: ${result.message}');
+        print('Response body getProductType: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetProductTypeResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getProductType  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProductTypeResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getProductType successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProductTypeResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getProductType  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getProductType: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1055,46 +1081,46 @@ class ApiIntegration {
 
   static Future<GetUtilitiesTypeResponseBody> getUtilities() async {
     try {
-    final url = Uri.parse(ApiConstants.getUtilities);
+      final url = Uri.parse(ApiConstants.getUtilities);
 
-    print('📤 Sending getUtilities request to: $url');
+      print('📤 Sending getUtilities request to: $url');
 
-    print('headers getUtilities: ${ApiConstants.headerWithToken()}');
+      print('headers getUtilities: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getUtilities: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getUtilities: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetUtilitiesTypeResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getUtilities: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getUtilities successful: ${result.message}');
+        print('Response body getUtilities: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetUtilitiesTypeResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getUtilities  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetUtilitiesTypeResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getUtilities successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetUtilitiesTypeResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getUtilities  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getUtilities : ${e.toString()}';
       print('❌ $errorMsg');
@@ -1115,46 +1141,46 @@ class ApiIntegration {
 
   static Future<GetColorsResponseBody> getColors() async {
     try {
-    final url = Uri.parse(ApiConstants.getColors);
+      final url = Uri.parse(ApiConstants.getColors);
 
-    print('📤 Sending getColors request to: $url');
+      print('📤 Sending getColors request to: $url');
 
-    print('headers getColors: ${ApiConstants.headerWithToken()}');
+      print('headers getColors: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getColors: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getColors: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetColorsResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getColors: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getColors successful: ${result.message}');
+        print('Response body getColors: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetColorsResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getColors  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetColorsResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getColors successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetColorsResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getColors  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getColors: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1175,46 +1201,46 @@ class ApiIntegration {
 
   static Future<GetFinishesResponseBody> getFinishes() async {
     try {
-    final url = Uri.parse(ApiConstants.getFinishes);
+      final url = Uri.parse(ApiConstants.getFinishes);
 
-    print('📤 Sending getFinishes request to: $url');
+      print('📤 Sending getFinishes request to: $url');
 
-    print('headers getFinishes: ${ApiConstants.headerWithToken()}');
+      print('headers getFinishes: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getFinishes: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getFinishes: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetFinishesResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getFinishes: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getFinishes successful: ${result.message}');
+        print('Response body getFinishes: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetFinishesResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getFinishes  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetFinishesResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getFinishes successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetFinishesResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getFinishes  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getFinishes: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1235,46 +1261,46 @@ class ApiIntegration {
 
   static Future<GetTextureResponseBody> getTextures() async {
     try {
-    final url = Uri.parse(ApiConstants.getTextures);
+      final url = Uri.parse(ApiConstants.getTextures);
 
-    print('📤 Sending getTextures request to: $url');
+      print('📤 Sending getTextures request to: $url');
 
-    print('headers getTextures: ${ApiConstants.headerWithToken()}');
+      print('headers getTextures: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getTextures: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getTextures: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetTextureResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getTextures: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getTextures successful: ${result.message}');
+        print('Response body getTextures: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetTextureResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getTextures  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetTextureResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getTextures successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetTextureResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getTextures  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getTextures: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1295,46 +1321,47 @@ class ApiIntegration {
 
   static Future<GetNaturalColorResponseBody> getNaturalColours() async {
     try {
-    final url = Uri.parse(ApiConstants.getNaturalColors);
+      final url = Uri.parse(ApiConstants.getNaturalColors);
 
-    print('📤 Sending getNaturalColors request to: $url');
+      print('📤 Sending getNaturalColors request to: $url');
 
-    print('headers getNaturalColors: ${ApiConstants.headerWithToken()}');
+      print('headers getNaturalColors: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getNaturalColors: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getNaturalColors: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetNaturalColorResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getNaturalColors: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getNaturalColors successful: ${result.message}');
+        print('Response body getNaturalColors: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetNaturalColorResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getNaturalColors  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetNaturalColorResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getNaturalColors successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetNaturalColorResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print(
+              '❌ getNaturalColors  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getNaturalColors: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1355,46 +1382,46 @@ class ApiIntegration {
 
   static Future<GetOriginsResponseBody> getOrigins() async {
     try {
-    final url = Uri.parse(ApiConstants.getOrigins);
+      final url = Uri.parse(ApiConstants.getOrigins);
 
-    print('📤 Sending getOrigins request to: $url');
+      print('📤 Sending getOrigins request to: $url');
 
-    print('headers getOrigins: ${ApiConstants.headerWithToken()}');
+      print('headers getOrigins: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getOrigins: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getOrigins: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetOriginsResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getOrigins: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getOrigins successful: ${result.message}');
+        print('Response body getOrigins: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetOriginsResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getOrigins  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetOriginsResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getOrigins successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetOriginsResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getOrigins  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getOrigins: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1415,48 +1442,49 @@ class ApiIntegration {
 
   static Future<GetStateCountriesResponseBody> getStateCountries() async {
     try {
-    final url = Uri.parse(ApiConstants.getStateCountries);
+      final url = Uri.parse(ApiConstants.getStateCountries);
 
-    print('📤 Sending getStateCountries request to: $url');
+      print('📤 Sending getStateCountries request to: $url');
 
-    print('headers getStateCountries: ${ApiConstants.headerWithToken()}');
+      print('headers getStateCountries: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    if (kDebugMode) {
-      print('📥 Response status getStateCountries: ${response.statusCode}');
-    }
-    if (kDebugMode) {
-      print('Response body getStateCountries: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetStateCountriesResponseBody.fromJson(jsonResponse);
       if (kDebugMode) {
-        print('✅ getStateCountries successful: ${result.message}');
+        print('📥 Response status getStateCountries: ${response.statusCode}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetStateCountriesResponseBody.fromJson(jsonResponse);
       if (kDebugMode) {
-        print('❌ getStateCountries  failed with status ${response.statusCode}');
+        print('Response body getStateCountries: ${response.body}');
       }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetStateCountriesResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getStateCountries successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetStateCountriesResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print(
+              '❌ getStateCountries  failed with status ${response.statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getStateCountries: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1477,46 +1505,47 @@ class ApiIntegration {
 
   static Future<GetProcessingNaturesResponseBody> getProcessingNature() async {
     try {
-    final url = Uri.parse(ApiConstants.getProcessingNatures);
+      final url = Uri.parse(ApiConstants.getProcessingNatures);
 
-    print('📤 Sending getProcessingNatures request to: $url');
+      print('📤 Sending getProcessingNatures request to: $url');
 
-    print('headers getProcessingNatures: ${ApiConstants.headerWithToken()}');
+      print('headers getProcessingNatures: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getProcessingNatures: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getProcessingNatures: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetProcessingNaturesResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getProcessingNatures: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getProcessingNatures successful: ${result.message}');
+        print('Response body getProcessingNatures: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetProcessingNaturesResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getProcessingNatures  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProcessingNaturesResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getProcessingNatures successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetProcessingNaturesResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getProcessingNatures  failed with status ${response
+              .statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getProcessingNatures: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1537,46 +1566,47 @@ class ApiIntegration {
 
   static Future<GetMaterialNatureResponseBody> getNaturalMaterial() async {
     try {
-    final url = Uri.parse(ApiConstants.getNaturalMaterials);
+      final url = Uri.parse(ApiConstants.getNaturalMaterials);
 
-    print('📤 Sending getNaturalMaterials request to: $url');
+      print('📤 Sending getNaturalMaterials request to: $url');
 
-    print('headers getNaturalMaterials: ${ApiConstants.headerWithToken()}');
+      print('headers getNaturalMaterials: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getNaturalMaterials: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getNaturalMaterials: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetMaterialNatureResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getNaturalMaterials: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getNaturalMaterials successful: ${result.message}');
+        print('Response body getNaturalMaterials: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetMaterialNatureResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getNaturalMaterials  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetMaterialNatureResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getNaturalMaterials successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetMaterialNatureResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getNaturalMaterials  failed with status ${response
+              .statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getNaturalMaterials: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1597,46 +1627,47 @@ class ApiIntegration {
 
   static Future<GetHandicraftsResponseBody> getHandicraftsTypes() async {
     try {
-    final url = Uri.parse(ApiConstants.getHandicraftsTypes);
+      final url = Uri.parse(ApiConstants.getHandicraftsTypes);
 
-    print('📤 Sending getHandicraftsTypes request to: $url');
+      print('📤 Sending getHandicraftsTypes request to: $url');
 
-    print('headers getHandicraftsTypes: ${ApiConstants.headerWithToken()}');
+      print('headers getHandicraftsTypes: ${ApiConstants.headerWithToken()}');
 
-    final response = await ApiClient.send(() {
-      return http.get(
-        url,
-        headers: ApiConstants.headerWithToken(),
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
 
-      ).timeout(_timeout);
-    });
+        ).timeout(_timeout);
+      });
 
-    print('📥 Response status getHandicraftsTypes: ${response.statusCode}');
-    if (kDebugMode) {
-      print('Response body getHandicraftsTypes: ${response.body}');
-    }
-
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetHandicraftsResponseBody.fromJson(jsonResponse);
+      print('📥 Response status getHandicraftsTypes: ${response.statusCode}');
       if (kDebugMode) {
-        print('✅ getHandicraftsTypes successful: ${result.message}');
+        print('Response body getHandicraftsTypes: ${response.body}');
       }
-      return result;
-    } else {
-      final jsonResponse = jsonDecode(response.body);
-      final result = GetHandicraftsResponseBody.fromJson(jsonResponse);
-      if (kDebugMode) {
-        print('❌ getHandicraftsTypes  failed with status ${response.statusCode}');
-      }
-      return result;
 
-      //   GetProductTypeResponseBody(
-      //   status: false,
-      //   message: 'Executive Tracking failed. Status: ${result.message}',
-      //   statusCode: response.statusCode,
-      // );
-    }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetHandicraftsResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ getHandicraftsTypes successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetHandicraftsResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ getHandicraftsTypes  failed with status ${response
+              .statusCode}');
+        }
+        return result;
+
+        //   GetProductTypeResponseBody(
+        //   status: false,
+        //   message: 'Executive Tracking failed. Status: ${result.message}',
+        //   statusCode: response.statusCode,
+        // );
+      }
     } on http.ClientException catch (e) {
       final errorMsg = 'Network error getHandicraftsTypes: ${e.toString()}';
       print('❌ $errorMsg');
@@ -1662,10 +1693,14 @@ class ApiIntegration {
   /// - [pageSize]: Number of items per page (default: 20)
   ///
   /// Returns [GetCatalogueProductResponseBody] with product list and pagination info
-  static Future<GetCatalogueProductResponseBody> getCatalogueProductList({int page = 1, int pageSize = 20, String? search}) async {
+  static Future<GetCatalogueProductResponseBody> getCatalogueProductList(
+      {int page = 1, int pageSize = 20, String? search}) async {
     try {
-      final url = Uri.parse('${ApiConstants.getCatalogueProductList}?page=$page&pageSize=$pageSize${search!=null?"&search=$search":""}');
-      if (kDebugMode) print('📤 Sending getCatalogueProductList request to: $url');
+      final url = Uri.parse('${ApiConstants
+          .getCatalogueProductList}?page=$page&pageSize=$pageSize${search !=
+          null ? "&search=$search" : ""}');
+      if (kDebugMode) print(
+          '📤 Sending getCatalogueProductList request to: $url');
 
       final response = await ApiClient.send(() {
         return http.get(
@@ -1702,11 +1737,15 @@ class ApiIntegration {
   /// Get Catalogue Product Details by ID
   ///
   /// Returns [GetCatalogueProductDetailsResponseBody] with detailed product information
-  static Future<GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails({required String productId,}) async
+  static Future<
+      GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails(
+      {required String productId,}) async
   {
     try {
-      final url = Uri.parse('${ApiConstants.getCatalogueProductDetails}/$productId');
-      if (kDebugMode) print('📤 Sending getCatalogueProductDetails request to: $url');
+      final url = Uri.parse(
+          '${ApiConstants.getCatalogueProductDetails}/$productId');
+      if (kDebugMode) print(
+          '📤 Sending getCatalogueProductDetails request to: $url');
 
       final response = await ApiClient.send(() {
         return http.get(
@@ -1786,7 +1825,6 @@ class ApiIntegration {
   }
 
 
-
   static Future<GetMinesOptionResponseBody> getMinesOption() async
   {
     try {
@@ -1829,9 +1867,10 @@ class ApiIntegration {
   }
 
 
-    //--------Client -----------
+  //--------Client -----------
 
-  static Future<GetClientListResponseBody> getClientList(String? search, String? clientTypeCode) async {
+  static Future<GetClientListResponseBody> getClientList(String? search,
+      String? clientTypeCode) async {
     // Build query params outside try block so it's accessible in catch blocks
     final queryParams = <String>[];
     if (search != null && search.isNotEmpty) {
@@ -1840,7 +1879,9 @@ class ApiIntegration {
     if (clientTypeCode != null && clientTypeCode.isNotEmpty) {
       queryParams.add('clientTypeCode=$clientTypeCode');
     }
-    final queryString = queryParams.isNotEmpty ? '?${queryParams.join('&')}' : '';
+    final queryString = queryParams.isNotEmpty
+        ? '?${queryParams.join('&')}'
+        : '';
 
     try {
       // Check connectivity first
@@ -1877,7 +1918,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📤 Sending getClientsList request to: $url');
-        print('📤 Sending getClientsList header: ${ApiConstants.headerWithToken}');
+        print(
+            '📤 Sending getClientsList header: ${ApiConstants.headerWithToken}');
       }
 
       final response = await ApiClient.send(() {
@@ -1962,7 +2004,9 @@ class ApiIntegration {
       // Try to return cached data on error
       try {
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse("${ApiConstants.getClientsList}${search!=null?"&search=$search":""}");
+            .getCachedResponse("${ApiConstants.getClientsList}${search != null
+            ? "&search=$search"
+            : ""}");
         if (cachedData?.responseData != null) {
           print('📍 Error occurred - Falling back to cached data');
           final jsonData = jsonDecode(cachedData!.responseData!);
@@ -1980,8 +2024,8 @@ class ApiIntegration {
   }
 
 
-
-  static Future<GetClientIdDetailsResponseBody> getClientDetails(String clientId) async {
+  static Future<GetClientIdDetailsResponseBody> getClientDetails(
+      String clientId) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2017,7 +2061,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📤 Sending Client Details request to: $url');
-        print('📤 Sending getClients Details header: ${ApiConstants.headerWithToken}');
+        print('📤 Sending getClients Details header: ${ApiConstants
+            .headerWithToken}');
       }
 
       final response = await ApiClient.send(() {
@@ -2046,7 +2091,7 @@ class ApiIntegration {
           if (result.status == true && result.data != null) {
             await AppBlocProvider.cacheRepository.saveCachedResponse(
               _createCachedResponse(
-                "${ApiConstants.getClientsDetails}/$clientId" ,
+                "${ApiConstants.getClientsDetails}/$clientId",
                 result,
                 200,
               ),
@@ -2060,7 +2105,8 @@ class ApiIntegration {
         return result;
       } else {
         if (kDebugMode) {
-          print('❌ getClients Details failed with status ${response.statusCode}');
+          print(
+              '❌ getClients Details failed with status ${response.statusCode}');
         }
         final jsonResponse = jsonDecode(response.body);
         final result = GetClientIdDetailsResponseBody.fromJson(jsonResponse);
@@ -2120,8 +2166,7 @@ class ApiIntegration {
   }
 
 
-
-    //--------MOM -----------
+  //--------MOM -----------
 
   static Future<GetMomResponseBody> getMomList({
     String? search,
@@ -2144,7 +2189,8 @@ class ApiIntegration {
       // Create cache key with params
       final cacheKey = queryParams.isEmpty
           ? ApiConstants.getMomList
-          : '${ApiConstants.getMomList}?${Uri(queryParameters: queryParams).query}';
+          : '${ApiConstants.getMomList}?${Uri(queryParameters: queryParams)
+          .query}';
 
       // If offline, try to load from cache
       if (!hasConnection) {
@@ -2282,8 +2328,8 @@ class ApiIntegration {
   }
 
 
-
-  static Future<GetMomIdDetailsResponseBody> getMomIdDetails(String momId) async {
+  static Future<GetMomIdDetailsResponseBody> getMomIdDetails(
+      String momId) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2319,7 +2365,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📤 Sending MOM Details request to: $url');
-        print('📤 Sending getMOM Details header: ${ApiConstants.headerWithToken}');
+        print(
+            '📤 Sending getMOM Details header: ${ApiConstants.headerWithToken}');
       }
 
       final response = await ApiClient.send(() {
@@ -2348,7 +2395,7 @@ class ApiIntegration {
           if (result.status == true && result.data != null) {
             await AppBlocProvider.cacheRepository.saveCachedResponse(
               _createCachedResponse(
-                "${ApiConstants.getMomDetails}/$momId" ,
+                "${ApiConstants.getMomDetails}/$momId",
                 result,
                 200,
               ),
@@ -2444,7 +2491,8 @@ class ApiIntegration {
       // Create cache key with params
       final cacheKey = queryParams.isEmpty
           ? ApiConstants.getWorkPlanList
-          : '${ApiConstants.getWorkPlanList}?${Uri(queryParameters: queryParams).query}';
+          : '${ApiConstants.getWorkPlanList}?${Uri(queryParameters: queryParams)
+          .query}';
 
       // If offline, try to load from cache
       if (!hasConnection) {
@@ -2479,7 +2527,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📤 Sending get Work Plan List request to: $uri');
-        print('📤 Sending get Work Plan List header: ${ApiConstants.headerWithToken}');
+        print('📤 Sending get Work Plan List header: ${ApiConstants
+            .headerWithToken}');
       }
 
       final response = await ApiClient.send(() {
@@ -2581,8 +2630,8 @@ class ApiIntegration {
   }
 
 
-
-  static Future<GetWorkPlanDetailsResponseBody> getWorkPlanIdDetails(String workPlanId) async {
+  static Future<GetWorkPlanDetailsResponseBody> getWorkPlanIdDetails(
+      String workPlanId) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2591,7 +2640,8 @@ class ApiIntegration {
       if (!hasConnection) {
         print('📍 No connectivity - Loading Work Plan Details from local cache');
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+            .getCachedResponse(
+            "${ApiConstants.getWorkPlanDetails}/$workPlanId");
 
         if (cachedData?.responseData != null) {
           try {
@@ -2601,7 +2651,8 @@ class ApiIntegration {
             print('Error parsing cached Work Plan Details: $e');
             return GetWorkPlanDetailsResponseBody(
               status: false,
-              message: 'Failed to load cached Work Plan Details: ${e.toString()}',
+              message: 'Failed to load cached Work Plan Details: ${e
+                  .toString()}',
             );
           }
         }
@@ -2618,7 +2669,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📤 Sending Work Plan Details request to: $url');
-        print('📤 Sending getWorkPlan Details header: ${ApiConstants.headerWithToken}');
+        print('📤 Sending getWorkPlan Details header: ${ApiConstants
+            .headerWithToken}');
       }
 
       final response = await ApiClient.send(() {
@@ -2660,7 +2712,8 @@ class ApiIntegration {
         return result;
       } else {
         if (kDebugMode) {
-          print('❌ get Work Plan Details failed with status ${response.statusCode}');
+          print('❌ get Work Plan Details failed with status ${response
+              .statusCode}');
         }
         final jsonResponse = jsonDecode(response.body);
         final result = GetWorkPlanDetailsResponseBody.fromJson(jsonResponse);
@@ -2679,7 +2732,8 @@ class ApiIntegration {
       // Try to return cached data on network error
       try {
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+            .getCachedResponse(
+            "${ApiConstants.getWorkPlanDetails}/$workPlanId");
         if (cachedData?.responseData != null) {
           print('📍 Network error - Falling back to cached data');
           final jsonData = jsonDecode(cachedData!.responseData!);
@@ -2703,7 +2757,8 @@ class ApiIntegration {
       // Try to return cached data on error
       try {
         final cachedData = await AppBlocProvider.cacheRepository
-            .getCachedResponse("${ApiConstants.getWorkPlanDetails}/$workPlanId");
+            .getCachedResponse(
+            "${ApiConstants.getWorkPlanDetails}/$workPlanId");
         if (cachedData?.responseData != null) {
           print('📍 Error occurred - Falling back to cached data');
           final jsonData = jsonDecode(cachedData!.responseData!);
@@ -2720,7 +2775,8 @@ class ApiIntegration {
     }
   }
 
-  static Future<PostWorkPlanResponseBody> postWorkPlan(PostWorkPlanRequestBody requestBody) async {
+  static Future<PostWorkPlanResponseBody> postWorkPlan(
+      PostWorkPlanRequestBody requestBody) async {
     try {
       final url = Uri.parse(ApiConstants.postWorkPlan);
 
@@ -2787,7 +2843,8 @@ class ApiIntegration {
 
   ///-----------------PATCH METHOD --------------------------
 
-  static Future<GetProfileResponseBody> updateProfile(GetProfileRequestBody requestBody) async {
+  static Future<GetProfileResponseBody> updateProfile(
+      GetProfileRequestBody requestBody) async {
     try {
       final url = Uri.parse(ApiConstants.updateProfile);
 
@@ -2831,7 +2888,7 @@ class ApiIntegration {
       print('❌ $errorMsg');
       return GetProfileResponseBody(
         status: false,
-        message:errorMsg,
+        message: errorMsg,
       );
     } catch (e) {
       final errorMsg = 'Error: ${e.toString()}';
@@ -2844,7 +2901,8 @@ class ApiIntegration {
   }
 
 
-  static Future<ApproveResponseBody> approvePendingUsers(ApproveRequestBody requestBody,String id) async {
+  static Future<ApproveResponseBody> approvePendingUsers(
+      ApproveRequestBody requestBody, String id) async {
     try {
       final url = Uri.parse("${ApiConstants.approveRegistration}/$id");
 
@@ -2899,8 +2957,6 @@ class ApiIntegration {
       );
     }
   }
-
-
 
 
   /// ---------------- DELETE METHOD -------------------------
@@ -2962,7 +3018,6 @@ class ApiIntegration {
   }
 
 
-
   /// Check if device has internet connectivity
   static Future<bool> hasConnectivity() async {
     try {
@@ -2997,11 +3052,13 @@ class ApiIntegration {
 
   ///---------------------POST METHOD ---------------------------
 
-  static Future<PunchInOutResponseBody> punchIn(PunchInOutRequestBody body) async {
+  static Future<PunchInOutResponseBody> punchIn(
+      PunchInOutRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.punchIn);
       if (kDebugMode) print('📤 Sending punchIn request to: $url');
-      if (kDebugMode) print('📤 Sending headers: ${ApiConstants.headerWithToken()}');
+      if (kDebugMode) print(
+          '📤 Sending headers: ${ApiConstants.headerWithToken()}');
 
       final response = await ApiClient.send(() {
         return http.post(
@@ -3034,7 +3091,8 @@ class ApiIntegration {
     }
   }
 
-  static Future<PunchInOutResponseBody> punchOut(PunchInOutRequestBody body) async {
+  static Future<PunchInOutResponseBody> punchOut(
+      PunchInOutRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.punchOut);
       if (kDebugMode) print('📤 Sending punchOut request to: $url');
@@ -3142,7 +3200,8 @@ class ApiIntegration {
   //
   //
 
-  static Future<ApiCommonResponseBody> locationPing(PunchInOutRequestBody requestBody) async {
+  static Future<ApiCommonResponseBody> locationPing(
+      PunchInOutRequestBody requestBody) async {
     try {
       final url = Uri.parse(ApiConstants.locationPing);
 
@@ -3216,7 +3275,8 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postColors(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postColors(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postColors);
       if (kDebugMode) print('📤 Sending postColors request to: $url');
@@ -3247,12 +3307,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postColors error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postFinishes(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postFinishes(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postFinishes);
       if (kDebugMode) print('📤 Sending postFinishes request to: $url');
@@ -3283,12 +3345,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postFinishes error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postTextures(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postTextures(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postTextures);
       if (kDebugMode) print('📤 Sending postTextures request to: $url');
@@ -3319,12 +3383,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postTextures error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postNaturalColors(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postNaturalColors(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postNaturalColors);
       if (kDebugMode) print('📤 Sending postNaturalColors request to: $url');
@@ -3355,12 +3421,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postNaturalColors error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postOrigins(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postOrigins(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postOrigins);
       if (kDebugMode) print('📤 Sending postOrigins request to: $url');
@@ -3391,12 +3459,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postOrigins error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postStateCountries(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postStateCountries(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postStateCountries);
       if (kDebugMode) print('📤 Sending postStateCountries request to: $url');
@@ -3427,12 +3497,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postStateCountries error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postProcessingNatures(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postProcessingNatures(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postProcessingNatures);
       if (kDebugMode) print('📤 Sending postProcessingNatures request to: $url');
@@ -3457,18 +3529,21 @@ class ApiIntegration {
         final jsonResponse = jsonDecode(response.body);
         return PostCatalogueCommonResponseBody(
           status: false,
-          message: jsonResponse['message'] ?? 'Insert postProcessing Natures failed',
+          message: jsonResponse['message'] ??
+              'Insert postProcessing Natures failed',
           statusCode: response.statusCode,
         );
       }
     } catch (e) {
       if (kDebugMode) print('❌ postProcessingNatures error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postNaturalMaterials(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postNaturalMaterials(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postNaturalMaterials);
       if (kDebugMode) print('📤 Sending postColors request to: $url');
@@ -3499,12 +3574,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postNaturalMaterials error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postHandicraftsTypes(PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postHandicraftsTypes(
+      PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postHandicraftsTypes);
       if (kDebugMode) print('📤 Sending postHandicraftsTypes request to: $url');
@@ -3535,12 +3612,14 @@ class ApiIntegration {
       }
     } catch (e) {
       if (kDebugMode) print('❌ postHandicraftsTypes error: $e');
-      return PostCatalogueCommonResponseBody(status: false, message: e.toString());
+      return PostCatalogueCommonResponseBody(
+          status: false, message: e.toString());
     }
   }
 
 
-  static Future<ProductEntryResponseBody> postProductEntry(ProductEntryRequestBody body) async {
+  static Future<ProductEntryResponseBody> postProductEntry(
+      ProductEntryRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postProductEntry);
       if (kDebugMode) print('📤 Sending postProductEntry request to: $url');
@@ -3666,11 +3745,12 @@ class ApiIntegration {
   static Future<ApiCommonResponseBody> putCatalogueOptionsEntry({
     required String productId,
     required PutCatalogueOptionEntryRequestBody requestBody,
-  })
-  async {
+  }) async {
     try {
-      final url = Uri.parse('${ApiConstants.putCatalogueOptionsEntry}/$productId/options');
-      if (kDebugMode) print('📤 Sending putCatalogueOptionsEntry request to: $url');
+      final url = Uri.parse(
+          '${ApiConstants.putCatalogueOptionsEntry}/$productId/options');
+      if (kDebugMode) print(
+          '📤 Sending putCatalogueOptionsEntry request to: $url');
 
       final response = await ApiClient.send(() {
         return http.put(
@@ -3682,7 +3762,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📥 putCatalogueOptionsEntry status: ${response.statusCode}');
-        print('📥 putCatalogueOptionsEntry request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 putCatalogueOptionsEntry request: ${jsonEncode(
+            requestBody.toJson())}');
         print('📥 putCatalogueOptionsEntry body: ${response.body}');
       }
 
@@ -3693,7 +3774,8 @@ class ApiIntegration {
         final jsonResponse = jsonDecode(response.body);
         return ApiCommonResponseBody(
           status: false,
-          message: jsonResponse['message'] ?? 'Failed to update product options',
+          message: jsonResponse['message'] ??
+              'Failed to update product options',
           statusCode: response.statusCode,
         );
       }
@@ -3707,11 +3789,9 @@ class ApiIntegration {
   }
 
 
-
   static Future<PostMinesEntryResponseBody> postMinesEntry({
     required PostMinesEntryRequestBody requestBody,
-  })
-  async {
+  }) async {
     try {
       final url = Uri.parse(ApiConstants.postMinesEntry);
       if (kDebugMode) print('📤 Sending postMinesEntry request to: $url');
@@ -3725,9 +3805,8 @@ class ApiIntegration {
       });
 
       if (kDebugMode) {
-        print('📥 postMinesEntry status: ${response.statusCode}');
-        print('📥 postMinesEntry request: ${jsonEncode(requestBody.toJson())}');
-        print('📥 postMinesEntry body: ${response.body}');
+        print('📥 response status: ${response.statusCode}');
+        print('📥 response body: ${response.body}');
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -3831,8 +3910,7 @@ class ApiIntegration {
 
   static Future<GetCatalogueProductResponseBody> postSearch({
     required PostSearchRequestBody requestBody,
-  })
-  async {
+  }) async {
     try {
       final url = Uri.parse(ApiConstants.postSearch);
       if (kDebugMode) print('📤 Sending postSearch request to: $url');
@@ -3874,8 +3952,7 @@ class ApiIntegration {
 
   static Future<PostMomEntryResponseBody> postMomEntry({
     required PostMomEntryRequestBody requestBody,
-  })
-  async {
+  }) async {
     try {
       final url = Uri.parse(ApiConstants.postMomEntry);
       if (kDebugMode) print('📤 Sending postMomEntry request to: $url');
@@ -3917,8 +3994,7 @@ class ApiIntegration {
 
   static Future<PostClientAddResponseBody> postClientAdd({
     required PostClientAddRequestBody requestBody,
-  })
-  async {
+  }) async {
     try {
       final url = Uri.parse(ApiConstants.postClients);
       if (kDebugMode) print('📤 Sending postClients request to: $url');
@@ -3962,10 +4038,10 @@ class ApiIntegration {
     required PostClientAddContactRequestBody requestBody,
     required String clientId,
     required String locationId
-  })
-  async {
+  }) async {
     try {
-      final url = Uri.parse("${ApiConstants.postClients}/$clientId/locations/$locationId/contacts");
+      final url = Uri.parse("${ApiConstants
+          .postClients}/$clientId/locations/$locationId/contacts");
       if (kDebugMode) print('📤 Sending postClients contacts request to: $url');
 
       final response = await ApiClient.send(() {
@@ -3978,7 +4054,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📥 postClients contacts status: ${response.statusCode}');
-        print('📥 postClients contacts request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postClients contacts request: ${jsonEncode(
+            requestBody.toJson())}');
         print('📥 postClients contacts body: ${response.body}');
       }
 
@@ -4006,8 +4083,7 @@ class ApiIntegration {
   static Future<PostClientAddLocationResponseBody> postClientAddLocation({
     required PostClientAddLocationRequestBody requestBody,
     required String clientId,
-  })
-  async {
+  }) async {
     try {
       final url = Uri.parse("${ApiConstants.postClients}/$clientId/locations");
       if (kDebugMode) print('📤 Sending postClients locations request to: $url');
@@ -4022,7 +4098,8 @@ class ApiIntegration {
 
       if (kDebugMode) {
         print('📥 postClients locations status: ${response.statusCode}');
-        print('📥 postClients locations request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 postClients locations request: ${jsonEncode(
+            requestBody.toJson())}');
         print('📥 postClients locations body: ${response.body}');
       }
 
@@ -4048,139 +4125,510 @@ class ApiIntegration {
   }
 
 
+  // ==================== LEAD APIs ====================
+
+  /// Post New Lead
+  static Future<NewLeadResponseBody> postNewLead({
+    required PostNewLeadRequestBody requestBody,
+  }) async
+  {
+    try {
+      if (kDebugMode) {
+        print(
+            '📤 Sending postNewLead request to: ${ApiConstants.postLeadEntry}');
+        print('📤 Sending postNewLead header: ${ApiConstants.headerWithToken}');
+        print('📤 postNewLead request: ${jsonEncode(requestBody.toJson())}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          Uri.parse(ApiConstants.postLeadEntry),
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response postNewLead status: ${response.statusCode}');
+        print('📥 postNewLead body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = NewLeadResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ postNewLead successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ postNewLead failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        return NewLeadResponseBody.fromJson(jsonResponse);
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return NewLeadResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return NewLeadResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  /// Get Lead List
+  static Future<GetLeadListResponseBody> getLeadList({
+    int? page,
+    int? pageSize,
+    String? search,
+  }) async
+  {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // Build query parameters
+      final queryParams = <String, String>{};
+      if (page != null) {
+        queryParams['Page'] = page.toString();
+      }
+      if (pageSize != null) {
+        queryParams['PageSize'] = pageSize.toString();
+      }
+      if (search != null && search.isNotEmpty) {
+        queryParams['Search'] = search;
+      }
+
+      // Create cache key with params
+      final cacheKey = queryParams.isEmpty
+          ? ApiConstants.getLeadList
+          : '${ApiConstants.getLeadList}?${Uri(queryParameters: queryParams)
+          .query}';
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Lead List from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(cacheKey);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetLeadListResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached Lead List: $e');
+            return GetLeadListResponseBody(
+              status: false,
+              message: 'Failed to load cached Lead List: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetLeadListResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API with query params
+      final uri = Uri.parse(ApiConstants.getLeadList).replace(
+        queryParameters: queryParams.isEmpty ? null : queryParams,
+      );
+
+      if (kDebugMode) {
+        print('📤 Sending get Lead List request to: $uri');
+        print(
+            '📤 Sending get Lead List header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          uri,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getLeadList status: ${response.statusCode}');
+        print('Response getLeadList body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetLeadListResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getLeadList successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                cacheKey,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getLeadList response');
+          }
+        } catch (e) {
+          print('Error caching getLeadList: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getLeadList failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetLeadListResponseBody.fromJson(jsonResponse);
+        return GetLeadListResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getLeadList);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetLeadListResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetLeadListResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.getLeadList);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetLeadListResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetLeadListResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  /// Get Lead Details
+  static Future<GetLeadDetailsResponseBody> getLeadDetails(
+      String leadId) async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Lead Details from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getLeadDetails}/$leadId");
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetLeadDetailsResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached Lead Details: $e');
+            return GetLeadDetailsResponseBody(
+              status: false,
+              message: 'Failed to load cached Lead Details: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetLeadDetailsResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse("${ApiConstants.getLeadDetails}/$leadId");
+
+      if (kDebugMode) {
+        print('📤 Sending Lead Details request to: $url');
+        print('📤 Sending getLead Details header: ${ApiConstants
+            .headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getLead Details status: ${response.statusCode}');
+        print('Response getLead Details body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetLeadDetailsResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getLead Details successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                "${ApiConstants.getLeadDetails}/$leadId",
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getLeadDetails response');
+          }
+        } catch (e) {
+          print('Error caching getLead Details: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ get Lead Details failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetLeadDetailsResponseBody.fromJson(jsonResponse);
+        return GetLeadDetailsResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getLeadDetails}/$leadId");
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetLeadDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetLeadDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse("${ApiConstants.getLeadDetails}/$leadId");
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetLeadDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetLeadDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  /// Get Assignable Users - Fetch list of users who can be assigned to leads
+  static Future<LeadAssignResponseBody> getAssignableUsers() async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading assignable users from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.leadsAssign);
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return LeadAssignResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached assignable users: $e');
+            return LeadAssignResponseBody(
+              status: false,
+              message: 'Failed to load cached assignable users: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return LeadAssignResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse(ApiConstants.leadsAssign);
+
+      if (kDebugMode) {
+        print('📤 Sending getAssignableUsers request to: $url');
+        print('📤 Sending getAssignableUsers header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getAssignableUsers status: ${response.statusCode}');
+        print('Response getAssignableUsers body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = LeadAssignResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getAssignableUsers successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                ApiConstants.leadsAssign,
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached getAssignableUsers response');
+          }
+        } catch (e) {
+          print('Error caching getAssignableUsers: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getAssignableUsers failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = LeadAssignResponseBody.fromJson(jsonResponse);
+        return LeadAssignResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.leadsAssign);
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return LeadAssignResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return LeadAssignResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(ApiConstants.leadsAssign);
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return LeadAssignResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return LeadAssignResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
 }
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       final meeting = Meeting(
-//         id: meetingId,
-//         title: 'Sample Meeting',
-//         status: 'completed',
-//         startTime: DateTime.now().subtract(const Duration(hours: 1)),
-//         endTime: DateTime.now(),
-//         organizer: 'current_user',
-//       );
-//
-//       return MeetingResponse(
-//         success: true,
-//         message: 'Meeting ended successfully',
-//         meeting: meeting,
-//       );
-//     } catch (e) {
-//       return MeetingResponse(
-//         success: false,
-//         message: 'Failed to end meeting: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-//   /// Get list of all meetings
-//   static Future<MeetingsListResponse> getMeetings() async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return const MeetingsListResponse(
-//         success: true,
-//         message: 'Meetings loaded successfully',
-//         meetings: [],
-//       );
-//     } catch (e) {
-//       return MeetingsListResponse(
-//         success: false,
-//         message: 'Failed to load meetings: ${e.toString()}',
-//         meetings: [],
-//       );
-//     }
-//   }
-//
-//   /// Get details of a specific meeting
-//   static Future<MeetingDetailResponse> getMeetingDetail(String meetingId) async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       return const MeetingDetailResponse(
-//         success: false,
-//         message: 'Meeting not found',
-//       );
-//     } catch (e) {
-//       return MeetingDetailResponse(
-//         success: false,
-//         message: 'Failed to load meeting detail: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-//   // ===================== DASHBOARD APIs =====================
-//
-//   /// Get executive dashboard data
-//   static Future<ExecutiveDashboardResponse> getExecutiveDashboard() async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       final stats = const DashboardStats(
-//         totalEmployees: 50,
-//         activeEmployees: 45,
-//         totalMeetings: 12,
-//         activeMeetings: 3,
-//       );
-//
-//       final recentMeetings = [
-//         Meeting(
-//           id: 'meeting_1',
-//           title: 'Weekly Team Standup',
-//           status: 'active',
-//           startTime: DateTime.now(),
-//           organizer: 'executive_1',
-//           location: 'Conference Room A',
-//         ),
-//         Meeting(
-//           id: 'meeting_2',
-//           title: 'Project Review',
-//           status: 'completed',
-//           startTime: DateTime.now().subtract(const Duration(hours: 2)),
-//           endTime: DateTime.now().subtract(const Duration(hours: 1)),
-//           organizer: 'executive_1',
-//         ),
-//       ];
-//
-//       final todayAttendance = AttendanceRecord(
-//         id: 'attendance_1',
-//         date: DateTime.now(),
-//         punchInTime: DateTime.now().subtract(const Duration(hours: 8)),
-//         punchInLocation: 'Office',
-//         workingHours: 8,
-//       );
-//
-//       return ExecutiveDashboardResponse(
-//         success: true,
-//         message: 'Executive dashboard data fetched successfully',
-//         stats: stats,
-//         recentMeetings: recentMeetings,
-//         todayAttendance: todayAttendance,
-//       );
-//     } catch (e) {
-//       return ExecutiveDashboardResponse(
-//         success: false,
-//         message: 'Failed to load executive dashboard: ${e.toString()}',
-//       );
-//     }
-//   }
-//
-//   /// Get admin dashboard data
-//   static Future<AdminDashboardResponse> getAdminDashboard() async {
-//     try {
-//       await Future.delayed(const Duration(seconds: 1));
-//
-//       final stats = DashboardStats(
-//         totalEmployees: 50,
-//         activeEmployees: 45,
-//         totalMeetings: 25,
-//         activeMeetings: 5,
-//       );
-//
-//       final recentEmployees = [
-//         User(
-//           id: 'emp_1',
-//           username: 'john.doe@company.com',
-//           email: 'john.doe@company.com',
-//           firstName: 'John',

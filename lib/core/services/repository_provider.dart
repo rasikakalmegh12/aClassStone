@@ -3,6 +3,7 @@ import 'package:apclassstone/api/network/network_service.dart';
 import 'package:apclassstone/api/network/offline_api_wrapper.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
+import 'package:apclassstone/bloc/lead/lead_bloc.dart';
 import 'package:apclassstone/data/local/cache_repository.dart';
 import 'package:apclassstone/data/local/queue_repository.dart';
 import 'package:apclassstone/bloc/queue/queue_bloc.dart';
@@ -61,6 +62,12 @@ class AppBlocProvider {
   static late GetWorkPlanListBloc _getWorkPlanListBloc;
   static late GetWorkPlanDetailsBloc _getWorkPlanDetailsBloc;
   static late PostWorkPlanBloc _postWorkPlanBloc;
+
+  // Lead BLoCs
+  static late PostNewLeadBloc _postNewLeadBloc;
+  static late GetLeadListBloc _getLeadListBloc;
+  static late GetLeadDetailsBloc _getLeadDetailsBloc;
+  static late GetAssignableUsersBloc _getAssignableUsersBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -142,6 +149,12 @@ class AppBlocProvider {
     _getWorkPlanDetailsBloc = GetWorkPlanDetailsBloc();
     _postWorkPlanBloc = PostWorkPlanBloc();
 
+    // Initialize Lead BLoCs
+    _postNewLeadBloc = PostNewLeadBloc();
+    _getLeadListBloc = GetLeadListBloc();
+    _getLeadDetailsBloc = GetLeadDetailsBloc();
+    _getAssignableUsersBloc = GetAssignableUsersBloc();
+
 
   }
 
@@ -198,6 +211,12 @@ class AppBlocProvider {
   static GetWorkPlanDetailsBloc get getWorkPlanDetailsBloc => _getWorkPlanDetailsBloc;
   static PostWorkPlanBloc get postWorkPlanBloc => _postWorkPlanBloc;
 
+  // Lead BLoC getters
+  static PostNewLeadBloc get postNewLeadBloc => _postNewLeadBloc;
+  static GetLeadListBloc get getLeadListBloc => _getLeadListBloc;
+  static GetLeadDetailsBloc get getLeadDetailsBloc => _getLeadDetailsBloc;
+  static GetAssignableUsersBloc get getAssignableUsersBloc => _getAssignableUsersBloc;
+
 
   // Service getters for direct access
   static ConnectivityService get connectivityService => _connectivityService;
@@ -247,6 +266,13 @@ class AppBlocProvider {
     _getClientListBloc.close();
     _getClientListBloc.close();
     _attendanceTrackingMonthlyBloc.close();
+
+    // Dispose Lead BLoCs
+    _postNewLeadBloc.close();
+    _getLeadListBloc.close();
+    _getLeadDetailsBloc.close();
+    _getAssignableUsersBloc.close();
+
     _connectivityService.dispose();
     _syncService.dispose();
   }

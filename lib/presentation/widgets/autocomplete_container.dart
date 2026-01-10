@@ -38,7 +38,7 @@ class CustomAutocompleteSection extends StatelessWidget {
         : null;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -56,13 +56,13 @@ class CustomAutocompleteSection extends StatelessWidget {
           /// Header
           Row(
             children: [
-              Icon(icon, size: 20, color: _primaryColor),
+              Icon(icon, size: 18, color: _primaryColor),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -75,7 +75,7 @@ class CustomAutocompleteSection extends StatelessWidget {
               ]
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
           /// Autocomplete
           RawAutocomplete<DropdownOption>(

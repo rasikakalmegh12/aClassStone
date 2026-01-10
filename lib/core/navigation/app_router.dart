@@ -19,6 +19,7 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import '../../bloc/lead/lead_bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../core/services/repository_provider.dart';
 import '../../presentation/catalog/catalog_main.dart';
@@ -408,6 +409,8 @@ class AppRouter {
                 BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
                 BlocProvider<PostMomEntryBloc>(create: (context) => PostMomEntryBloc(),),
                 BlocProvider(create: (_) => MomImageUploadBloc()),
+                BlocProvider<GetCatalogueProductListBloc>(create: (context) => GetCatalogueProductListBloc(),),
+                BlocProvider<GetCatalogueProductDetailsBloc>(create: (context) => GetCatalogueProductDetailsBloc(),),
               ],
               child: const NewMomScreen(),
             );
@@ -482,6 +485,8 @@ class AppRouter {
               BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
               BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
               BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+              BlocProvider<GetLeadDetailsBloc>(create: (context) => GetLeadDetailsBloc(),),
+              BlocProvider<GetLeadListBloc>(create: (context) => GetLeadListBloc(),),
             ],
             child: const LeadsListScreen(),
           );
@@ -497,6 +502,12 @@ class AppRouter {
               BlocProvider<GetCatalogueProductListBloc>(
                 create: (context) => GetCatalogueProductListBloc(),
               ),
+              BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
+              BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
+              BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
+              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
+              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+              BlocProvider<GetAssignableUsersBloc>(create: (context) => GetAssignableUsersBloc(),),
             ],
             child: NewLeadScreen(
               existingLead: leadData, // Pass the extra data

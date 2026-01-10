@@ -1,12 +1,13 @@
-class GetMomResponseBody {
+class GetLeadListResponseBody {
   bool? status;
   String? message;
   int? statusCode;
   Data? data;
 
-  GetMomResponseBody({this.status, this.message, this.statusCode, this.data});
+  GetLeadListResponseBody(
+      {this.status, this.message, this.statusCode, this.data});
 
-  GetMomResponseBody.fromJson(Map<String, dynamic> json) {
+  GetLeadListResponseBody.fromJson(Map<String, dynamic> json) {
     status = json['status'];
     message = json['message'];
     statusCode = json['statusCode'];
@@ -75,65 +76,61 @@ class Data {
 
 class Items {
   String? id;
-  String? momId;
+  String? leadNo;
   String? clientId;
-  String? clientCode;
   String? clientName;
-  String? contactName;
-  String? executiveFullName;
-  String? meetingType;
-  String? meetingAt;
-  String? meetingAtDisplay;
-  bool? followUpRequired;
-  bool? isConvertedToLead;
-  String? shortNotes;
+  String? executiveUserId;
+  String? executiveName;
+  bool? isFromMom;
+  int? grandTotal;
+  String? deadlineDate;
+  String? assignedToUserId;
+  String? assignedToName;
+  String? createdAt;
 
   Items(
       {this.id,
-        this.momId,
+        this.leadNo,
         this.clientId,
-        this.clientCode,
         this.clientName,
-        this.contactName,
-        this.executiveFullName,
-        this.meetingType,
-        this.meetingAt,
-        this.meetingAtDisplay,
-        this.followUpRequired,
-        this.isConvertedToLead,
-        this.shortNotes});
+        this.executiveUserId,
+        this.executiveName,
+        this.isFromMom,
+        this.grandTotal,
+        this.deadlineDate,
+        this.assignedToUserId,
+        this.assignedToName,
+        this.createdAt});
 
   Items.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    momId = json['momId'];
+    leadNo = json['leadNo'];
     clientId = json['clientId'];
-    clientCode = json['clientCode'];
     clientName = json['clientName'];
-    contactName = json['contactName'];
-    executiveFullName = json['executiveFullName'];
-    meetingType = json['meetingType'];
-    meetingAt = json['meetingAt'];
-    meetingAtDisplay = json['meetingAtDisplay'];
-    followUpRequired = json['followUpRequired'];
-    isConvertedToLead = json['isConvertedToLead'];
-    shortNotes = json['shortNotes'];
+    executiveUserId = json['executiveUserId'];
+    executiveName = json['executiveName'];
+    isFromMom = json['isFromMom'];
+    grandTotal = json['grandTotal'];
+    deadlineDate = json['deadlineDate'];
+    assignedToUserId = json['assignedToUserId'];
+    assignedToName = json['assignedToName'];
+    createdAt = json['createdAt'];
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
-    data['momId'] = this.momId;
+    data['leadNo'] = this.leadNo;
     data['clientId'] = this.clientId;
-    data['clientCode'] = this.clientCode;
     data['clientName'] = this.clientName;
-    data['contactName'] = this.contactName;
-    data['executiveFullName'] = this.executiveFullName;
-    data['meetingType'] = this.meetingType;
-    data['meetingAt'] = this.meetingAt;
-    data['meetingAtDisplay'] = this.meetingAtDisplay;
-    data['followUpRequired'] = this.followUpRequired;
-    data['isConvertedToLead'] = this.isConvertedToLead;
-    data['shortNotes'] = this.shortNotes;
+    data['executiveUserId'] = this.executiveUserId;
+    data['executiveName'] = this.executiveName;
+    data['isFromMom'] = this.isFromMom;
+    data['grandTotal'] = this.grandTotal;
+    data['deadlineDate'] = this.deadlineDate;
+    data['assignedToUserId'] = this.assignedToUserId;
+    data['assignedToName'] = this.assignedToName;
+    data['createdAt'] = this.createdAt;
     return data;
   }
 }

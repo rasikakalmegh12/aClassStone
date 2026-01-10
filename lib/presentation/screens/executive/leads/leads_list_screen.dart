@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -86,8 +87,13 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.pushNamed("newLeadScreen");
+        onPressed: () async {
+         final result= await context.pushNamed("newLeadScreen");
+         if (result== true){
+if (kDebugMode) {
+  print(" lead added successfully");
+}
+         }
           // Navigator.push(
           //   context,
           //   MaterialPageRoute(builder: (context) => const NewLeadScreen()),
@@ -138,16 +144,16 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: AppColors.grey200),
             ),
-            child: TextField(
+            child: const TextField(
               decoration: InputDecoration(
                 hintText: 'Search leads by client, product, or lead number',
                 hintStyle: TextStyle(
                   fontSize: 14,
                   color: AppColors.textLight,
                 ),
-                prefixIcon: const Icon(Icons.search, color: AppColors.textLight),
+                prefixIcon: Icon(Icons.search, color: AppColors.textLight),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
           ),
@@ -241,7 +247,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                     children: [
                       Text(
                         lead['leadNumber'],
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primaryTeal,
@@ -250,7 +256,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       const SizedBox(height: 4),
                       Text(
                         lead['clientName'],
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textPrimary,
@@ -305,7 +311,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Products
-                Text(
+                const Text(
                   'Products:',
                   style: TextStyle(
                     fontSize: 12,
@@ -326,7 +332,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                       ),
                       child: Text(
                         product,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11,
                           color: AppColors.textSecondary,
                         ),
@@ -363,7 +369,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.schedule,
                           size: 16,
                           color: AppColors.accentAmber,
@@ -371,7 +377,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Follow-up due: ${lead['followUpDate']}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.accentAmber,
@@ -401,7 +407,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                         const SizedBox(width: 8),
                         Text(
                           'Closed on: ${lead['closedDate']}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: AppColors.success,
@@ -429,7 +435,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Update',
                             style: TextStyle(
                               fontSize: 12,
@@ -451,7 +457,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                             ),
                             elevation: 0,
                           ),
-                          child: Text(
+                          child: const Text(
                             'View Details',
                             style: TextStyle(
                               fontSize: 12,
@@ -472,7 +478,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'View Details',
                             style: TextStyle(
                               fontSize: 12,
@@ -502,7 +508,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
             const SizedBox(width: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 color: AppColors.textSecondary,
               ),
@@ -512,7 +518,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
         const SizedBox(height: 4),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
@@ -535,7 +541,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Sort Leads',
                 style: TextStyle(
                   fontSize: 18,
@@ -545,7 +551,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
               ),
               const SizedBox(height: 16),
               ListTile(
-                title: Text('By Deadline'),
+                title: const Text('By Deadline'),
                 leading: const Icon(Icons.calendar_today_outlined),
                 onTap: () {
                   Navigator.pop(context);
