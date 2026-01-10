@@ -74,7 +74,8 @@ class _ExecutiveHistoryViewState extends State<ExecutiveHistoryView> {
         preferredSize: const Size.fromHeight(56),
         child: CoolAppCard(
           title: "Executive Tracking",
-          backgroundColor: SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminPrimary: AppColors.primaryTealDark,
+          backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+          AppColors.adminPrimaryDark :AppColors.primaryTealDark,
           action: IconButton(
             icon: const Icon(Icons.calendar_month, color: Colors.white, size: 20),
 

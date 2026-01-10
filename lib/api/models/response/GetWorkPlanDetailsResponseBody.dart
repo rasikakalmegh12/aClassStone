@@ -34,10 +34,10 @@ class Data {
   String? toDate;
   String? status;
   String? executiveNote;
-  Null? adminComment;
+  String? adminComment;
   String? submittedAt;
-  Null? approvedAt;
-  Null? approvedByAdminUserId;
+  String? approvedAt;
+  String? approvedByAdminUserId;
   List<Days>? days;
 
   Data(
@@ -141,7 +141,7 @@ class Clients {
   String? clientId;
   String? clientName;
   String? addedBy;
-  Null? adminNote;
+  String? adminNote;
   String? createdAt;
 
   Clients(

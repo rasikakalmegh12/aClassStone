@@ -250,7 +250,8 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(56),
         // pass headerColor to the custom app bar
-        child: CoolAppCard(title:  widget.existingLead != null ? 'Update Lead' : 'New Lead',),
+        child: CoolAppCard(title:  widget.existingLead != null ? 'Update Lead' : 'New Lead',backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+        AppColors.adminPrimaryDark :AppColors.primaryTealDark,),
       ),
       // appBar: _buildAppBar(),
       body: MultiBlocListener(
@@ -2474,7 +2475,8 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           child: ElevatedButton(
             onPressed: _submitLead,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryTeal,
+              backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+              AppColors.adminPrimaryDark :AppColors.primaryTealDark,
               foregroundColor: AppColors.white,
               padding: const EdgeInsets.symmetric(vertical: 12),
               shape: RoundedRectangleBorder(

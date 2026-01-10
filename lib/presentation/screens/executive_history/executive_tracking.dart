@@ -514,9 +514,9 @@ class _ExecutiveTrackingState extends State<ExecutiveTracking> {
         ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
-            gradient:SessionManager.getUserRole().toString().toLowerCase() =="superadmin" ?AppColors.superAdminGradient:  const LinearGradient(
-              colors: [Color(0xFF4A6CF7), Color(0xFF6E8BFF)],
-            ),
+            gradient:SessionManager.getUserRole() =="superadmin"?AppColors.superAdminGradient:SessionManager.getUserRole() =="admin"?
+            AppColors.adminGradient :AppColors.primaryGradient,
+
           ),
         ),
       ),

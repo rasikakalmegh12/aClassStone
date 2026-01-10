@@ -19,8 +19,11 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import '../../bloc/generate_pdf/generate_pdf_bloc.dart';
 import '../../bloc/lead/lead_bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
+import '../../bloc/user_management/user_management_bloc.dart';
+import '../../bloc/work_plan/work_plan_decision_bloc.dart';
 import '../../core/services/repository_provider.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
@@ -227,7 +230,8 @@ class AppRouter {
               BlocProvider<AllUsersBloc>(create: (context) => AllUsersBloc(),),
               BlocProvider<ApproveRegistrationBloc>(create: (context) => ApproveRegistrationBloc(),),
               BlocProvider<RejectRegistrationBloc>(create: (context) => RejectRegistrationBloc(),),
-            ],
+              BlocProvider<UserManagementBloc>(create: (context) => UserManagementBloc(),),
+              ],
             child: const AllUsersScreen(),
           );
         },
@@ -450,6 +454,7 @@ class AppRouter {
               BlocProvider<PostWorkPlanBloc>(create: (context) => PostWorkPlanBloc(),),
               BlocProvider<GetWorkPlanDetailsBloc>(create: (context) => GetWorkPlanDetailsBloc(),),
               BlocProvider<GetWorkPlanListBloc>(create: (context) => GetWorkPlanListBloc(),),
+              BlocProvider<WorkPlanDecisionBloc>(create: (context) => WorkPlanDecisionBloc(),),
             ],
             child: const CreateWorkPlanScreen(),
           );
@@ -468,6 +473,9 @@ class AppRouter {
               BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
               BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
               BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+              BlocProvider<GetWorkPlanListBloc>(create: (context) => GetWorkPlanListBloc(),),
+              BlocProvider<GetWorkPlanDetailsBloc>(create: (context) => GetWorkPlanDetailsBloc(),),
+              BlocProvider<WorkPlanDecisionBloc>(create: (context) => WorkPlanDecisionBloc(),),
             ],
             child: const WorkPlansListScreen(),
           );
@@ -550,6 +558,7 @@ class AppRouter {
                 BlocProvider<GetHandicraftsBloc>.value(value: AppBlocProvider.getHandicraftsBloc),
                 BlocProvider<GetPriceRangeBloc>.value(value: AppBlocProvider.getPriceRangeBloc),
                 BlocProvider<GetMinesOptionBloc>.value(value: AppBlocProvider.getMinesOptionBloc),
+                BlocProvider<GeneratePdfBloc>.value(value: AppBlocProvider.generatePdfBloc),
               ],
               child: const CataloguePage());
         },

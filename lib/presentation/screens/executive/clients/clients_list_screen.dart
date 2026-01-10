@@ -193,7 +193,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                       _loadClientList(showLoader: false);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? (SessionManager.getUserRole() == "superadmin"
@@ -213,12 +213,14 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                               : AppColors.grey300,
                         ),
                       ),
-                      child: Text(
-                        filter,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected ? AppColors.white : AppColors.textSecondary,
+                      child: Center(
+                        child: Text(
+                          filter,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? AppColors.white : AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),

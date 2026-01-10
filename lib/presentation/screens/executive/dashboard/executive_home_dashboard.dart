@@ -934,7 +934,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               Expanded(
                 child: _buildQuickActionButton(
                   label: 'Work Plan',
-                  icon: Icons.more_horiz,
+                  icon: Icons.work_history_outlined,
                   onTap: () {
                     context.pushNamed("workPlanDetails");
                     // Show more options
@@ -947,7 +947,6 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
       ),
     ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.3, end: 0);
   }
-
   Widget _buildQuickActionButton({
     required String label,
     required IconData icon,
@@ -956,17 +955,19 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.grey200),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 24,
-              color: AppColors.primaryTeal,
+              size: 22,
+              color: AppColors.superAdminPrimary,
             ),
             const SizedBox(height: 4),
             Text(
@@ -974,7 +975,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: AppColors.superAdminPrimaryDark,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1003,7 +1004,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem('Home', Icons.home_outlined, true),
-              _buildNavItem('Meetings', Icons.group_outlined, false),
+              _buildNavItem('MOM', Icons.assignment_outlined, false),
               _buildNavItem('Leads', Icons.star_outline, false),
               _buildNavItem('Clients', Icons.person_outline, false),
             ],
@@ -1016,11 +1017,8 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
   Widget _buildNavItem(String label, IconData icon, bool isActive) {
     return GestureDetector(
       onTap: () {
-        if (label == 'Meetings') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const MeetingsListScreen()),
-          );
+        if (label == 'MOM') {
+          context.pushNamed("momDetailsScreen");
         } else if (label == 'Leads') {
           context.pushNamed("leadScreenList");
           // Navigator.push(
@@ -1028,10 +1026,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
           //   MaterialPageRoute(builder: (context) => const LeadsListScreen()),
           // );
         } else if (label == 'Clients') {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ClientsListScreen()),
-          );
+          context.pushNamed("clientsListScreen");
         }
       },
       child: Column(

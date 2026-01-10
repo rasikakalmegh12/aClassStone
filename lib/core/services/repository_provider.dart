@@ -3,7 +3,10 @@ import 'package:apclassstone/api/network/network_service.dart';
 import 'package:apclassstone/api/network/offline_api_wrapper.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
+import 'package:apclassstone/bloc/generate_pdf/generate_pdf_bloc.dart';
 import 'package:apclassstone/bloc/lead/lead_bloc.dart';
+import 'package:apclassstone/bloc/user_management/user_management_bloc.dart';
+import 'package:apclassstone/bloc/work_plan/work_plan_decision_bloc.dart';
 import 'package:apclassstone/data/local/cache_repository.dart';
 import 'package:apclassstone/data/local/queue_repository.dart';
 import 'package:apclassstone/bloc/queue/queue_bloc.dart';
@@ -68,6 +71,15 @@ class AppBlocProvider {
   static late GetLeadListBloc _getLeadListBloc;
   static late GetLeadDetailsBloc _getLeadDetailsBloc;
   static late GetAssignableUsersBloc _getAssignableUsersBloc;
+
+  // PDF Generation BLoC
+  static late GeneratePdfBloc _generatePdfBloc;
+
+  // User Management BLoC
+  static late UserManagementBloc _userManagementBloc;
+
+  // Work Plan Decision BLoC
+  static late WorkPlanDecisionBloc _workPlanDecisionBloc;
 
   // Offline-first services
   static late ConnectivityService _connectivityService;
@@ -155,6 +167,15 @@ class AppBlocProvider {
     _getLeadDetailsBloc = GetLeadDetailsBloc();
     _getAssignableUsersBloc = GetAssignableUsersBloc();
 
+    // Initialize PDF Generation BLoC
+    _generatePdfBloc = GeneratePdfBloc();
+
+    // Initialize User Management BLoC
+    _userManagementBloc = UserManagementBloc();
+
+    // Initialize Work Plan Decision BLoC
+    _workPlanDecisionBloc = WorkPlanDecisionBloc();
+
 
   }
 
@@ -217,6 +238,15 @@ class AppBlocProvider {
   static GetLeadDetailsBloc get getLeadDetailsBloc => _getLeadDetailsBloc;
   static GetAssignableUsersBloc get getAssignableUsersBloc => _getAssignableUsersBloc;
 
+  // PDF Generation BLoC getter
+  static GeneratePdfBloc get generatePdfBloc => _generatePdfBloc;
+
+  // User Management BLoC getter
+  static UserManagementBloc get userManagementBloc => _userManagementBloc;
+
+  // Work Plan Decision BLoC getter
+  static WorkPlanDecisionBloc get workPlanDecisionBloc => _workPlanDecisionBloc;
+
 
   // Service getters for direct access
   static ConnectivityService get connectivityService => _connectivityService;
@@ -272,6 +302,15 @@ class AppBlocProvider {
     _getLeadListBloc.close();
     _getLeadDetailsBloc.close();
     _getAssignableUsersBloc.close();
+
+    // Dispose PDF Generation BLoC
+    _generatePdfBloc.close();
+
+    // Dispose User Management BLoC
+    _userManagementBloc.close();
+
+    // Dispose Work Plan Decision BLoC
+    _workPlanDecisionBloc.close();
 
     _connectivityService.dispose();
     _syncService.dispose();

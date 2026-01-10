@@ -10,6 +10,7 @@ import '../../../../api/models/response/GetMomResponseBody.dart';
 import '../../../../bloc/mom/mom_event.dart';
 import '../../../../bloc/mom/mom_state.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/session/session_manager.dart';
 import '../../../widgets/app_bar.dart';
 import './new_mom_screen.dart';
 //
@@ -459,9 +460,10 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: const PreferredSize(
-          preferredSize: Size.fromHeight(56),
-          child: CoolAppCard(title: "MOM Details",)
+      appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(56),
+          child: CoolAppCard(title: "MOM Details",backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+          AppColors.adminPrimaryDark :AppColors.primaryTealDark,)
       ),
       body: Column(
         children: [
@@ -504,8 +506,9 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryTeal,
+      floatingActionButton: SessionManager.getUserRole() =="execuvtive"?FloatingActionButton(
+        backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+        AppColors.adminPrimaryDark :AppColors.primaryTealDark,
         child: const Icon(Icons.add, color: Colors.white),
         onPressed: () async {
           final result = await context.pushNamed("momScreen");
@@ -513,7 +516,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
             _loadMomList();
           }
         },
-      ),
+      ):null,
     );
   }
 
@@ -593,20 +596,24 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
                       _loadMomList(showLoader: false);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryTeal : AppColors.white,
+                        color: isSelected ? SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+                        AppColors.adminPrimaryDark :AppColors.primaryTealDark : AppColors.white,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: isSelected ? AppColors.primaryTeal : AppColors.grey300,
+                          color: isSelected ? SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+                          AppColors.adminPrimaryDark :AppColors.primaryTealDark: AppColors.grey300,
                         ),
                       ),
-                      child: Text(
-                        filter,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: isSelected ? AppColors.white : AppColors.textSecondary,
+                      child: Center(
+                        child: Text(
+                          filter,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isSelected ? AppColors.white : AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -774,9 +781,9 @@ class _MomDetailsBottomSheetState extends State<_MomDetailsBottomSheet> {
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.9,
+      initialChildSize: 0.7,
       minChildSize: 0.5,
-      maxChildSize: 0.95,
+      maxChildSize: 0.85,
       builder: (context, scrollController) {
         return Container(
           decoration: const BoxDecoration(
@@ -1203,9 +1210,9 @@ class _MomDetailsBottomSheetState extends State<_MomDetailsBottomSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(7),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
@@ -1214,7 +1221,7 @@ class _MomDetailsBottomSheetState extends State<_MomDetailsBottomSheet> {
               notes,
               style: const TextStyle(
                 fontSize: 14,
-                height: 1.6,
+                height: 1.3,
                 color: AppColors.textPrimary,
               ),
             ),

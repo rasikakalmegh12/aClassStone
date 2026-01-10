@@ -1908,7 +1908,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
 
   Widget _buildQuickActionsCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: AppColors.superAdminCard,
         borderRadius: BorderRadius.circular(12),
@@ -1933,65 +1933,90 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Executive Tracking',
-                  icon: Icons.route,
-                  onTap: () {
-                    context.pushNamed("executiveHistoryTracking");
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Catalogues',
-                  icon: Icons.calendar_today_outlined,
-                  onTap: () {
-                    context.pushNamed("cataloguePage");
-                  },
-                ),
-              ),
-            ],
-          ),
+IntrinsicHeight(
+  child: Row(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Expanded(
+        child: _buildQuickActionButton(
+          label: 'Executive Tracking',
+          icon: Icons.route,
+          onTap: () {
+            context.pushNamed("executiveHistoryTracking");
+          },
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: _buildQuickActionButton(
+          label: 'Catalogues',
+          icon: Icons.calendar_today_outlined,
+          onTap: () {
+            context.pushNamed("cataloguePage");
+          },
+        ),
+      ),
+      const SizedBox(width: 12),
+      Expanded(
+        child: _buildQuickActionButton(
+          label: 'Work-Plan',
+          icon: Icons.work_history_outlined,
+          onTap: () {
+            context.pushNamed("workPlanDetails");
+          },
+        ),
+      ),
+    ],
+  ),
+),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Attendance',
-                  icon: Icons.assignment_outlined,
-                  onTap: () {
-                    context.pushNamed("attendanceTracking");
-                    // Show more options
-                  },
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Attendance',
+                    icon: Icons.assignment_outlined,
+                    onTap: () {
+                      context.pushNamed("attendanceTracking");
+                      // Show more options
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Leads',
-                  icon: Icons.star_outline,
-                  onTap: () {
-
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Leads',
+                    icon: Icons.star_outline,
+                    onTap: () {
+                      context.pushNamed("leadScreenList");
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Clients',
-                  icon: Icons.person_outline,
-                  onTap: () {
-                    context.pushNamed("clientsListScreen");
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Clients',
+                    icon: Icons.person_outline,
+                    onTap: () {
+                      context.pushNamed("clientsListScreen");
+                    },
+                  ),
                 ),
-              ),
-
-
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'MOM',
+                    icon: Icons.list_alt_rounded,
+                    onTap: () {
+                      context.pushNamed("momDetailsScreen");
+                    },
+                  ),
+                ),
+            
+            
+              ],
+            ),
           ),
         ],
       ),
@@ -2006,22 +2031,24 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.grey200),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 24,
+              size: 22,
               color: AppColors.superAdminPrimary,
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 color: AppColors.superAdminPrimaryDark,

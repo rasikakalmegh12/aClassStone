@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
-
+import '../../../../api/models/request/WorkPlanDecisionRequestBody.dart';
 import '../../../../api/models/response/GetWorkPlanDetailsResponseBody.dart' as WorkPlan show Days;
 import '../../../../bloc/work_plan/work_plan_bloc.dart';
 import '../../../../bloc/work_plan/work_plan_event.dart';
 import '../../../../bloc/work_plan/work_plan_state.dart';
+import '../../../../bloc/work_plan/work_plan_decision_bloc.dart';
+import '../../../../bloc/work_plan/work_plan_decision_event.dart';
+import '../../../../bloc/work_plan/work_plan_decision_state.dart' as Decision;
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/session/session_manager.dart';
-import 'create_work_plan_screen.dart';
 
 class WorkPlansListScreen extends StatefulWidget {
   const WorkPlansListScreen({super.key});
@@ -23,7 +24,7 @@ class WorkPlansListScreen extends StatefulWidget {
 
 class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
   String selectedFilter = 'All';
-  final List<String> filters = ['All', 'DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED'];
+  final List<String> filters = ['All',  'SUBMITTED', 'APPROVED', 'REJECTED'];
 
   @override
   void initState() {
@@ -212,7 +213,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
     final roleColor = _getRoleColor();
     return Container(
       color: AppColors.white,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       child: SizedBox(
         height: 32,
         child: ListView.builder(
@@ -233,7 +234,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   _fetchWorkPlans(statusFilter: selectedFilter);
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
                   decoration: BoxDecoration(
                     color: isSelected ? roleColor : AppColors.white,
                     borderRadius: BorderRadius.circular(16),
@@ -241,12 +242,14 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                       color: isSelected ? roleColor : AppColors.grey300,
                     ),
                   ),
-                  child: Text(
-                    filter,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isSelected ? AppColors.white : AppColors.textSecondary,
+                  child: Center(
+                    child: Text(
+                      filter,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? AppColors.white : AppColors.textSecondary,
+                      ),
                     ),
                   ),
                 ),
@@ -486,206 +489,610 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (bottomSheetContext) => BlocProvider.value(
-        value: context.read<GetWorkPlanDetailsBloc>(),
-        child: DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          maxChildSize: 0.95,
-          minChildSize: 0.5,
-          expand: false,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: BlocBuilder<GetWorkPlanDetailsBloc, GetWorkPlanDetailsState>(
-                builder: (context, state) {
-                  if (state is GetWorkPlanDetailsLoading && state.showLoader) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-
-                  if (state is GetWorkPlanDetailsError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: AppColors.error,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            state.message,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  if (state is GetWorkPlanDetailsSuccess) {
-                    final data = state.response.data;
-                    if (data == null) {
-                      return const Center(
-                        child: Text('No details available'),
-                      );
-                    }
-
-                    return ListView(
-                      controller: scrollController,
-                      padding: const EdgeInsets.all(20),
-                      children: [
-                        // Header
-                        Row(
+      builder: (bottomSheetContext) => MultiBlocProvider(
+        providers: [
+          BlocProvider.value(
+            value: context.read<GetWorkPlanDetailsBloc>(),
+          ),
+          BlocProvider(
+            create: (context) => WorkPlanDecisionBloc(),
+          ),
+        ],
+        child: StatefulBuilder(
+          builder: (context, setModalState) {
+            return BlocConsumer<WorkPlanDecisionBloc,
+                Decision.WorkPlanDecisionState>(
+                listener: (context, decisionState) {
+                  if (decisionState is Decision.WorkPlanDecisionSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: roleColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                Icons.assignment,
-                                color: roleColor,
-                                size: 24,
-                              ),
-                            ),
+                            const Icon(Icons.check_circle, color: Colors.white),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Work Plan Details',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  Text(
-                                    _formatDateRange(data.fromDate, data.toDate),
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                decisionState.response.message ??
+                                    'Decision submitted successfully',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.close),
                             ),
                           ],
                         ),
+                        backgroundColor: AppColors.success,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
 
-                        const SizedBox(height: 20),
+                    // Refresh the work plan list and details
+                    this.context.read<GetWorkPlanListBloc>().add(
+                      FetchWorkPlanList(showLoader: false),
+                    );
 
-                        // Status Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: _getStatusColor(data.status).withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: _getStatusColor(data.status).withOpacity(0.3),
+                    // Refresh work plan details
+                    context.read<GetWorkPlanDetailsBloc>().add(
+                      FetchWorkPlanDetails(
+                        workPlanId: workPlanId,
+                        showLoader: false,
+                      ),
+                    );
+
+                    // Delay closing to show updated data
+                    Future.delayed(const Duration(milliseconds: 1500), () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      }
+                    });
+                  } else if (decisionState is Decision.WorkPlanDecisionError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.error, color: Colors.white),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                decisionState.message,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                _getStatusIcon(data.status),
-                                size: 16,
-                                color: _getStatusColor(data.status),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                data.status?.toUpperCase() ?? 'UNKNOWN',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: _getStatusColor(data.status),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                            ],
-                          ),
+                          ],
                         ),
-
-                        const SizedBox(height: 20),
-
-                        // Executive Info
-                        if(SessionManager.getUserRole() =="superadmin" || SessionManager.getUserRole()=="admin")
-                        _buildDetailSection(
-                          title: 'Executive',
-                          icon: Icons.person,
-                          color: roleColor,
-                          child: Text(
-                            data.executiveName ?? 'Unknown',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                        ),
-
-                        // Executive Note
-                        if (data.executiveNote != null && data.executiveNote!.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          _buildDetailSection(
-                            title: 'Executive Note',
-                            icon: Icons.note,
-                            color: AppColors.primaryTeal,
-                            child: Text(
-                              data.executiveNote!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-
-                        const SizedBox(height: 20),
-
-                        // Days Section
-                        if (data.days != null && data.days!.isNotEmpty) ...[
-                          const Text(
-                            'Daily Plan',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ...data.days!.map((day) {
-                            return _buildDayCard(day, roleColor);
-                          }),
-                        ],
-
-                        const SizedBox(height: 20),
-                      ],
+                        backgroundColor: AppColors.error,
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius
+                            .circular(10)),
+                      ),
                     );
                   }
-
-                  return const SizedBox();
                 },
-              ),
-            );
-          },
+                builder: (context, decisionState) {
+                  return DraggableScrollableSheet(
+                    initialChildSize: 0.75,
+                    maxChildSize: 0.85,
+                    minChildSize: 0.5,
+                    expand: false,
+                    builder: (context, scrollController) {
+                      return Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20)),
+                        ),
+                        child: BlocBuilder<
+                            GetWorkPlanDetailsBloc,
+                            GetWorkPlanDetailsState>(
+                          builder: (context, state) {
+                            if (state is GetWorkPlanDetailsLoading &&
+                                state.showLoader) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+
+                            if (state is GetWorkPlanDetailsError) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.error_outline,
+                                      size: 64,
+                                      color: AppColors.error,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      state.message,
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (state is GetWorkPlanDetailsSuccess) {
+                              final data = state.response.data;
+                              if (data == null) {
+                                return const Center(
+                                  child: Text('No details available'),
+                                );
+                              }
+
+                              final isAdmin = SessionManager.getUserRole() ==
+                                  "admin" ||
+                                  SessionManager.getUserRole() == "superadmin";
+                              final isPending = data.status?.toUpperCase() ==
+                                  'SUBMITTED';
+                              final isProcessing = decisionState is Decision
+                                  .WorkPlanDecisionLoading;
+
+                              return ListView(
+                                controller: scrollController,
+                                padding: const EdgeInsets.all(20),
+                                children: [
+                                  // Header
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: roleColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                              8),
+                                        ),
+                                        child: Icon(
+                                          Icons.assignment,
+                                          color: roleColor,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment
+                                              .start,
+                                          children: [
+                                            const Text(
+                                              'Work Plan Details',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppColors.textPrimary,
+                                              ),
+                                            ),
+                                            Text(
+                                              _formatDateRange(
+                                                  data.fromDate, data.toDate),
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        icon: const Icon(Icons.close),
+                                      ),
+                                    ],
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Status Badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: _getStatusColor(data.status)
+                                          .withOpacity(
+                                          0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: _getStatusColor(data.status)
+                                            .withOpacity(0.3),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          _getStatusIcon(data.status),
+                                          size: 16,
+                                          color: _getStatusColor(data.status),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          data.status?.toUpperCase() ??
+                                              'UNKNOWN',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                            color: _getStatusColor(data.status),
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 20),
+
+                                  // Executive Info
+                                  if(SessionManager.getUserRole() ==
+                                      "superadmin" ||
+                                      SessionManager.getUserRole() == "admin")
+                                    _buildDetailSection(
+                                      title: 'Executive',
+                                      icon: Icons.person,
+                                      color: roleColor,
+                                      child: Text(
+                                        data.executiveName ?? 'Unknown',
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+
+                                  // Executive Note
+                                  if (data.executiveNote != null &&
+                                      data.executiveNote!.isNotEmpty) ...[
+                                    const SizedBox(height: 16),
+                                    _buildDetailSection(
+                                      title: 'Executive Note',
+                                      icon: Icons.note,
+                                      color: AppColors.primaryTeal,
+                                      child: Text(
+                                        data.executiveNote!,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: AppColors.textPrimary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+
+
+                                  const SizedBox(height: 20),
+
+                                  // Days Section
+                                  if (data.days != null &&
+                                      data.days!.isNotEmpty) ...[
+                                    const Text(
+                                      'Daily Plan',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ...data.days!.map((day) {
+                                      return _buildDayCard(day, roleColor);
+                                    }),
+                                  ],
+                                  // Approve/Reject Buttons (for Admin/SuperAdmin only when status is SUBMITTED)
+                                  if (isAdmin && isPending) ...[
+                                    const SizedBox(height: 24),
+
+                                    // Decision Section Header
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            gradient: LinearGradient(
+                                              colors: [
+                                                roleColor.withValues(alpha: 0.1),
+                                                roleColor.withValues(alpha: 0.05),
+                                              ],
+                                            ),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.how_to_vote,
+                                            color: roleColor,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        const Text(
+                                          'Review & Decision',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.textPrimary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    const SizedBox(height: 16),
+
+                                    if (isProcessing)
+                                      Container(
+                                        padding: const EdgeInsets.all(20),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[50],
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: Colors.grey[200]!),
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 3,
+                                                color: roleColor,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            const Text(
+                                              'Processing decision...',
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.textSecondary,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    else
+                                      Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: [
+                                              Colors.grey[50]!,
+                                              Colors.white,
+                                            ],
+                                          ),
+                                          borderRadius: BorderRadius.circular(16),
+                                          border: Border.all(color: Colors.grey[200]!),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(alpha: 0.05),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            // Approve Button
+                                            Expanded(
+                                              child: Container(
+                                                width: double.infinity,
+                                                height: 50,
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Color(0xFF10B981),
+                                                      Color(0xFF059669),
+                                                    ],
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: AppColors.success.withValues(alpha: 0.3),
+                                                      blurRadius: 12,
+                                                      offset: const Offset(0, 4),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Material(
+                                                  color: Colors.transparent,
+                                                  child: InkWell(
+                                                    onTap: () => _handleDecision(
+                                                      context,
+                                                      data.id ?? '',
+                                                      'APPROVED',
+                                                      roleColor,
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          Container(
+                                                            padding: const EdgeInsets.all(5),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.white.withValues(alpha: 0.2),
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.check_circle,
+                                                              color: Colors.white,
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 12),
+                                                          const Text(
+                                                            'Approve',
+                                                            style: TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight.w700,
+                                                              color: Colors.white,
+                                                              letterSpacing: 0.5,
+                                                            ),
+                                                          ),
+
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 12),
+
+                                            // Reject Button
+                                            Expanded(
+                                              child: Container(
+                                                width: double.infinity,
+                                                height: 50,
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                    colors: [
+                                                      Color(0xFFEF4444),
+                                                      Color(0xFFDC2626),
+                                                    ],
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: AppColors.error.withValues(alpha: 0.3),
+                                                      blurRadius: 12,
+                                                      offset: const Offset(0, 4),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Material(
+                                                  color: Colors.transparent,
+                                                  child: InkWell(
+                                                    onTap: () => _handleDecision(
+                                                      context,
+                                                      data.id ?? '',
+                                                      'REJECTED',
+                                                      roleColor,
+                                                    ),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                                                      child: Row(
+                                                        mainAxisAlignment: MainAxisAlignment.center,
+                                                        children: [
+                                                          Container(
+                                                            padding: const EdgeInsets.all(5),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.white.withValues(alpha: 0.2),
+                                                              borderRadius: BorderRadius.circular(8),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.cancel,
+                                                              color: Colors.white,
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(width: 12),
+                                                          const Text(
+                                                            'Reject',
+                                                            style: TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight: FontWeight.w700,
+                                                              color: Colors.white,
+                                                              letterSpacing: 0.5,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                  const SizedBox(height: 20),
+                                ],
+                              );
+                            }
+
+                            return const SizedBox();
+                          },
+                        ),
+                      );
+                    },
+                  );
+                });
+
+          }),
+
+      ) );
+  }
+
+  /// Handle Approve/Reject Decision
+  void _handleDecision(BuildContext context, String workPlanId, String decision, Color roleColor) {
+    final isApprove = decision == 'APPROVED';
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(
+              isApprove ? Icons.check_circle : Icons.cancel,
+              color: isApprove ? AppColors.success : AppColors.error,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              '${isApprove ? 'Approve' : 'Reject'} Work Plan?',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
+        content: Text(
+          'Are you sure you want to ${isApprove ? 'approve' : 'reject'} this work plan?',
+          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+
+              // Submit decision
+              final requestBody = WorkPlanDecisionRequestBody(
+                decision: decision,
+                adminComment: null, // Can be extended to add comments
+              );
+
+              context.read<WorkPlanDecisionBloc>().add(
+                SubmitWorkPlanDecision(
+                  workPlanId: workPlanId,
+                  requestBody: requestBody,
+                  showLoader: true,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isApprove ? AppColors.success : AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: Text(isApprove ? 'Approve' : 'Reject'),
+          ),
+        ],
       ),
     );
   }

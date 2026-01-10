@@ -16,12 +16,20 @@ class ApiConstants {
   static const String getUserProfile = "${baseUrl}profile";
   static const String updateProfile = "${baseUrl}profile";
   static const String changePassword = "auth/change-password";
+  // static const String userProfileDetails = "${baseUrl}profile/users/0111c7de-0cfc-4585-a64b-02c1b03b9d78?appCode=MARKETING";
+  // static const String changeRole = "${baseUrl}admin/roles/change-role/0111c7de-0cfc-4585-a64b-02c1b03b9d78";
+  // static const String changeStatus = "${baseUrl}admin/users/0111c7de-0cfc-4585-a64b-02c1b03b9d78/status?isActive=true";
 
   // Registration Management
   static const String allUsers = "${baseUrl}admin/users/all";
   static const String pendingRegistrations = "${baseUrl}admin/users/pending";
   static const String approveRegistration = "${baseUrl}admin/users/approve";
   static const String rejectRegistration = "${baseUrl}admin/users/reject";
+
+  // User Management - Profile & Status
+  static String userProfileDetails(String userId) => "${baseUrl}profile/users/$userId?appCode=MARKETING";
+  static String changeUserStatus(String userId, bool isActive) => "${baseUrl}admin/users/$userId/status?isActive=$isActive";
+  static String changeUserRole(String userId) => "${baseUrl}admin/roles/change-role/$userId";
 
   // Attendance
   static const String punchIn = "${baseUrl}marketing/executive/punch-in";
@@ -110,6 +118,10 @@ class ApiConstants {
   static const String getLeadList = "${baseUrl}marketing/leads/list";
   static const String postLeadEntry = "${baseUrl}marketing/leads";
   static const String leadsAssign = "${baseUrl}marketing/leads/assignees";
+
+
+
+  static const String generatePdf = "${baseUrl}marketing/products";
 
   // Common Headers
   static const Map<String, String> defaultHeaders = {

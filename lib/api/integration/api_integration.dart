@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:apclassstone/api/models/request/ApproveRequestBody.dart';
+import 'package:apclassstone/api/models/request/ChangeRoleRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostCatalogueCommonRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostClientAddContactRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostClientAddLocationRequestBody.dart';
@@ -21,6 +22,7 @@ import 'package:apclassstone/api/models/response/CatalogueImageEntryResponseBody
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceMonthlyResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveAttendanceResponseBody.dart';
 import 'package:apclassstone/api/models/response/ExecutiveTrackingByDaysResponse.dart';
+import 'package:apclassstone/api/models/response/GeneratePdfResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetCatalogueProductResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetCatalogueProductDetailsResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetClientIdDetailsResponseBody.dart';
@@ -62,6 +64,7 @@ import '../constants/api_constants.dart';
 import '../models/request/GetProfileRequestBody.dart';
 import '../models/request/PostNewLeadRequestBody.dart';
 import '../models/request/RegistrationRequestBody.dart';
+import '../models/request/WorkPlanDecisionRequestBody.dart';
 import '../models/response/GetColorsResponseBody.dart';
 import '../models/response/GetLeadDetailsResponseBody.dart';
 import '../models/response/GetLeadListResponseBody.dart';
@@ -73,6 +76,9 @@ import '../models/response/PendingRegistrationResponseBody.dart';
 import '../models/response/PostClientAddResponseBody.dart';
 import '../models/response/PostMomImageUploadResponseBody.dart';
 import '../models/response/RegistrationResponseBody.dart';
+import '../models/response/RoleChangeResponsebody.dart';
+import '../models/response/StatusChangeResponsebody.dart';
+import '../models/response/UserProfileDetailsResponsebody.dart';
 import '../models/request/PunchInOutRequestBody.dart';
 import '../network/api_client.dart';
 
@@ -2631,7 +2637,8 @@ class ApiIntegration {
 
 
   static Future<GetWorkPlanDetailsResponseBody> getWorkPlanIdDetails(
-      String workPlanId) async {
+      String workPlanId) async
+  {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2774,6 +2781,8 @@ class ApiIntegration {
       );
     }
   }
+
+
 
   static Future<PostWorkPlanResponseBody> postWorkPlan(
       PostWorkPlanRequestBody requestBody) async {
@@ -4626,6 +4635,412 @@ class ApiIntegration {
       }
 
       return LeadAssignResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  // ===================== GENERATE PDF API =====================
+
+  /// Generate PDF for a product
+  ///
+  /// Returns: GeneratePdfResponseBody with PDF URL on success
+  static Future<GeneratePdfResponseBody> generatePdf(String productId) async {
+    try {
+      final url = Uri.parse("${ApiConstants.generatePdf}/$productId/pdf");
+
+      if (kDebugMode) {
+        print('📤 Sending generatePdf request to: $url');
+        print('📤 Sending generatePdf header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response generatePdf status: ${response.statusCode}');
+        print('📥 generatePdf body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GeneratePdfResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ generatePdf successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ generatePdf failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        return GeneratePdfResponseBody.fromJson(jsonResponse);
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return GeneratePdfResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return GeneratePdfResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  // ===================== USER MANAGEMENT APIs =====================
+
+  /// Get User Profile Details
+  ///
+  /// Returns: UserProfileDetailsResponseBody with user profile data
+  static Future<UserProfileDetailsResponseBody> getUserProfileDetails(String userId) async {
+    try {
+      final url = Uri.parse(ApiConstants.userProfileDetails(userId));
+
+      if (kDebugMode) {
+        print('📤 Sending getUserProfileDetails request to: $url');
+        print('📤 Sending getUserProfileDetails header: ${ApiConstants.headerWithToken}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.get(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response getUserProfileDetails status: ${response.statusCode}');
+        print('📥 getUserProfileDetails body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = UserProfileDetailsResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ getUserProfileDetails successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ getUserProfileDetails failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        return UserProfileDetailsResponseBody.fromJson(jsonResponse);
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return UserProfileDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return UserProfileDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  /// Change User Role
+  ///
+  /// Returns: RoleChangeResponseBody with updated role data
+  static Future<RoleChangeResponseBody> changeUserRole({
+    required String userId,
+    required String role,
+    String appCode = 'MARKETING',
+  }) async {
+    try {
+      final url = Uri.parse(ApiConstants.changeUserRole(userId));
+      final requestBody = ChangeRoleRequestBody(
+        role: role,
+        appCode: appCode,
+      );
+
+      if (kDebugMode) {
+        print('📤 Sending changeUserRole request to: $url');
+        print('📤 changeUserRole request body: ${jsonEncode(requestBody.toJson())}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.patch(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response changeUserRole status: ${response.statusCode}');
+        print('📥 changeUserRole body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = RoleChangeResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ changeUserRole successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ changeUserRole failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        return RoleChangeResponseBody.fromJson(jsonResponse);
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return RoleChangeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return RoleChangeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  /// Change User Status (Active/Inactive)
+  ///
+  /// Returns: StatusChangeResponseBody with updated status
+  static Future<StatusChangeResponseBody> changeUserStatus({
+    required String userId,
+    required bool isActive,
+  }) async {
+    try {
+      final url = Uri.parse(ApiConstants.changeUserStatus(userId, isActive));
+
+      if (kDebugMode) {
+        print('📤 Sending changeUserStatus request to: $url');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.patch(
+          url,
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response changeUserStatus status: ${response.statusCode}');
+        print('📥 changeUserStatus body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = StatusChangeResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ changeUserStatus successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ changeUserStatus failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        return StatusChangeResponseBody.fromJson(jsonResponse);
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return StatusChangeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return StatusChangeResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  // ===================== WORK PLAN DECISION API =====================
+
+  /// Submit Work Plan Decision (Approve/Reject)
+  ///
+  /// Returns: GetWorkPlanDetailsResponseBody with updated work plan
+  static Future<GetWorkPlanDetailsResponseBody> workPlanDecision(
+      String workPlanId, WorkPlanDecisionRequestBody requestBody) async {
+    try {
+      // Check connectivity first
+      final hasConnection = await hasConnectivity();
+
+      // If offline, try to load from cache
+      if (!hasConnection) {
+        print('📍 No connectivity - Loading Work Plan Decision from local cache');
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(
+            "${ApiConstants.getWorkPlanDetails}/$workPlanId/decision");
+
+        if (cachedData?.responseData != null) {
+          try {
+            final jsonData = jsonDecode(cachedData!.responseData!);
+            return GetWorkPlanDetailsResponseBody.fromJson(jsonData);
+          } catch (e) {
+            print('Error parsing cached Work Plan Decision: $e');
+            return GetWorkPlanDetailsResponseBody(
+              status: false,
+              message: 'Failed to load cached Work Plan Decision: ${e.toString()}',
+            );
+          }
+        }
+
+        // No cache available
+        return GetWorkPlanDetailsResponseBody(
+          status: false,
+          message: 'No internet connectivity and no cached data available',
+        );
+      }
+
+      // Online - fetch from API
+      final url = Uri.parse("${ApiConstants.getWorkPlanDetails}/$workPlanId/decision");
+
+      if (kDebugMode) {
+        print('📤 Sending Work Plan Decision request to: $url');
+        print('📤 Work Plan Decision request body: ${jsonEncode(requestBody.toJson())}');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          body: jsonEncode(requestBody.toJson()),
+          headers: ApiConstants.headerWithToken(),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response workPlanDecision status: ${response.statusCode}');
+        print('📥 workPlanDecision body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetWorkPlanDetailsResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ workPlanDecision successful: ${result.message}');
+        }
+
+        // Cache successful response
+        try {
+          if (result.status == true && result.data != null) {
+            await AppBlocProvider.cacheRepository.saveCachedResponse(
+              _createCachedResponse(
+                "${ApiConstants.getWorkPlanDetails}/$workPlanId/decision",
+                result,
+                200,
+              ),
+            );
+            print('📦 Cached workPlanDecision response');
+          }
+        } catch (e) {
+          print('Error caching workPlanDecision: $e');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ workPlanDecision failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        final result = GetWorkPlanDetailsResponseBody.fromJson(jsonResponse);
+        return GetWorkPlanDetailsResponseBody(
+          status: false,
+          message: result.message,
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on network error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(
+            "${ApiConstants.getWorkPlanDetails}/$workPlanId/decision");
+        if (cachedData?.responseData != null) {
+          print('📍 Network error - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetWorkPlanDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on network error: $cacheError');
+      }
+
+      return GetWorkPlanDetailsResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+
+      // Try to return cached data on error
+      try {
+        final cachedData = await AppBlocProvider.cacheRepository
+            .getCachedResponse(
+            "${ApiConstants.getWorkPlanDetails}/$workPlanId/decision");
+        if (cachedData?.responseData != null) {
+          print('📍 Error occurred - Falling back to cached data');
+          final jsonData = jsonDecode(cachedData!.responseData!);
+          return GetWorkPlanDetailsResponseBody.fromJson(jsonData);
+        }
+      } catch (cacheError) {
+        print('Error loading cache on error: $cacheError');
+      }
+
+      return GetWorkPlanDetailsResponseBody(
         status: false,
         message: errorMsg,
       );

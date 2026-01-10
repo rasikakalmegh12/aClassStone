@@ -1,11 +1,18 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import 'package:apclassstone/bloc/catalogue/post_catalogue_methods/post_catalogue_event.dart';
+import 'package:apclassstone/bloc/generate_pdf/generate_pdf_bloc.dart';
+import 'package:apclassstone/bloc/generate_pdf/generate_pdf_event.dart';
+import 'package:apclassstone/bloc/generate_pdf/generate_pdf_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 import '../../api/models/response/GetCatalogueProductResponseBody.dart' hide Data;
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_event.dart';
@@ -2141,16 +2148,79 @@ class _CataloguePageState extends State<CataloguePage>
                   children: [
                     Text(
                       data.name ?? 'Unnamed Product',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Code: ${data.productCode ?? 'N/A'}',
-                      style: TextStyle(color: Colors.grey[700]),
+                      style: TextStyle(color: Colors.grey[700],fontSize: 12),
                     ),
                   ],
                 ),
               ),
+              BlocProvider(
+                create: (context) => GeneratePdfBloc(),
+                child: BlocConsumer<GeneratePdfBloc, GeneratePdfState>(
+                  listener: (context, pdfState) {
+                    if (pdfState is GeneratePdfSuccess) {
+                      final pdfUrl = pdfState.response.data?.fullUrl;
+                      if (pdfUrl != null) {
+                        _sharePdf(pdfUrl, data.name ?? 'Product');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('PDF URL not available'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    } else if (pdfState is GeneratePdfError) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(pdfState.message),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  builder: (context, pdfState) {
+                    final isGenerating = pdfState is GeneratePdfLoading;
+
+                    return IconButton(
+                      onPressed: isGenerating
+                          ? null
+                          : () {
+                              if (data.id != null) {
+                                context.read<GeneratePdfBloc>().add(
+                                      GeneratePdfForProduct(
+                                        productId: data.id!,
+                                        showLoader: true,
+                                      ),
+                                    );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Product ID not available'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            },
+                      icon: isGenerating
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.grey[700],
+                              ),
+                            )
+                          : Icon(Icons.share, color: Colors.grey[700]),
+                    );
+                  },
+                ),
+              ),
+
               IconButton(
                 onPressed: () => Navigator.of(context).pop(),
                 icon: Icon(Icons.close, color: Colors.grey[700]),
@@ -3580,8 +3650,144 @@ class _CataloguePageState extends State<CataloguePage>
   void _shareAllProducts() {
     // TODO: Implement share functionality
   }
-}
 
+  /// Helper method to download and open PDF file
+  Future<void> _sharePdf(String pdfUrl, String productName) async {
+    try {
+      // Show downloading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 16),
+                Text('Downloading PDF...'),
+              ],
+            ),
+            duration: Duration(seconds: 30),
+          ),
+        );
+      }
+
+      // Download the PDF file
+      final response = await http.get(Uri.parse(pdfUrl));
+
+      if (response.statusCode == 200) {
+        // Get temporary directory
+        final tempDir = await getTemporaryDirectory();
+        final fileName = productName ??'product_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final filePath = '${tempDir.path}/$fileName';
+
+        // Save PDF to file
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+
+        if (kDebugMode) {
+          print('PDF saved to: $filePath');
+        }
+
+        // Dismiss downloading indicator
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+
+        // Open the PDF file in external app
+        final uri = Uri.file(filePath);
+        final canLaunch = await canLaunchUrl(uri);
+
+        if (canLaunch) {
+          final launched = await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+
+          if (!launched && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Could not open PDF. No PDF viewer found.'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+        } else {
+          // Fallback: Open URL in browser if file launch fails
+          if (kDebugMode) {
+            print('Cannot launch file URI, trying URL instead');
+          }
+
+          final urlUri = Uri.parse(pdfUrl);
+          if (await canLaunchUrl(urlUri)) {
+            await launchUrl(
+              urlUri,
+              mode: LaunchMode.externalApplication,
+            );
+          } else {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Could not open PDF'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        }
+      } else {
+        throw Exception('Failed to download PDF: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error downloading PDF: $e');
+      }
+
+      // Dismiss any showing snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
+
+      // Fallback: Open PDF URL directly in browser
+      try {
+        final uri = Uri.parse(pdfUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(
+            uri,
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to open PDF. Please check your connection.'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (urlError) {
+        if (kDebugMode) {
+          print('Error opening URL: $urlError');
+        }
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Failed to open PDF. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+}
 class RoleTheme {
   static Color primary(String role) =>
       role == 'superadmin'

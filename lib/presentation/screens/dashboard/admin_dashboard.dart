@@ -838,74 +838,89 @@ class _AdminDashboardState extends State<AdminDashboard> {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Executive Tracking',
-                  icon: Icons.route,
-                  onTap: () {
-                    context.pushNamed("executiveHistoryTracking");
-                  },
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Executive Tracking',
+                    icon: Icons.route,
+                    onTap: () {
+                      context.pushNamed("executiveHistoryTracking");
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Catalogues',
-                  icon: Icons.calendar_today_outlined,
-                  onTap: () {
-                    context.pushNamed("cataloguePage");
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Catalogues',
+                    icon: Icons.calendar_today_outlined,
+                    onTap: () {
+                      context.pushNamed("cataloguePage");
+                    },
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Work-Plan',
+                    icon: Icons.work_history_outlined,
+                    onTap: () {
+                      context.pushNamed("workPlanDetails");
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Attendance',
-                  icon: Icons.assignment_outlined,
-                  onTap: () {
-                    context.pushNamed("attendanceTracking");
-                    // Show more options
-                  },
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Attendance',
+                    icon: Icons.assignment_outlined,
+                    onTap: () {
+                      context.pushNamed("attendanceTracking");
+                      // Show more options
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Leads',
-                  icon: Icons.star_outline,
-                  onTap: () {
-                    // Navigate to leads
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Leads',
+                    icon: Icons.star_outline,
+                    onTap: () {
+                      context.pushNamed("leadScreenList");
+                      // Navigate to leads
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildQuickActionButton(
-                  label: 'Clients',
-                  icon: Icons.person_outline,
-                  onTap: () {
-                    // Navigate to clients
-                    context.pushNamed("clientsListScreen");
-                  },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'Clients',
+                    icon: Icons.person_outline,
+                    onTap: () {
+                      // Navigate to clients
+                      context.pushNamed("clientsListScreen");
+                    },
+                  ),
                 ),
-              ),
-              // const SizedBox(width: 12),
-              // Expanded(
-              //   child: _buildQuickActionButton(
-              //     label: 'More',
-              //     icon: Icons.more_horiz,
-              //     onTap: () {
-              //       // Show more options
-              //     },
-              //   ),
-              // ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildQuickActionButton(
+                    label: 'MOM',
+                    icon: Icons.list_alt_rounded,
+                    onTap: () {
+                      context.pushNamed("momDetailsScreen");
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -920,17 +935,19 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.grey200),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              size: 24,
-              color: AppColors.adminPrimary,
+              size: 22,
+              color: AppColors.superAdminPrimary,
             ),
             const SizedBox(height: 4),
             Text(
@@ -938,7 +955,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
               style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: AppColors.adminPrimaryDark,
+                color: AppColors.superAdminPrimaryDark,
               ),
               textAlign: TextAlign.center,
             ),
@@ -947,7 +964,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
       ),
     );
   }
-
   void _showLogoutDialog() {
     showDialog(
       context: context,

@@ -29,7 +29,7 @@ class GetLeadListResponseBody {
 class Data {
   int? page;
   int? pageSize;
-  int? total;
+  double? total;
   List<Items>? items;
   int? totalPages;
   bool? hasNext;
@@ -47,7 +47,7 @@ class Data {
   Data.fromJson(Map<String, dynamic> json) {
     page = json['page'];
     pageSize = json['pageSize'];
-    total = json['total'];
+    total = json['total']?.toDouble();
     if (json['items'] != null) {
       items = <Items>[];
       json['items'].forEach((v) {
@@ -82,7 +82,7 @@ class Items {
   String? executiveUserId;
   String? executiveName;
   bool? isFromMom;
-  int? grandTotal;
+  double? grandTotal;
   String? deadlineDate;
   String? assignedToUserId;
   String? assignedToName;
@@ -110,7 +110,7 @@ class Items {
     executiveUserId = json['executiveUserId'];
     executiveName = json['executiveName'];
     isFromMom = json['isFromMom'];
-    grandTotal = json['grandTotal'];
+    grandTotal = json['grandTotal']?.toDouble();
     deadlineDate = json['deadlineDate'];
     assignedToUserId = json['assignedToUserId'];
     assignedToName = json['assignedToName'];
