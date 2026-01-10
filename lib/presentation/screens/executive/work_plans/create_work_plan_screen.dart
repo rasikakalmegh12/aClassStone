@@ -1,13 +1,17 @@
 import 'dart:convert';
 
+import 'package:apclassstone/bloc/work_plan/work_plan_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../api/models/request/PostWorkPlanRequestBody.dart';
 import '../../../../bloc/client/get_client/get_client_bloc.dart';
 import '../../../../bloc/client/get_client/get_client_event.dart';
 import '../../../../bloc/client/get_client/get_client_state.dart';
+import '../../../../bloc/work_plan/work_plan_event.dart';
+import '../../../../bloc/work_plan/work_plan_state.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../widgets/dropdown_widget.dart';
 
@@ -84,10 +88,6 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     {'name': 'Marble Palace', 'selected': false},
   ];
   List<WorkPlanDay> workPlanDays = [];
-  List<Days> workDays = [];
-
-  DateTime fromDate = DateTime.now();
-  DateTime toDate = DateTime.now();
 
   int currentDayIndex = 0;
   bool isEditing = false;
@@ -154,42 +154,69 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: _buildAppBar(),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDateTypeSection(),
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<PostWorkPlanBloc, PostWorkPlanState>(
+            listener: (context, state) {
+              if (state is PostWorkPlanSuccess) {
+                if(state.response.statusCode==200 || state.response.statusCode==201){
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Work-Plan Successfully Added!')),
+                  );
+                  // Optionally refresh pending list
+                  context.pop(true);
+                }
+                else{
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("${state.response.message}")),
+                  );
+                }
+
+              } else if (state is PostWorkPlanError) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(state.message ?? 'Failed to approve user')),
+                );
+              }
+            },
+          ),
+        ],
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDateTypeSection(),
 
 
-                    _buildDateSection(),
-                    const SizedBox(height: 24),
+                      _buildDateSection(),
+                      const SizedBox(height: 24),
 
-                    _buildCitySection(),
-                    const SizedBox(height: 24),
+                      _buildCitySection(),
+                      const SizedBox(height: 24),
 
-                    // _buildClientsSection(),
-                    // const SizedBox(height: 16),
+                      // _buildClientsSection(),
+                      // const SizedBox(height: 16),
 
-                    // _buildDayWisePlans(),   // 👈 ADD HERE
-                    _buildActiveDayEditor(),
-                    const SizedBox(height: 24),
+                      // _buildDayWisePlans(),   // 👈 ADD HERE
+                      _buildActiveDayEditor(),
+                      const SizedBox(height: 24),
 
-                    _buildNotesSection(),
-                    const SizedBox(height: 80),
+                      _buildNotesSection(),
+                      const SizedBox(height: 80),
 
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            _buildBottomButton(),
-          ],
+              _buildBottomButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -206,7 +233,7 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
       ),
       title: Text(
         widget.workPlan != null ? 'Edit Work Plan' : 'Create Work Plan',
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
@@ -427,12 +454,19 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     );
 
     if (picked != null) {
+      print('📅 Date range picked: ${formatDateYyyyMmDd(picked.start)} to ${formatDateYyyyMmDd(picked.end)}');
+
       setState(() {
         _dateRange = picked;
         _fromDateController.text = _formatDate(picked.start);
         _toDateController.text = _formatDate(picked.end);
 
         _buildWorkPlanDays();
+
+        print('📅 Total work plan days created: ${workPlanDays.length}');
+        for (var i = 0; i < workPlanDays.length; i++) {
+          print('  Day ${i + 1}: ${formatDateYyyyMmDd(workPlanDays[i].planDate)}');
+        }
       });
     }
   }
@@ -553,8 +587,8 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
           decoration: InputDecoration(
             hintText: 'Enter City',
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+
           ),
-          validator: (v) => v == null || v.isEmpty ? 'City required' : null,
         ),
 
       ],
@@ -566,19 +600,13 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
-          children: [
-            Text(
-              'Clients',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            SizedBox(width: 4),
-            Text('*', style: TextStyle(color: AppColors.error)),
-          ],
+        const Text(
+          'Clients',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 8),
 
@@ -679,26 +707,6 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     );
   }
 
-  void _generateDaysFromRange() {
-    workPlanDays.clear();
-
-    final totalDays = toDate.difference(fromDate).inDays + 1;
-
-    for (int i = 0; i < totalDays; i++) {
-      final date = fromDate.add(Duration(days: i));
-
-      workDays.add(
-        Days(
-          planDate: formatDateDdMmmYyyy(date), // ✅ STORED FORMAT
-          clientIds: [],
-          prospects: [],
-        ),
-      );
-    }
-
-    currentDayIndex = 0;
-    _resetDayForm();
-  }
   Widget _buildActiveDayEditor() {
     final day = workPlanDays[currentDayIndex];
     final isLastDay = currentDayIndex == workPlanDays.length - 1;
@@ -1064,20 +1072,25 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     final day = workPlanDays[currentDayIndex];
 
     // Basic validation: require at least one client
-    if (selectedClientIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one client for this day'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
+    // if (selectedClientIds.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     const SnackBar(
+    //       content: Text('Please select at least one client for this day'),
+    //       backgroundColor: AppColors.error,
+    //     ),
+    //   );
+    //   return;
+    // }
 
     day.dayNote = dayNoteController.text;
     day.clientIds = selectedClientIds.toList();
     day.prospects = List<Prospects>.from(currentProspects);
     day.isSaved = true;
+
+    print('✅ Saved day ${currentDayIndex + 1}/${workPlanDays.length}: ${formatDateYyyyMmDd(day.planDate)}');
+    print('   Note: "${day.dayNote}"');
+    print('   Clients: ${day.clientIds.length}');
+    print('   Prospects: ${day.prospects.length}');
 
     setState(() {
       isEditing = false;
@@ -1086,9 +1099,11 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
       // Move to next day if exists, else finish & hide prospects (handled in UI)
       if (currentDayIndex < workPlanDays.length - 1) {
         currentDayIndex++;
+        print('📍 Moving to next day (${currentDayIndex + 1}/${workPlanDays.length})');
         _resetDayForm();
       } else {
         // last day saved -> clear current form so it doesn't look editable
+        print('🎉 All days saved! Workflow complete.');
         _resetDayForm();
       }
     });
@@ -1246,31 +1261,62 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
   }
 
   void _submitPlan() {
-    if (_formKey.currentState!.validate() && selectedClientIds.isNotEmpty) {
-      final action = widget.workPlan != null ? 'updated' : 'submitted';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Work plan $action successfully'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      final requestBody= PostWorkPlanRequestBody(
-        fromDate: formatDateDdMmmYyyy(fromDate),
-        toDate: formatDateDdMmmYyyy(toDate),
-        submitNow: true,
-        days: workDays,
-      );
-      print("work plan request body :${jsonEncode(requestBody.toJson())}");
+    print('🚀 Submitting work plan...');
 
-      // Navigator.pop(context);
-    } else if (selectedClientIds.isEmpty) {
+    // Validate that at least one day has been saved
+    if (!_workflowComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select at least one client'),
+          content: Text('Please save all days before submitting'),
           backgroundColor: AppColors.error,
         ),
       );
+      return;
     }
+
+    // Validate required fields (only city is mandatory)
+    if (_cityController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a city'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    print('📊 Total workPlanDays: ${workPlanDays.length}');
+
+    // Convert workPlanDays to Days format for API
+    final List<Days> daysForApi = workPlanDays.map((day) {
+      print('  Converting day: ${formatDateYyyyMmDd(day.planDate)} (Saved: ${day.isSaved}, Clients: ${day.clientIds.length}, Prospects: ${day.prospects.length})');
+
+      return Days(
+        planDate: formatDateYyyyMmDd(day.planDate),
+        dayNote: day.dayNote.trim().isEmpty ? null : day.dayNote.trim(),
+        clientIds: day.clientIds.isNotEmpty ? day.clientIds : null,
+        prospects: day.prospects.isNotEmpty ? day.prospects : null,
+      );
+    }).toList();
+
+    // Determine the date range from workPlanDays
+    final firstDate = workPlanDays.first.planDate;
+    final lastDate = workPlanDays.last.planDate;
+
+    print('📅 Date range: ${formatDateYyyyMmDd(firstDate)} to ${formatDateYyyyMmDd(lastDate)}');
+    print('📋 Days for API: ${daysForApi.length}');
+
+    final requestBody = PostWorkPlanRequestBody(
+      fromDate: formatDateYyyyMmDd(firstDate),
+      toDate: formatDateYyyyMmDd(lastDate),
+      executiveNote: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+      submitNow: true,
+      days: daysForApi,
+    );
+
+    print("📤 work plan request body: ${jsonEncode(requestBody.toJson())}");
+
+    context.read<PostWorkPlanBloc>().add(SubmitWorkPlan(requestBody: requestBody));
   }
 
   @override
@@ -1282,5 +1328,14 @@ class _CreateWorkPlanScreenState extends State<CreateWorkPlanScreen> {
     _notesController.dispose();
     super.dispose();
   }
+
+
+
+String formatDateYyyyMmDd(DateTime date) {
+  final y = date.year.toString().padLeft(4, '0');
+  final m = date.month.toString().padLeft(2, '0');
+  final d = date.day.toString().padLeft(2, '0');
+  return '$y-$m-$d';
+}
 }
 

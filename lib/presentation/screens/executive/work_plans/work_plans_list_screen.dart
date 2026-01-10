@@ -31,9 +31,12 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
     _fetchWorkPlans();
   }
 
-  void _fetchWorkPlans() {
+  void _fetchWorkPlans({String? statusFilter}) {
     context.read<GetWorkPlanListBloc>().add(
-      FetchWorkPlanList(showLoader: true),
+      FetchWorkPlanList(
+        showLoader: true,
+        search: statusFilter == 'All' ? null : statusFilter,
+      ),
     );
   }
 
@@ -65,99 +68,101 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final roleColor = _getRoleColor();
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
       appBar: _buildAppBar(),
-      body: BlocConsumer<GetWorkPlanListBloc, GetWorkPlanListState>(
-        listener: (context, state) {
-          if (state is GetWorkPlanListError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          if (state is GetWorkPlanListLoading && state.showLoader) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          if (state is GetWorkPlanListSuccess) {
-            final workPlans = state.response.data?.items ?? [];
-
-            // Filter based on selected status
-            final filteredPlans = selectedFilter == 'All'
-                ? workPlans
-                : workPlans.where((plan) => plan.status == selectedFilter).toList();
-
-            if (filteredPlans.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      size: 64,
-                      color: AppColors.grey400,
+      body: Column(
+        children: [
+          _buildFilterChips(),
+          Expanded(
+            child: BlocConsumer<GetWorkPlanListBloc, GetWorkPlanListState>(
+              listener: (context, state) {
+                if (state is GetWorkPlanListError) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.message),
+                      backgroundColor: AppColors.error,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'No work plans found',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: AppColors.textSecondary,
+                  );
+                }
+              },
+              builder: (context, state) {
+                if (state is GetWorkPlanListLoading && state.showLoader) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
+                if (state is GetWorkPlanListSuccess) {
+                  final workPlans = state.response.data?.items ?? [];
+
+                  if (workPlans.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.calendar_today_outlined,
+                            size: 64,
+                            color: AppColors.grey400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            selectedFilter == 'All'
+                                ? 'No work plans found'
+                                : 'No $selectedFilter work plans found',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }
+                    );
+                  }
 
-            return Column(
-              children: [
-                _buildFilterChips(),
-                Expanded(
-                  child: RefreshIndicator(
+                  return RefreshIndicator(
                     onRefresh: () async {
-                      _fetchWorkPlans();
+                      _fetchWorkPlans(statusFilter: selectedFilter);
                     },
-                    color: roleColor,
+                    color: _getRoleColor(),
                     child: ListView.builder(
                       padding: const EdgeInsets.all(16),
-                      itemCount: filteredPlans.length,
+                      itemCount: workPlans.length,
                       itemBuilder: (context, index) {
-                        final plan = filteredPlans[index];
+                        final plan = workPlans[index];
                         return _buildWorkPlanCard(plan);
                       },
                     ),
-                  ),
-                ),
-              ],
-            );
-          }
+                  );
+                }
 
-          return Column(
-            children: [
-              _buildFilterChips(),
-              const Expanded(
-                child: Center(
-                  child: Text(
-                    'Pull to refresh',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
+                return Center(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      _fetchWorkPlans(statusFilter: selectedFilter);
+                    },
+                    color: _getRoleColor(),
+                    child: ListView(
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(
+                          child: Text(
+                            'Pull to refresh',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ],
-          );
-        },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -224,6 +229,8 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                   setState(() {
                     selectedFilter = filter;
                   });
+                  // Call API with the selected filter
+                  _fetchWorkPlans(statusFilter: selectedFilter);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -929,7 +936,7 @@ class _WorkPlansListScreenState extends State<WorkPlansListScreen> {
                         const SizedBox(height: 4),
                         Text(
                           prospect.note!,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 11,
                             fontStyle: FontStyle.italic,
                             color: AppColors.textSecondary,

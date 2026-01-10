@@ -2435,7 +2435,7 @@ class ApiIntegration {
       // Build query parameters
       final queryParams = <String, String>{};
       if (search != null && search.isNotEmpty) {
-        queryParams['Search'] = search;
+        queryParams['Status'] = search;
       }
       if (isConvertedToLead != null) {
         queryParams['IsConvertedToLead'] = isConvertedToLead.toString();

@@ -427,6 +427,8 @@ class AppRouter {
               BlocProvider<PostWorkPlanBloc>(create: (context) => PostWorkPlanBloc(),),
               BlocProvider<GetWorkPlanDetailsBloc>(create: (context) => GetWorkPlanDetailsBloc(),),
               BlocProvider<GetWorkPlanListBloc>(create: (context) => GetWorkPlanListBloc(),),
+              BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
+              BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
             ],
             child: const MeetingsListScreen(),
           );

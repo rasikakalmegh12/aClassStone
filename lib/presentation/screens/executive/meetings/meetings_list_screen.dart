@@ -459,8 +459,8 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundLight,
-      appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(56),
+      appBar: const PreferredSize(
+          preferredSize: Size.fromHeight(56),
           child: CoolAppCard(title: "MOM Details",)
       ),
       body: Column(
