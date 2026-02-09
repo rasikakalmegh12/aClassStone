@@ -692,14 +692,14 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
                   const SizedBox(width: 8),
                   const Text(
                     'Basic Product Information',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
                 'Fill in the essential details to create your product',
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
               ),
               const SizedBox(height: 24),
 

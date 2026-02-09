@@ -1,7 +1,7 @@
 /// App Constants for AP Class Stones Marketing App
 class AppConstants {
   // App Info
-  static const String appName = 'A Class Stones';
+  static const String appName = 'OOTU';
   static const String appVersion = '1.0.0';
   static const String companyTagline = 'Premium Stones, Premium Quality';
   static const String appCode = 'MARKETING';
@@ -9,6 +9,8 @@ class AppConstants {
   // API Configuration
   static const String baseUrl = 'https://api.apclassstones.com/v1/';
   static const String apiTimeout = '30';
+
+
 
   // Storage Keys
   static const String isLoggedInKey = 'is_logged_in';

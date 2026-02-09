@@ -506,7 +506,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
           ),
         ],
       ),
-      floatingActionButton: SessionManager.getUserRole() =="execuvtive"?FloatingActionButton(
+      floatingActionButton: SessionManager.getUserRole() =="executive"?FloatingActionButton(
         backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
         AppColors.adminPrimaryDark :AppColors.primaryTealDark,
         child: const Icon(Icons.add, color: Colors.white),

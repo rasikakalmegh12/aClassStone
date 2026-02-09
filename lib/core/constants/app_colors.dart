@@ -64,6 +64,12 @@ class AppColors {
     colors: [primaryDeepBlue, primaryDeepBlueLight],
   );
 
+  static const LinearGradient newGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [secondaryBlue, secondaryBlueLight],
+  );
+
   static const LinearGradient goldGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
@@ -96,6 +102,7 @@ class AppColors {
   // A designated color set for Super Admin screens. These are additive and do
   // not replace existing app colors. Use these in Super Admin UI only.
   // -------------------------
+
   static const Color superAdminPrimary = Color(0xFF0B3566); // deep indigo-blue
   static const Color superAdminPrimaryDark = Color(0xFF07243F);
   static const Color superAdminPrimaryLight = Color(0xFF516679);
@@ -114,6 +121,7 @@ class AppColors {
   // A designated color set for Admin screens. Professional and distinct from
   // Super Admin while maintaining visual harmony with the overall app design.
   // -------------------------
+
   static const Color adminPrimary = Color(0xFF1E40AF); // vibrant blue
   static const Color adminPrimaryDark = Color(0xFF1E3A8A);
   static const Color adminPrimaryLight = Color(0xFF3B82F6);

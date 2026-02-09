@@ -226,16 +226,20 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
         child: Row(
           children: [
             Container(
-              width: 44,
-              height: 44,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.superAdminAccent, AppColors.primaryGold],
+                gradient:
+                const LinearGradient(
+                  colors: [
+                    Colors.white38,Colors.white70
+                    // AppColors.superAdminAccent, AppColors.primaryGold
+                  ],
                 ),
                 borderRadius: BorderRadius.circular(22),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primaryGold.withAlpha((0.25 * 255).toInt()),
+                    color: AppColors.secondaryBlue.withAlpha((0.25 * 255).toInt()),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -243,8 +247,8 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
               ),
               child: const Icon(
                 Icons.admin_panel_settings_rounded,
-                color: Colors.white,
-                size: 20,
+                color: Colors.black87,
+                size: 25,
               ),
             ),
             const SizedBox(width: 14),
@@ -952,12 +956,12 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                           children: [
                             Row(
                               children: [
-                                Text(
+                                const Text(
                                   'Pending Registrations',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1E293B),
+                                    color: Color(0xFF1E293B),
                                     letterSpacing: -0.3,
                                   ),
                                 ),
@@ -973,7 +977,7 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                     ),
                                     child: Text(
                                       '${state.response.data!.length}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -982,11 +986,11 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                   ),
                               ],
                             ),
-                            Text(
+                            const Text(
                               'Review and approve new registrations',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: const Color(0xFF64748B),
+                                color: Color(0xFF64748B),
                               ),
                             ),
                           ],
@@ -1062,20 +1066,20 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                                   ),
                                 ),
                                 const SizedBox(height: 12),
-                                Text(
+                                const Text(
                                   'All caught up!',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1A365D),
+                                    color: Color(0xFF1A365D),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
+                                const Text(
                                   'No pending registrations to review',
                                   style: TextStyle(
                                     fontSize: 12,
-                                    color: const Color(0xFF718096),
+                                    color: Color(0xFF718096),
                                   ),
                                 ),
                               ],
@@ -1113,20 +1117,20 @@ class _SuperAdminDashboardState extends State<SuperAdminDashboard> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text(
+                          const Text(
                             'Unable to load data',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF1A365D),
+                              color: Color(0xFF1A365D),
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Text(
+                          const Text(
                             'Failed to load pending registrations',
                             style: TextStyle(
                               fontSize: 12,
-                              color: const Color(0xFF718096),
+                              color: Color(0xFF718096),
                             ),
                           ),
                         ],

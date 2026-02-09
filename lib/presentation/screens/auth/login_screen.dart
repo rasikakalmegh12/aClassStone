@@ -12,6 +12,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 
+import '../../../core/constants/image_constant.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/loading_overlay.dart';
@@ -57,8 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 70,
             child: Text(
               role,
-              style: const TextStyle(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.primaryGold,
               ),
@@ -78,8 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 child: Text(
                   '$email / $password',
-                  style: TextStyle(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textPrimary,
                   ),
                 ),
@@ -93,6 +92,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       body: BlocListener<LoginBloc, LoginState>(
         listener: (context, state) async {
@@ -133,11 +134,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   context.goNamed('admin-dashboard', extra: role);
                 }
               }
-              // Navigator.of(context).pushReplacement(
-              //   MaterialPageRoute(
-              //     builder: (context) => DashboardRouter(user: state.user!),
-              //   ),
-              // );
             }
           } else if (state is LoginError) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -171,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Container(
                                 width: 120,
                                 height: 120,
+                                  padding: const EdgeInsets.all(15),
                                 decoration: BoxDecoration(
                                   color: AppColors.white,
                                   borderRadius: BorderRadius.circular(25),
@@ -182,19 +179,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                     ),
                                   ],
                                 ),
-                                child: const Icon(
-                                  Icons.diamond,
-                                  size: 60,
-                                  color: AppColors.primaryGold,
-                                ),
+                                child:
+                                Image.asset(ImageConstant.logo, fit: BoxFit.contain)
                               ),
                               const SizedBox(height: 24),
                               Text(
                                 AppConstants.appName.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 24,
+                                style: textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryGold,
+                                  color: AppColors.secondaryBlue,
                                   letterSpacing: 1.5,
                                 ),
                               ),
@@ -236,10 +229,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const Text(
+                              Text(
                                 'Sign In',
-                                style: TextStyle(
-                                  fontSize: 20,
+                                style: textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                 ),
@@ -289,37 +281,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               // Remember Me & Forgot Password
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: _rememberMe,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _rememberMe = value ?? false;
-                                          });
-                                        },
-                                        activeColor: AppColors.primaryGold,
-                                      ),
-                                      const Text(
-                                        'Remember me',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                  // Row(
+                                  //   children: [
+                                  //     Checkbox(
+                                  //       value: _rememberMe,
+                                  //       onChanged: (value) {
+                                  //         setState(() {
+                                  //           _rememberMe = value ?? false;
+                                  //         });
+                                  //       },
+                                  //       activeColor: AppColors.primaryGold,
+                                  //     ),
+                                  //     const Text(
+                                  //       'Remember me',
+                                  //       style: TextStyle(
+                                  //         fontSize: 14,
+                                  //         color: AppColors.textSecondary,
+                                  //       ),
+                                  //     ),
+                                  //   ],
+                                  // ),
                                   TextButton(
                                     onPressed: () {
                                       // Handle forgot password
                                     },
-                                    child: const Text(
+                                    child: Text(
                                       'Forgot Password?',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.primaryGold,
+                                      style: textTheme.labelMedium?.copyWith(
+                                        color: AppColors.secondaryBlue,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -335,7 +326,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     text: 'Sign In',
                                     onPressed: _handleLogin,
                                     isLoading: state is LoginLoading,
-                                    gradient: AppColors.primaryGradient,
+                                    // gradient: AppColors.primaryGradient,
+                                    gradient: AppColors.newGradient,
                                   );
                                 },
                               ),
@@ -345,10 +337,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "Don't have an account? ",
-                                    style: TextStyle(
-                                      fontSize: 14,
+                                    style: textTheme.bodySmall?.copyWith(
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
@@ -357,11 +348,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Navigator.push(context, MaterialPageRoute(builder: (context) => const RegisterScreen()));
                                      // context.push("/registrationScreen");
                                     },
-                                    child: const Text(
+                                    child: Text(
                                       'Register',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: AppColors.primaryGold,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: AppColors.secondaryBlue,
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -371,43 +361,43 @@ class _LoginScreenState extends State<LoginScreen> {
                               const SizedBox(height: 20),
 
                               // Demo Credentials Helper
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primaryGold.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: AppColors.primaryGold.withValues(alpha: 0.3),
-                                  ),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Row(
-                                      children: [
-                                        Icon(
-                                          Icons.info_outline,
-                                          color: AppColors.primaryGold,
-                                          size: 18,
-                                        ),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Demo Credentials',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.primaryGold,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 8),
-                                    _buildCredentialRow('Super Admin', 'superadmin@acls.local', 'SuperAdmin123!'),
-                                    _buildCredentialRow('Admin', 'adm@adm.com', '123456'),
-                                    _buildCredentialRow('Executive', 'demouser4@gmail.com', 'demouser4'),
-                                  ],
-                                ),
-                              ),
+                              // Container(
+                              //   padding: const EdgeInsets.all(12),
+                              //   decoration: BoxDecoration(
+                              //     color: AppColors.primaryGold.withValues(alpha: 0.1),
+                              //     borderRadius: BorderRadius.circular(8),
+                              //     border: Border.all(
+                              //       color: AppColors.primaryGold.withValues(alpha: 0.3),
+                              //     ),
+                              //   ),
+                              //   child: Column(
+                              //     crossAxisAlignment: CrossAxisAlignment.start,
+                              //     children: [
+                              //       const Row(
+                              //         children: [
+                              //           Icon(
+                              //             Icons.info_outline,
+                              //             color: AppColors.primaryGold,
+                              //             size: 18,
+                              //           ),
+                              //           SizedBox(width: 8),
+                              //           Text(
+                              //             'Demo Credentials',
+                              //             style: TextStyle(
+                              //               fontSize: 14,
+                              //               fontWeight: FontWeight.w600,
+                              //               color: AppColors.primaryGold,
+                              //             ),
+                              //           ),
+                              //         ],
+                              //       ),
+                              //       const SizedBox(height: 8),
+                              //       _buildCredentialRow('Super Admin', 'superadmin@acls.local', 'SuperAdmin123!'),
+                              //       _buildCredentialRow('Admin', 'adm@adm.com', '123456'),
+                              //       _buildCredentialRow('Executive', 'demouser4@gmail.com', 'demouser4'),
+                              //     ],
+                              //   ),
+                              // ),
                             ],
                           ),
                         )
@@ -422,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               curve: Curves.easeOutBack,
                             ),
 
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),

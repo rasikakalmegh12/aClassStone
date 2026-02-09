@@ -1165,29 +1165,29 @@ class _NewMomScreenState extends State<NewMomScreen> {
             ),
           ],
         ),
-        if (needsFollowUp) ...[
-          const SizedBox(height: 16),
-          Text(
-            'Reminder',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField('Date', _followUpDateController),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTextField('Time', _followUpTimeController),
-              ),
-            ],
-          ),
-        ],
+        // if (needsFollowUp) ...[
+        //   const SizedBox(height: 16),
+        //   Text(
+        //     'Reminder',
+        //     style: TextStyle(
+        //       fontSize: 14,
+        //       fontWeight: FontWeight.w500,
+        //       color: AppColors.textPrimary,
+        //     ),
+        //   ),
+        //   const SizedBox(height: 8),
+        //   Row(
+        //     children: [
+        //       Expanded(
+        //         child: _buildTextField('Date', _followUpDateController),
+        //       ),
+        //       const SizedBox(width: 12),
+        //       Expanded(
+        //         child: _buildTextField('Time', _followUpTimeController),
+        //       ),
+        //     ],
+        //   ),
+        // ],
       ],
     );
   }

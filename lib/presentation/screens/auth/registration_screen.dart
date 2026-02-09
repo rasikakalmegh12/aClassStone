@@ -54,9 +54,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Register'),
+        title: Text('Register', style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
         centerTitle: true,
         elevation: 0,
       ),
@@ -116,6 +119,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  style: textTheme.bodyMedium,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Full name is required';
@@ -139,6 +143,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  style: textTheme.bodyMedium,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -164,6 +169,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  style: textTheme.bodyMedium,
                   keyboardType: TextInputType.phone,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -188,6 +194,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
+                  style: textTheme.bodyMedium,
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -210,29 +217,28 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       onPressed: isLoading ? null : _handleRegistration,
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: Colors.blue,
+                        backgroundColor: colorScheme.primary,
                         disabledBackgroundColor: Colors.grey,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: isLoading
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
+                                  colorScheme.onPrimary,
                                 ),
                               ),
                             )
-                          : const Text(
+                          : Text(
                               'Register',
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                                color: colorScheme.onPrimary,
                               ),
                             ),
                     );
@@ -245,13 +251,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account? '),
+                    Text('Already have an account? ', style: textTheme.bodySmall),
                     GestureDetector(
                       onTap: () => context.go('/login'),
-                      child: const Text(
+                      child: Text(
                         'Login',
-                        style: TextStyle(
-                          color: Colors.blue,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: colorScheme.primary,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

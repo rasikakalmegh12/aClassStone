@@ -172,6 +172,10 @@ class MyApp extends StatelessWidget {
   ThemeData _buildTheme() {
     return ThemeData(
       useMaterial3: true,
+      // Use local Montserrat font family registered in pubspec.yaml
+      fontFamily: 'Montserrat',
+      textTheme: ThemeData.light().textTheme.apply(fontFamily: 'Montserrat'),
+      primaryTextTheme: ThemeData.light().primaryTextTheme.apply(fontFamily: 'Montserrat'),
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primaryGold,
         brightness: Brightness.light,
@@ -185,12 +189,13 @@ class MyApp extends StatelessWidget {
         onSurface: AppColors.textPrimary,
       ),
       // textTheme: TextStyleTextTheme(),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: AppColors.primaryGold,
         foregroundColor: AppColors.white,
         elevation: 0,
         centerTitle: true,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
+          fontFamily: 'Montserrat',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: AppColors.white,

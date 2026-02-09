@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../bloc/auth/auth_event.dart';
@@ -67,6 +66,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       body: BlocListener<RegistrationBloc, RegistrationState>(
         listener: (context, state) {
@@ -128,8 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             const SizedBox(width: 8),
                             Text(
                               'Create Account',
-                              style: TextStyle(
-                                fontSize: 24,
+                              style: textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
                               ),
@@ -158,8 +158,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             children: [
                               Text(
                                 'Register with ${AppConstants.appName}',
-                                style: TextStyle(
-                                  fontSize: 18,
+                                style: textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.textPrimary,
                                 ),
@@ -393,7 +392,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.info_outline,
                                       color: AppColors.info,
                                       size: 20,
@@ -402,8 +401,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     Expanded(
                                       child: Text(
                                         'Your registration will be reviewed and approved by a Super Admin.',
-                                        style: TextStyle(
-                                          fontSize: 12,
+                                        style: textTheme.bodySmall?.copyWith(
                                           color: AppColors.info,
                                         ),
                                       ),

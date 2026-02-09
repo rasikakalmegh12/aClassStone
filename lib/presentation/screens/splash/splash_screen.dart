@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/image_constant.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -95,7 +96,8 @@ class _SplashScreenState extends State<SplashScreen>
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          // gradient: AppColors.primaryGradient,
+          gradient: AppColors.newGradient,
         ),
         child: SafeArea(
           child: Column(
@@ -109,6 +111,7 @@ class _SplashScreenState extends State<SplashScreen>
                       Container(
                         width: 150,
                         height: 150,
+                        padding: EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           color: AppColors.white,
                           borderRadius: BorderRadius.circular(30),
@@ -120,11 +123,13 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ],
                         ),
-                        child: const Icon(
-                          Icons.diamond,
-                          size: 80,
-                          color: AppColors.primaryGold,
-                        ),
+                        child:
+                          Image.asset(ImageConstant.logo, fit: BoxFit.contain)
+                        // const Icon(
+                        //   Icons.diamond,
+                        //   size: 80,
+                        //   color: AppColors.primaryGold,
+                        // ),
                       )
                           .animate(controller: _logoController)
                           .scale(
@@ -144,7 +149,7 @@ class _SplashScreenState extends State<SplashScreen>
                       const SizedBox(height: 40),
 
                       // Company Name Animation
-                      Text(
+                      const Text(
                         AppConstants.appName,
                         style: TextStyle(
                           fontSize: 32,
