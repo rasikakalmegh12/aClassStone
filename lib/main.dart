@@ -12,6 +12,7 @@ import 'bloc/auth/auth_state.dart';
 import 'bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import 'bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
 import 'bloc/dashboard/dashboard_bloc.dart';
+import 'bloc/lead/close_lead_bloc.dart';
 import 'bloc/lead/lead_bloc.dart';
 import 'bloc/mom/mom_bloc.dart';
 import 'bloc/registration/registration_bloc.dart';
@@ -92,6 +93,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return MultiBlocProvider(
           providers: [
+        BlocProvider<CloseLeadBloc>(create: (context) => CloseLeadBloc(),),
         BlocProvider<GetAssignableUsersBloc>(create: (context) => GetAssignableUsersBloc(),),
         BlocProvider<PostNewLeadBloc>(create: (context) => PostNewLeadBloc(),),
         BlocProvider<GetAssignableUsersBloc>(create: (context) => GetAssignableUsersBloc(),),

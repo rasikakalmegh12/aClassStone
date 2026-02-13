@@ -14,6 +14,7 @@ import 'package:apclassstone/api/models/request/PostSearchRequestBody.dart';
 import 'package:apclassstone/api/models/request/PostWorkPlanRequestBody.dart';
 import 'package:apclassstone/api/models/request/ProductEntryRequestBody.dart';
 import 'package:apclassstone/api/models/request/PutCatalogueOptionEntryRequestBody.dart';
+import 'package:apclassstone/api/models/request/PutEditCatalogueRequestBody.dart';
 import 'package:apclassstone/api/models/response/ActiveSessionResponseBody.dart';
 import 'package:apclassstone/api/models/response/AllUsersResponseBody.dart';
 import 'package:apclassstone/api/models/response/ApiCommonResponseBody.dart';
@@ -51,6 +52,7 @@ import 'package:apclassstone/api/models/response/PostMomEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PostWorkPlanResponseBody.dart';
 import 'package:apclassstone/api/models/response/ProductEntryResponseBody.dart';
 import 'package:apclassstone/api/models/response/PunchInOutResponseBody.dart';
+import 'package:apclassstone/api/models/response/PutEditCatalogueResponseBody.dart';
 import 'package:apclassstone/bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
 import 'package:apclassstone/core/constants/app_constants.dart';
 import 'package:flutter/foundation.dart';
@@ -104,8 +106,7 @@ class ApiIntegration {
   ///     "phone": "phone_number"
   ///   }
   /// }
-  static Future<RegistrationResponseBody> register(
-      RegistrationRequestBody requestBody,) async {
+  static Future<RegistrationResponseBody> register(RegistrationRequestBody requestBody,) async {
     try {
       final url = Uri.parse(ApiConstants.register);
 
@@ -175,8 +176,7 @@ class ApiIntegration {
   /// "refreshTokenExpiresAt": "2025-12-21T13:14:53.9756553Z"
   /// }
   /// }
-  static Future<LoginResponseBody> login(String username,
-      String password) async {
+  static Future<LoginResponseBody> login(String username, String password) async {
     try {
       final url = Uri.parse(ApiConstants.loginWithPassword);
 
@@ -840,8 +840,7 @@ class ApiIntegration {
     }
   }
 
-  static Future<ExecutiveAttendanceResponseBody> executiveAttendance(
-      String date) async {
+  static Future<ExecutiveAttendanceResponseBody> executiveAttendance(String date) async {
     try {
       final url = Uri.parse("${ApiConstants.executiveAttendance}?date=$date");
 
@@ -898,8 +897,7 @@ class ApiIntegration {
     }
   }
 
-  static Future<ExecutiveTrackingByDaysResponse> executiveTrackingByDays(
-      String userId, String date) async {
+  static Future<ExecutiveTrackingByDaysResponse> executiveTrackingByDays(String userId, String date) async {
     try {
       final url = Uri.parse(
           "${ApiConstants.executiveTrackingByDays}/$userId/days/$date");
@@ -960,9 +958,7 @@ class ApiIntegration {
     }
   }
 
-  static Future<
-      ExecutiveAttendanceMonthlyResponseBody> executiveAttendanceMonthly(
-      String userId, String fromDate, String toDate) async {
+  static Future<ExecutiveAttendanceMonthlyResponseBody> executiveAttendanceMonthly(String userId, String fromDate, String toDate) async {
     try {
       final url = Uri.parse("${ApiConstants
           .executiveAttendanceDateWise}/$userId/attendance?from=$fromDate&to=$toDate");
@@ -1024,7 +1020,6 @@ class ApiIntegration {
     }
   }
 
-
   static Future<GetProductTypeResponseBody> getProductType() async {
     try {
       final url = Uri.parse(ApiConstants.getProductType);
@@ -1083,7 +1078,6 @@ class ApiIntegration {
       );
     }
   }
-
 
   static Future<GetUtilitiesTypeResponseBody> getUtilities() async {
     try {
@@ -1144,7 +1138,6 @@ class ApiIntegration {
     }
   }
 
-
   static Future<GetColorsResponseBody> getColors() async {
     try {
       final url = Uri.parse(ApiConstants.getColors);
@@ -1204,7 +1197,6 @@ class ApiIntegration {
     }
   }
 
-
   static Future<GetFinishesResponseBody> getFinishes() async {
     try {
       final url = Uri.parse(ApiConstants.getFinishes);
@@ -1263,7 +1255,6 @@ class ApiIntegration {
       );
     }
   }
-
 
   static Future<GetTextureResponseBody> getTextures() async {
     try {
@@ -1699,8 +1690,7 @@ class ApiIntegration {
   /// - [pageSize]: Number of items per page (default: 20)
   ///
   /// Returns [GetCatalogueProductResponseBody] with product list and pagination info
-  static Future<GetCatalogueProductResponseBody> getCatalogueProductList(
-      {int page = 1, int pageSize = 20, String? search}) async {
+  static Future<GetCatalogueProductResponseBody> getCatalogueProductList({int page = 1, int pageSize = 20, String? search}) async {
     try {
       final url = Uri.parse('${ApiConstants
           .getCatalogueProductList}?page=$page&pageSize=$pageSize${search !=
@@ -1743,9 +1733,7 @@ class ApiIntegration {
   /// Get Catalogue Product Details by ID
   ///
   /// Returns [GetCatalogueProductDetailsResponseBody] with detailed product information
-  static Future<
-      GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails(
-      {required String productId,}) async
+  static Future<GetCatalogueProductDetailsResponseBody> getCatalogueProductDetails({required String productId,}) async
   {
     try {
       final url = Uri.parse(
@@ -1789,8 +1777,7 @@ class ApiIntegration {
   }
 
 
-  static Future<GetPriceRangeResponseBody> getPriceRange() async
-  {
+  static Future<GetPriceRangeResponseBody> getPriceRange() async {
     try {
       final url = Uri.parse(ApiConstants.getPriceRange);
       if (kDebugMode) print('📤 Sending getPriceRange request to: $url');
@@ -1831,8 +1818,7 @@ class ApiIntegration {
   }
 
 
-  static Future<GetMinesOptionResponseBody> getMinesOption() async
-  {
+  static Future<GetMinesOptionResponseBody> getMinesOption() async {
     try {
       final url = Uri.parse(ApiConstants.getMinesOption);
       if (kDebugMode) print('📤 Sending getMinesOption request to: $url');
@@ -1875,8 +1861,7 @@ class ApiIntegration {
 
   //--------Client -----------
 
-  static Future<GetClientListResponseBody> getClientList(String? search,
-      String? clientTypeCode) async {
+  static Future<GetClientListResponseBody> getClientList(String? search, String? clientTypeCode) async {
     // Build query params outside try block so it's accessible in catch blocks
     final queryParams = <String>[];
     if (search != null && search.isNotEmpty) {
@@ -1885,6 +1870,7 @@ class ApiIntegration {
     if (clientTypeCode != null && clientTypeCode.isNotEmpty) {
       queryParams.add('clientTypeCode=$clientTypeCode');
     }
+
     final queryString = queryParams.isNotEmpty
         ? '?${queryParams.join('&')}'
         : '';
@@ -2030,8 +2016,7 @@ class ApiIntegration {
   }
 
 
-  static Future<GetClientIdDetailsResponseBody> getClientDetails(
-      String clientId) async {
+  static Future<GetClientIdDetailsResponseBody> getClientDetails(String clientId) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2174,11 +2159,7 @@ class ApiIntegration {
 
   //--------MOM -----------
 
-  static Future<GetMomResponseBody> getMomList({
-    String? search,
-    bool? isConvertedToLead,
-  }) async
-  {
+  static Future<GetMomResponseBody> getMomList({String? search, bool? isConvertedToLead, String? status}) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2190,6 +2171,9 @@ class ApiIntegration {
       }
       if (isConvertedToLead != null) {
         queryParams['IsConvertedToLead'] = isConvertedToLead.toString();
+      }
+      if (status != null) {
+        queryParams['Status'] = status.toString();
       }
 
       // Create cache key with params
@@ -2334,8 +2318,7 @@ class ApiIntegration {
   }
 
 
-  static Future<GetMomIdDetailsResponseBody> getMomIdDetails(
-      String momId) async {
+  static Future<GetMomIdDetailsResponseBody> getMomIdDetails(String momId) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2476,11 +2459,7 @@ class ApiIntegration {
 
   //--------WORK PLAN -----------
 
-  static Future<GetWorkPlanResponseBody> getWorkPlanList({
-    String? search,
-    bool? isConvertedToLead,
-  }) async
-  {
+  static Future<GetWorkPlanResponseBody> getWorkPlanList({String? search, bool? isConvertedToLead,}) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2636,9 +2615,7 @@ class ApiIntegration {
   }
 
 
-  static Future<GetWorkPlanDetailsResponseBody> getWorkPlanIdDetails(
-      String workPlanId) async
-  {
+  static Future<GetWorkPlanDetailsResponseBody> getWorkPlanIdDetails(String workPlanId) async {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -2784,8 +2761,7 @@ class ApiIntegration {
 
 
 
-  static Future<PostWorkPlanResponseBody> postWorkPlan(
-      PostWorkPlanRequestBody requestBody) async {
+  static Future<PostWorkPlanResponseBody> postWorkPlan(PostWorkPlanRequestBody requestBody) async {
     try {
       final url = Uri.parse(ApiConstants.postWorkPlan);
 
@@ -2852,8 +2828,7 @@ class ApiIntegration {
 
   ///-----------------PATCH METHOD --------------------------
 
-  static Future<GetProfileResponseBody> updateProfile(
-      GetProfileRequestBody requestBody) async {
+  static Future<GetProfileResponseBody> updateProfile(GetProfileRequestBody requestBody) async {
     try {
       final url = Uri.parse(ApiConstants.updateProfile);
 
@@ -2910,8 +2885,7 @@ class ApiIntegration {
   }
 
 
-  static Future<ApproveResponseBody> approvePendingUsers(
-      ApproveRequestBody requestBody, String id) async {
+  static Future<ApproveResponseBody> approvePendingUsers(ApproveRequestBody requestBody, String id) async {
     try {
       final url = Uri.parse("${ApiConstants.approveRegistration}/$id");
 
@@ -2961,6 +2935,62 @@ class ApiIntegration {
       final errorMsg = 'Error: ${e.toString()}';
       print('❌ $errorMsg');
       return ApproveResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  static Future<PostClientAddResponseBody> editClient(PostClientAddRequestBody requestBody, String id) async {
+    try {
+      final url = Uri.parse("${ApiConstants.editClient}/$id");
+
+      print('📤 Sending editClient request to: $url');
+      print('Request body: ${requestBody.toJson()}');
+
+      final response = await ApiClient.send(() {
+        return http.patch(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = PostClientAddResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ editClient successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = PostClientAddResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ Registration failed with status ${response.statusCode}');
+        }
+        return PostClientAddResponseBody(
+          status: false,
+          message: 'Client Update failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error in Client Update: ${e.toString()}';
+      print('❌ $errorMsg');
+      return PostClientAddResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return PostClientAddResponseBody(
         status: false,
         message: errorMsg,
       );
@@ -3061,8 +3091,7 @@ class ApiIntegration {
 
   ///---------------------POST METHOD ---------------------------
 
-  static Future<PunchInOutResponseBody> punchIn(
-      PunchInOutRequestBody body) async {
+  static Future<PunchInOutResponseBody> punchIn(PunchInOutRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.punchIn);
       if (kDebugMode) print('📤 Sending punchIn request to: $url');
@@ -3100,8 +3129,7 @@ class ApiIntegration {
     }
   }
 
-  static Future<PunchInOutResponseBody> punchOut(
-      PunchInOutRequestBody body) async {
+  static Future<PunchInOutResponseBody> punchOut(PunchInOutRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.punchOut);
       if (kDebugMode) print('📤 Sending punchOut request to: $url');
@@ -3209,8 +3237,7 @@ class ApiIntegration {
   //
   //
 
-  static Future<ApiCommonResponseBody> locationPing(
-      PunchInOutRequestBody requestBody) async {
+  static Future<ApiCommonResponseBody> locationPing(PunchInOutRequestBody requestBody) async {
     try {
       final url = Uri.parse(ApiConstants.locationPing);
 
@@ -3284,8 +3311,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postColors(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postColors(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postColors);
       if (kDebugMode) print('📤 Sending postColors request to: $url');
@@ -3322,8 +3348,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postFinishes(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postFinishes(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postFinishes);
       if (kDebugMode) print('📤 Sending postFinishes request to: $url');
@@ -3360,8 +3385,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postTextures(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postTextures(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postTextures);
       if (kDebugMode) print('📤 Sending postTextures request to: $url');
@@ -3398,8 +3422,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postNaturalColors(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postNaturalColors(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postNaturalColors);
       if (kDebugMode) print('📤 Sending postNaturalColors request to: $url');
@@ -3436,8 +3459,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postOrigins(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postOrigins(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postOrigins);
       if (kDebugMode) print('📤 Sending postOrigins request to: $url');
@@ -3474,8 +3496,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postStateCountries(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postStateCountries(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postStateCountries);
       if (kDebugMode) print('📤 Sending postStateCountries request to: $url');
@@ -3512,8 +3533,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postProcessingNatures(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postProcessingNatures(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postProcessingNatures);
       if (kDebugMode) print('📤 Sending postProcessingNatures request to: $url');
@@ -3551,8 +3571,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postNaturalMaterials(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postNaturalMaterials(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postNaturalMaterials);
       if (kDebugMode) print('📤 Sending postColors request to: $url');
@@ -3589,8 +3608,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostCatalogueCommonResponseBody> postHandicraftsTypes(
-      PostCatalogueCommonRequestBody body) async {
+  static Future<PostCatalogueCommonResponseBody> postHandicraftsTypes(PostCatalogueCommonRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postHandicraftsTypes);
       if (kDebugMode) print('📤 Sending postHandicraftsTypes request to: $url');
@@ -3627,8 +3645,7 @@ class ApiIntegration {
   }
 
 
-  static Future<ProductEntryResponseBody> postProductEntry(
-      ProductEntryRequestBody body) async {
+  static Future<ProductEntryResponseBody> postProductEntry(ProductEntryRequestBody body) async {
     try {
       final url = Uri.parse(ApiConstants.postProductEntry);
       if (kDebugMode) print('📤 Sending postProductEntry request to: $url');
@@ -3754,12 +3771,16 @@ class ApiIntegration {
   static Future<ApiCommonResponseBody> putCatalogueOptionsEntry({
     required String productId,
     required PutCatalogueOptionEntryRequestBody requestBody,
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse(
           '${ApiConstants.putCatalogueOptionsEntry}/$productId/options');
-      if (kDebugMode) print(
+      if (kDebugMode) {
+
+        print(
           '📤 Sending putCatalogueOptionsEntry request to: $url');
+      }
 
       final response = await ApiClient.send(() {
         return http.put(
@@ -3798,9 +3819,7 @@ class ApiIntegration {
   }
 
 
-  static Future<PostMinesEntryResponseBody> postMinesEntry({
-    required PostMinesEntryRequestBody requestBody,
-  }) async {
+  static Future<PostMinesEntryResponseBody> postMinesEntry({required PostMinesEntryRequestBody requestBody,}) async {
     try {
       final url = Uri.parse(ApiConstants.postMinesEntry);
       if (kDebugMode) print('📤 Sending postMinesEntry request to: $url');
@@ -3809,7 +3828,7 @@ class ApiIntegration {
         return http.post(
           url,
           headers: ApiConstants.headerWithToken(),
-          body: jsonEncode(requestBody.toJson()),
+           body:jsonEncode(requestBody.toJson()),
         ).timeout(_timeout);
       });
 
@@ -3839,13 +3858,7 @@ class ApiIntegration {
     }
   }
 
-  static Future<PostMomImageUploadResponseBody> postMomImageUpload({
-    required String momId,
-    required File imageFile,
-    required String? caption,
-    int sortOrder = 0,
-  }) async
-  {
+  static Future<PostMomImageUploadResponseBody> postMomImageUpload({required String momId, required File imageFile, required String? caption, int sortOrder = 0,}) async {
     try {
       final url = Uri.parse('${ApiConstants.postMomImage}/$momId/images');
 
@@ -3917,9 +3930,7 @@ class ApiIntegration {
   }
 
 
-  static Future<GetCatalogueProductResponseBody> postSearch({
-    required PostSearchRequestBody requestBody,
-  }) async {
+  static Future<GetCatalogueProductResponseBody> postSearch({required PostSearchRequestBody requestBody,}) async {
     try {
       final url = Uri.parse(ApiConstants.postSearch);
       if (kDebugMode) print('📤 Sending postSearch request to: $url');
@@ -3959,9 +3970,7 @@ class ApiIntegration {
     }
   }
 
-  static Future<PostMomEntryResponseBody> postMomEntry({
-    required PostMomEntryRequestBody requestBody,
-  }) async {
+  static Future<PostMomEntryResponseBody> postMomEntry({required PostMomEntryRequestBody requestBody,}) async {
     try {
       final url = Uri.parse(ApiConstants.postMomEntry);
       if (kDebugMode) print('📤 Sending postMomEntry request to: $url');
@@ -4001,9 +4010,51 @@ class ApiIntegration {
     }
   }
 
+  static Future<ApiCommonResponseBody> closeMOM({required String message, required String id}) async {
+    try {
+      final url = Uri.parse("${ApiConstants.closeMOM}/$id/close");
+      if (kDebugMode) print('📤 Sending closeMOM request to: $url');
+      final requestBody = {
+        "remarks": message
+      };
+      final response = await ApiClient.send(() {
+        return http.post(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 closeMOM status: ${response.statusCode}');
+        print('📥 closeMOM body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody.fromJson(jsonResponse);
+        // return PostMinesEntryResponseBody(
+        //   status: false,
+        //   message: jsonResponse['message'] ?? 'Failed to update product options',
+        //   statusCode: response.statusCode,
+        // );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ closeMOM error: $e');
+      return ApiCommonResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
   static Future<PostClientAddResponseBody> postClientAdd({
     required PostClientAddRequestBody requestBody,
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse(ApiConstants.postClients);
       if (kDebugMode) print('📤 Sending postClients request to: $url');
@@ -4047,7 +4098,8 @@ class ApiIntegration {
     required PostClientAddContactRequestBody requestBody,
     required String clientId,
     required String locationId
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse("${ApiConstants
           .postClients}/$clientId/locations/$locationId/contacts");
@@ -4092,7 +4144,8 @@ class ApiIntegration {
   static Future<PostClientAddLocationResponseBody> postClientAddLocation({
     required PostClientAddLocationRequestBody requestBody,
     required String clientId,
-  }) async {
+  })
+  async {
     try {
       final url = Uri.parse("${ApiConstants.postClients}/$clientId/locations");
       if (kDebugMode) print('📤 Sending postClients locations request to: $url');
@@ -4199,11 +4252,77 @@ class ApiIntegration {
     }
   }
 
+
+  static Future<ApiCommonResponseBody> closeLead(
+     String id, String message
+  ) async
+  {
+    try {
+      if (kDebugMode) {
+        print(
+            '📤 Sending closeLead request to: ${ApiConstants.closeLead}');
+        print('📤 Sending closeLead header: ${ApiConstants.headerWithToken}');
+
+      }
+      final requestBody = {
+        "remarks": message
+      };
+      final response = await ApiClient.send(() {
+        return http.post(
+          Uri.parse("${ApiConstants.closeLead}/$id/close"),
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody)
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 Response closeLead status: ${response.statusCode}');
+        print('📥 closeLead body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApiCommonResponseBody.fromJson(jsonResponse);
+
+        if (kDebugMode) {
+          print('✅ close Lead successful: ${result.message}');
+        }
+
+        return result;
+      } else {
+        if (kDebugMode) {
+          print('❌ closeLead failed with status ${response.statusCode}');
+        }
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody.fromJson(jsonResponse);
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      if (kDebugMode) {
+        print('❌ $errorMsg');
+      }
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
   /// Get Lead List
   static Future<GetLeadListResponseBody> getLeadList({
     int? page,
     int? pageSize,
     String? search,
+    int view = 3, // 0: Open, 1: Closed, 2: Urgent (next 15 days), 3: All
   }) async
   {
     try {
@@ -4221,6 +4340,8 @@ class ApiIntegration {
       if (search != null && search.isNotEmpty) {
         queryParams['Search'] = search;
       }
+      // Add view parameter - 0: Open, 1: Closed, 2: Urgent (next 15 days), 3: All
+      queryParams['View'] = view.toString();
 
       // Create cache key with params
       final cacheKey = queryParams.isEmpty
@@ -4365,7 +4486,8 @@ class ApiIntegration {
 
   /// Get Lead Details
   static Future<GetLeadDetailsResponseBody> getLeadDetails(
-      String leadId) async {
+      String leadId) async
+  {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -4774,7 +4896,8 @@ class ApiIntegration {
     required String userId,
     required String role,
     String appCode = 'MARKETING',
-  }) async {
+  }) async
+  {
     try {
       final url = Uri.parse(ApiConstants.changeUserRole(userId));
       final requestBody = ChangeRoleRequestBody(
@@ -4906,7 +5029,8 @@ class ApiIntegration {
   ///
   /// Returns: GetWorkPlanDetailsResponseBody with updated work plan
   static Future<GetWorkPlanDetailsResponseBody> workPlanDecision(
-      String workPlanId, WorkPlanDecisionRequestBody requestBody) async {
+      String workPlanId, WorkPlanDecisionRequestBody requestBody) async
+  {
     try {
       // Check connectivity first
       final hasConnection = await hasConnectivity();
@@ -5043,6 +5167,96 @@ class ApiIntegration {
       return GetWorkPlanDetailsResponseBody(
         status: false,
         message: errorMsg,
+      );
+    }
+  }
+
+
+  static Future<PutEditCatalogueResponseBody> putEditProduct({
+    required String productId,
+    required PutEditCatalogueRequestBody requestBody,
+  }) async
+  {
+    try {
+      final url = Uri.parse(
+          '${ApiConstants.editProduct}/$productId');
+      if (kDebugMode) {
+
+        print(
+            '📤 Sending PutEditCatalogueResponseBody request to: $url');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.put(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 PutEditCatalogueResponseBody status: ${response.statusCode}');
+        print('📥 PutEditCatalogueResponseBody request: ${jsonEncode(
+            requestBody.toJson())}');
+        print('📥 PutEditCatalogueResponseBody body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PutEditCatalogueResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PutEditCatalogueResponseBody(
+          status: false,
+          message: jsonResponse['message'] ??
+              'Failed to update product ',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ PutEditCatalogueResponseBody error: $e');
+      return PutEditCatalogueResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
+  // ========================= Put Edit Client =========================
+  static Future<PostClientAddResponseBody> putEditClient({
+    required String clientId,
+    required PostClientAddRequestBody requestBody,
+  }) async {
+    try {
+      final url = Uri.parse("${ApiConstants.postClients}/$clientId");
+      if (kDebugMode) print('📤 Sending putEditClient request to: $url');
+
+      final response = await ApiClient.send(() {
+        return http.patch(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 putEditClient status: ${response.statusCode}');
+        print('📥 putEditClient request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 putEditClient body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return PostClientAddResponseBody.fromJson(jsonResponse);
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ putEditClient error: $e');
+      return PostClientAddResponseBody(
+        status: false,
+        message: e.toString(),
       );
     }
   }

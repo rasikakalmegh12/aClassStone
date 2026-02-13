@@ -92,6 +92,7 @@ class GetMomListBloc extends Bloc<GetMomListEvent, GetMomListState> {
           final response = await ApiIntegration.getMomList(
             search: event.search,
             isConvertedToLead: event.isConvertedToLead,
+            status: event.status
           );
 
           if (response.status == true) {

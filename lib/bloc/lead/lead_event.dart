@@ -18,12 +18,14 @@ class FetchLeadList extends LeadEvent {
   final int? page;
   final int? pageSize;
   final String? search;
+  final int view; // 0: Open, 1: Closed, 2: Urgent (next 15 days), 3: All
   final bool showLoader;
 
   FetchLeadList({
     this.page,
     this.pageSize,
     this.search,
+    this.view = 3,
     this.showLoader = true,
   });
 }

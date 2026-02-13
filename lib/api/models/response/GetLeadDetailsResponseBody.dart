@@ -36,11 +36,16 @@ class Data {
   String? notes;
   String? deadlineDate;
   String? assignedToUserId;
-  int? transportAmount;
-  int? otherChargesAmount;
-  int? taxAmount;
-  int? materialsTotal;
-  int? grandTotal;
+  String? status;
+  String? closedAt;
+  String? closedByUserId;
+  String? closedByName;
+  String? closedRemarks;
+  double? transportAmount;
+  double? otherChargesAmount;
+  double? taxAmount;
+  double? materialsTotal;
+  double? grandTotal;
   String? pricingRuleVersion;
   String? createdAt;
   List<Items>? items;
@@ -55,6 +60,11 @@ class Data {
         this.notes,
         this.deadlineDate,
         this.assignedToUserId,
+        this.status,
+        this.closedAt,
+        this.closedByUserId,
+        this.closedByName,
+        this.closedRemarks,
         this.transportAmount,
         this.otherChargesAmount,
         this.taxAmount,
@@ -74,11 +84,16 @@ class Data {
     notes = json['notes'];
     deadlineDate = json['deadlineDate'];
     assignedToUserId = json['assignedToUserId'];
-    transportAmount = json['transportAmount']?.toInt();
-    otherChargesAmount = json['otherChargesAmount']?.toInt();
-    taxAmount = json['taxAmount']?.toInt();
-    materialsTotal = json['materialsTotal']?.toInt();
-    grandTotal = json['grandTotal']?.toInt();
+    status = json['status'];
+    closedAt = json['closedAt'];
+    closedByUserId = json['closedByUserId'];
+    closedByName = json['closedByName'];
+    closedRemarks = json['closedRemarks'];
+    transportAmount = json['transportAmount'];
+    otherChargesAmount = json['otherChargesAmount'];
+    taxAmount = json['taxAmount'];
+    materialsTotal = json['materialsTotal'];
+    grandTotal = json['grandTotal'];
     pricingRuleVersion = json['pricingRuleVersion'];
     createdAt = json['createdAt'];
     if (json['items'] != null) {
@@ -194,3 +209,8 @@ class Items {
     return data;
   }
 }
+
+
+
+
+

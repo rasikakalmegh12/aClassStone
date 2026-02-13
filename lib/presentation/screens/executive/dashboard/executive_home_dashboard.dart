@@ -24,6 +24,7 @@ import '../../../../bloc/dashboard/dashboard_event.dart';
 import '../../../../bloc/dashboard/dashboard_state.dart';
 import '../../../../core/constants/app_colors.dart';
 
+import '../../../../core/constants/image_constant.dart';
 import '../../../../main.dart';
 import '../../auth/login_screen.dart';
 import '../../debug/log_viewer.dart';
@@ -353,7 +354,9 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
               Container(
                 width: 32,
                 height: 32,
+                padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
+                  
                   color: AppColors.white,
                   borderRadius: BorderRadius.circular(8),
                   boxShadow: [
@@ -364,11 +367,7 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.diamond_outlined,
-                  color: AppColors.primaryTeal,
-                  size: 20,
-                ),
+                child:  Image.asset(ImageConstant.logo, fit: BoxFit.contain),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -426,19 +425,19 @@ class _ExecutiveHomeDashboardState extends State<ExecutiveHomeDashboard> {
                   ),
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LogViewerScreen()),
-                  );
-                },
-                icon: const Icon(
-                  Icons.bug_report,
-                  color: Colors.white,
-                  size: 16,
-                ),
-              ),
+              // IconButton(
+              //   onPressed: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(builder: (context) => const LogViewerScreen()),
+              //     );
+              //   },
+              //   icon: const Icon(
+              //     Icons.bug_report,
+              //     color: Colors.white,
+              //     size: 16,
+              //   ),
+              // ),
             ],
           ),
 

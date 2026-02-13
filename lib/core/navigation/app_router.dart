@@ -2,32 +2,36 @@ import 'package:apclassstone/bloc/auth/auth_bloc.dart';
 import 'package:apclassstone/bloc/auth/auth_state.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
+import 'package:apclassstone/bloc/client/put_edit_client/put_edit_client_bloc.dart';
 import 'package:apclassstone/bloc/dashboard/dashboard_bloc.dart';
 import 'package:apclassstone/bloc/mom/mom_bloc.dart';
 import 'package:apclassstone/bloc/work_plan/work_plan_bloc.dart';
-import 'package:apclassstone/core/constants/app_constants.dart';
-import 'package:apclassstone/presentation/screens/attendance/attendance_tracking.dart';
-import 'package:apclassstone/presentation/screens/auth/register_screen.dart';
-import 'package:apclassstone/presentation/screens/super_admin/screens/all_users_screen.dart';
-import 'package:apclassstone/presentation/screens/super_admin/screens/pending_users_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-
+import 'package:apclassstone/api/models/response/GetClientIdDetailsResponseBody.dart' as clientDetails;
+import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart' as allClientList;
 import '../../api/models/response/GetCatalogueProductResponseBody.dart';
 import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import '../../bloc/catalogue/put_catalogues_methods/put_edit_product_bloc.dart';
 import '../../bloc/generate_pdf/generate_pdf_bloc.dart';
+import '../../bloc/lead/close_lead_bloc.dart';
 import '../../bloc/lead/lead_bloc.dart';
+import '../../bloc/mom/close_mom_bloc.dart';
 import '../../bloc/registration/registration_bloc.dart';
 import '../../bloc/user_management/user_management_bloc.dart';
 import '../../bloc/work_plan/work_plan_decision_bloc.dart';
 import '../../core/services/repository_provider.dart';
 import '../../presentation/catalog/catalog_main.dart';
 import '../../presentation/catalog/catalogue_entry.dart';
+import '../../presentation/catalog/edit_catalogue.dart';
 import '../../presentation/screens/attendance/attendance_monthly_tracking.dart';
+import '../../presentation/screens/attendance/attendance_tracking.dart';
+import '../../presentation/screens/auth/login_screen.dart';
+import '../../presentation/screens/auth/register_screen.dart';
 import '../../presentation/screens/executive/clients/add_client_screen.dart';
 import '../../presentation/screens/executive/clients/clients_list_screen.dart';
 import '../../presentation/screens/executive/leads/add_to_lead.dart';
@@ -40,22 +44,15 @@ import '../../presentation/screens/executive/work_plans/work_plans_list_screen.d
 import '../../presentation/screens/executive_history/executive_history_tracking_screen.dart';
 import '../../presentation/screens/executive_history/executive_tracking.dart';
 import '../../presentation/screens/profile/profile_screen.dart';
-
 import '../../presentation/screens/dashboard/admin_dashboard.dart';
-import '../../presentation/screens/dashboard/admin_dashboard_screen.dart';
 import '../../presentation/screens/dashboard/executive_dashboard.dart';
-import '../../presentation/screens/dashboard/executive_dashboard_screen.dart';
-import '../../presentation/screens/dashboard/super_admin_dashboard_screen.dart';
-import '../../presentation/screens/meeting/meeting_detail_screen.dart';
-import '../../presentation/screens/meeting/meeting_list_screen.dart';
 import '../../presentation/screens/registration/pending_registrations_screen.dart';
 import '../../presentation/screens/splash/splash_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
-import '../../presentation/screens/dashboard/dashboard_router.dart';
-
-import 'package:apclassstone/api/models/models.dart';
 
 import '../../presentation/screens/super_admin/screens/super_admin_dashboard.dart';
+import '../../presentation/screens/super_admin/screens/all_users_screen.dart';
+import '../../presentation/screens/super_admin/screens/pending_users_screen.dart';
 
 class AppRouter {
   static final GoRouter router = GoRouter(
@@ -292,6 +289,49 @@ class AppRouter {
           );
         },
       ),
+      // Edit Product Route
+      GoRoute(
+        path: '/editProduct',
+        name: 'editProduct',
+        builder: (context, state) {
+          final productId = state.extra as String?;
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<GetCatalogueProductListBloc>.value(value: AppBlocProvider.getCatalogueProductListBloc),
+              BlocProvider<GetCatalogueProductDetailsBloc>.value(value: AppBlocProvider.getCatalogueProductDetailsBloc),
+              BlocProvider<GetProductTypeBloc>(create: (context) => GetProductTypeBloc(),),
+              BlocProvider<GetUtilitiesBloc>(create: (context) => GetUtilitiesBloc(),),
+              BlocProvider<GetColorsBloc>(create: (context) => GetColorsBloc(),),
+              BlocProvider<GetFinishesBloc>(create: (context) => GetFinishesBloc(),),
+              BlocProvider<GetTexturesBloc>(create: (context) => GetTexturesBloc(),),
+              BlocProvider<GetNaturalColorsBloc>(create: (context) => GetNaturalColorsBloc(),),
+              BlocProvider<GetOriginsBloc>(create: (context) => GetOriginsBloc(),),
+              BlocProvider<GetStateCountriesBloc>(create: (context) => GetStateCountriesBloc(),),
+              BlocProvider<GetProcessingNatureBloc>(create: (context) => GetProcessingNatureBloc(),),
+              BlocProvider<GetNaturalMaterialBloc>(create: (context) => GetNaturalMaterialBloc(),),
+              BlocProvider<GetHandicraftsBloc>(create: (context) => GetHandicraftsBloc(),),
+              BlocProvider<GetMinesOptionBloc>(create: (context) => GetMinesOptionBloc(),),
+              BlocProvider<GetPriceRangeBloc>(create: (context) => GetPriceRangeBloc(),),
+              BlocProvider<PostColorsBloc>(create: (context) => PostColorsBloc(),),
+              BlocProvider<PostFinishesBloc>(create: (context) => PostFinishesBloc(),),
+              BlocProvider<PostTexturesBloc>(create: (context) => PostTexturesBloc(),),
+              BlocProvider<PostNaturalColorsBloc>(create: (context) => PostNaturalColorsBloc(),),
+              BlocProvider<PostOriginsBloc>(create: (context) => PostOriginsBloc(),),
+              BlocProvider<PostStateCountriesBloc>(create: (context) => PostStateCountriesBloc(),),
+              BlocProvider<PostProcessingNaturesBloc>(create: (context) => PostProcessingNaturesBloc(),),
+              BlocProvider<PostNaturalMaterialsBloc>(create: (context) => PostNaturalMaterialsBloc(),),
+              BlocProvider<PostHandicraftsTypesBloc>(create: (context) => PostHandicraftsTypesBloc(),),
+              BlocProvider<ProductEntryBloc>(create: (context) => ProductEntryBloc(),),
+              BlocProvider<CatalogueImageEntryBloc>(create: (context) => CatalogueImageEntryBloc(),),
+              BlocProvider<PutCatalogueOptionsEntryBloc>(create: (context) => PutCatalogueOptionsEntryBloc(),),
+              BlocProvider<PostMinesEntryBloc>(create: (context) => PostMinesEntryBloc(),),
+              BlocProvider<PostSearchBloc>(create: (context) => PostSearchBloc(),),
+              BlocProvider<PutEditProductBloc>(create: (context) => PutEditProductBloc(),),
+            ],
+            child: EditCatalogue(productId: productId),
+          );
+        },
+      ),
       // Profile Route
       GoRoute(
         path: '/profile',
@@ -382,25 +422,41 @@ class AppRouter {
         },
       ),
 
-      GoRoute(
-        path: '/addClientScreen',
-        name: 'addClientScreen',
-        builder: (context, state) {
+GoRoute(
+  path: '/addClientScreen',
+  name: 'addClientScreen',
+  builder: (context, state) {
+    // Extract optional existingClient and allClientList from route extra
+    final extras = state.extra as Map<String, dynamic>?;
+    final existingClient = extras != null && extras['existingClient'] is clientDetails.Data
+        ? extras['existingClient'] as clientDetails.Data
+        : null;
+    final clientListData = extras != null && extras['allClientList'] != null
+        ? extras['allClientList']
+        : null;
 
-
-
-          return
-            MultiBlocProvider(
-              providers: [
-                BlocProvider<GetClientListBloc>(create: (context) => GetClientListBloc(),),
-                BlocProvider<GetClientDetailsBloc>(create: (context) => GetClientDetailsBloc(),),
-                BlocProvider<PostClientAddBloc>(create: (context) => PostClientAddBloc(),),
-              ],
-              child: const AddClientScreen(),
-            );
-
-        },
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<GetClientListBloc>(
+          create: (context) => GetClientListBloc(),
+        ),
+        BlocProvider<GetClientDetailsBloc>(
+          create: (context) => GetClientDetailsBloc(),
+        ),
+        BlocProvider<PostClientAddBloc>(
+          create: (context) => PostClientAddBloc(),
+        ),
+        BlocProvider<PutEditClientBloc>(
+          create: (context) => PutEditClientBloc(),
+        ),
+      ],
+      child: AddClientScreen(
+        existingClient: existingClient,
+        allClientList: clientListData,
       ),
+    );
+  },
+),
 
       GoRoute(
         path: '/momScreen',
@@ -436,6 +492,7 @@ class AppRouter {
               BlocProvider<GetWorkPlanListBloc>(create: (context) => GetWorkPlanListBloc(),),
               BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
               BlocProvider<GetMomListBloc>(create: (context) => GetMomListBloc(),),
+              BlocProvider<CloseMomBloc>.value(value: AppBlocProvider.closeMomBloc),
             ],
             child: const MeetingsListScreen(),
           );
@@ -495,6 +552,8 @@ class AppRouter {
               BlocProvider<GetMomDetailsBloc>(create: (context) => GetMomDetailsBloc(),),
               BlocProvider<GetLeadDetailsBloc>(create: (context) => GetLeadDetailsBloc(),),
               BlocProvider<GetLeadListBloc>(create: (context) => GetLeadListBloc(),),
+              BlocProvider<CloseLeadBloc>(create: (context) => CloseLeadBloc(),),
+              BlocProvider<CloseLeadBloc>.value(value: AppBlocProvider.closeLeadBloc),
             ],
             child: const LeadsListScreen(),
           );
@@ -538,13 +597,13 @@ class AppRouter {
         path: '/cataloguePage',
         name: 'cataloguePage',
         builder: (context, state) {
-          final meetingId = state.pathParameters['meetingId'];
-          // return MeetingDetailScreen(meetingId: meetingId);
           return MultiBlocProvider(
               providers:[
                 BlocProvider<GetCatalogueProductListBloc>(create: (context) => GetCatalogueProductListBloc(),),
                 BlocProvider<GetCatalogueProductDetailsBloc>(create: (context) => GetCatalogueProductDetailsBloc(),),
                 // Filter BLoCs - using singleton instances from AppBlocProvider
+                BlocProvider<GetCatalogueProductListBloc>.value(value: AppBlocProvider.getCatalogueProductListBloc),
+                BlocProvider<GetCatalogueProductDetailsBloc>.value(value: AppBlocProvider.getCatalogueProductDetailsBloc),
                 BlocProvider<GetProductTypeBloc>.value(value: AppBlocProvider.getProductTypeBloc),
                 BlocProvider<GetUtilitiesBloc>.value(value: AppBlocProvider.getUtilitiesBloc),
                 BlocProvider<GetColorsBloc>.value(value: AppBlocProvider.getColorsBloc),

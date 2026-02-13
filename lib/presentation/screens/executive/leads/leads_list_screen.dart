@@ -5,12 +5,19 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../api/models/response/GetLeadListResponseBody.dart';
 import '../../../../bloc/lead/lead_bloc.dart';
 import '../../../../bloc/lead/lead_event.dart';
 import '../../../../bloc/lead/lead_state.dart';
+import '../../../../bloc/lead/close_lead_bloc.dart';
+import '../../../../bloc/lead/close_lead_event.dart';
+import '../../../../bloc/lead/close_lead_state.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/session/session_manager.dart';
 import '../../../widgets/app_bar.dart';
+import '../../../widgets/custom_loader.dart';
+
+
 
 class LeadsListScreen extends StatefulWidget {
   const LeadsListScreen({super.key});
@@ -21,11 +28,30 @@ class LeadsListScreen extends StatefulWidget {
 
 class _LeadsListScreenState extends State<LeadsListScreen> {
   String selectedFilter = 'All';
-  final List<String> filters = ['All', 'Active', 'Closed', 'Follow-up Due'];
+  // Updated filters to match API view options: 0-Open, 1-Closed, 2-Urgent, 3-All
+  final List<String> filters = ['All','Open', 'Closed', 'Urgent', ];
 
   final TextEditingController _searchController = TextEditingController();
   int _currentPage = 1;
   final int _pageSize = 20;
+
+  /// Convert filter name to view parameter
+  /// Open = 0, Closed = 1, Urgent = 2, All = 3
+  int _getViewFromFilter(String filter) {
+    switch (filter) {
+      case 'All':
+        return 3;
+      case 'Open':
+        return 0;
+      case 'Closed':
+        return 1;
+      case 'Urgent':
+        return 2;
+
+      default:
+        return 3;
+    }
+  }
 
   @override
   void initState() {
@@ -35,6 +61,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
       FetchLeadList(
         page: _currentPage,
         pageSize: _pageSize,
+        view: _getViewFromFilter(selectedFilter),
         showLoader: true,
       ),
     );
@@ -52,7 +79,9 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
         page: _currentPage,
         pageSize: _pageSize,
         search: _searchController.text.isEmpty ? null : _searchController.text,
+        view: _getViewFromFilter(selectedFilter),
         showLoader: false,
+
       ),
     );
   }
@@ -67,10 +96,10 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
           title: 'My Leads',
           backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
           AppColors.adminPrimaryDark :AppColors.primaryTealDark,
-          action: IconButton(
-            onPressed: _showSortOptions,
-            icon: const Icon(Icons.sort, color: AppColors.textSecondary),
-          ),
+          // action: IconButton(
+          //   onPressed: _showSortOptions,
+          //   icon: const Icon(Icons.sort, color: AppColors.textSecondary),
+          // ),
         ),
       ),
       body: BlocConsumer<GetLeadListBloc, LeadState>(
@@ -147,49 +176,59 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
               },
             ),
           ),
-          // const SizedBox(height: 16),
-          // // Filter Chips
-          // SizedBox(
-          //   height: 32,
-          //   child: ListView.builder(
-          //     scrollDirection: Axis.horizontal,
-          //     itemCount: filters.length,
-          //     itemBuilder: (context, index) {
-          //       final filter = filters[index];
-          //       final isSelected = filter == selectedFilter;
-          //
-          //       return Padding(
-          //         padding: const EdgeInsets.only(right: 8),
-          //         child: GestureDetector(
-          //           onTap: () {
-          //             setState(() {
-          //               selectedFilter = filter;
-          //             });
-          //             // TODO: Filter implementation can be added here if backend supports it
-          //           },
-          //           child: Container(
-          //             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          //             decoration: BoxDecoration(
-          //               color: isSelected ? AppColors.primaryTeal : AppColors.white,
-          //               borderRadius: BorderRadius.circular(16),
-          //               border: Border.all(
-          //                 color: isSelected ? AppColors.primaryTeal : AppColors.grey300,
-          //               ),
-          //             ),
-          //             child: Text(
-          //               filter,
-          //               style: TextStyle(
-          //                 fontSize: 12,
-          //                 fontWeight: FontWeight.w500,
-          //                 color: isSelected ? AppColors.white : AppColors.textSecondary,
-          //               ),
-          //             ),
-          //           ),
-          //         ),
-          //       );
-          //     },
-          //   ),
-          // ),
+          const SizedBox(height: 16),
+          // Filter Chips
+          SizedBox(
+            height: 32,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: filters.length,
+              itemBuilder: (context, index) {
+                final filter = filters[index];
+                final isSelected = filter == selectedFilter;
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedFilter = filter;
+                      });
+                      context.read<GetLeadListBloc>().add(
+                        FetchLeadList(
+                          page: _currentPage,
+                          pageSize: _pageSize,
+                          view: _getViewFromFilter(selectedFilter),
+                          showLoader: true,
+                        ),
+                      );
+                      // TODO: Filter implementation can be added here if backend supports it
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected ? SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+                        AppColors.adminPrimaryDark :AppColors.primaryTealDark : AppColors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isSelected ?  SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+                          AppColors.adminPrimaryDark :AppColors.primaryTealDark : AppColors.grey300,
+                        ),
+                      ),
+                      child: Text(
+                        filter,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: isSelected ? AppColors.white : AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
@@ -292,7 +331,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
     return const SizedBox();
   }
 
-  Widget _buildLeadCard(dynamic lead, int index) {
+  Widget _buildLeadCard(Items lead, int index) {
     // Format currency
     final formattedValue = '₹${NumberFormat('#,##,###').format(lead.grandTotal ?? 0)}';
 
@@ -308,7 +347,8 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
     }
 
     // Determine status based on deadline
-    String status = 'Active';
+    // String status = "OPEN";
+    String status = lead.status ?? '';
     Color statusColor = AppColors.success;
 
     final deadline = DateTime.tryParse(lead.deadlineDate ?? '');
@@ -316,10 +356,10 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
       final now = DateTime.now();
       final daysUntilDeadline = deadline.difference(now).inDays;
 
-      if (daysUntilDeadline < 0) {
-        status = 'Overdue';
+      if (status == 'CLOSED') {
+        status = 'CLOSED';
         statusColor = AppColors.error;
-      } else if (daysUntilDeadline <= 3) {
+      } else if (status == 'Urgent') {
         status = 'Urgent';
         statusColor = AppColors.accentAmber;
       } else {
@@ -375,9 +415,47 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                           color: AppColors.textPrimary,
                         ),
                       ),
+                      if (lead.status == "CLOSED") ...[
+                        const SizedBox(height: 2),
+                        Container(
+                          width: double.infinity,
+                          // padding: const EdgeInsets.all(12),
+                          // decoration: BoxDecoration(
+                          //   color: AppColors.error.withValues(alpha: 0.1),
+                          //   borderRadius: BorderRadius.circular(8),
+                          // ),
+                          child: Row(
+                            children: [
+                              // const Icon(
+                              //   Icons.assignment,
+                              //   size: 16,
+                              //   color: AppColors.error,
+                              // ),
+                              // const SizedBox(width: 8),
+                              const Text(
+                                'Closed At :',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.error,
+                                ),
+                              ), const SizedBox(width: 8),
+                              Text(
+                                DateFormat('dd MMM yyyy hh:mm a').format(DateTime.parse(lead.closedAt!)),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
                     ],
                   ),
                 ),
+
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
@@ -385,7 +463,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    status,
+                    lead.status ??"",
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -486,6 +564,7 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                 Row(
                   children: [
                     Expanded(
+                      flex: 3,
                       child: OutlinedButton(
                         onPressed: () => _viewDetails(lead),
                         style: OutlinedButton.styleFrom(
@@ -507,6 +586,33 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                         ),
                       ),
                     ),
+                    // Show Close Lead button if status is not CLOSED
+                    if (lead.status != 'CLOSED') ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 1,
+                        child: ElevatedButton(
+                          onPressed: () => _showCloseLeadDialog(lead),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.white,
+                            foregroundColor: AppColors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            shape: RoundedRectangleBorder(
+                              side: BorderSide(color:  AppColors.error,),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          child: const Text(
+                            'Close Lead',
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -753,10 +859,96 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
                   if (data.notes != null && data.notes!.isNotEmpty)
                     _buildDetailRow('Notes', data.notes!),
 
-                  const SizedBox(height: 16),
 
+                  if(data.closedByName != null && data.closedByName!.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.error.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle,
+                                color: AppColors.error,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Lead Closed',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Closed By
+                          _buildClosedInfoRow(
+                            'Closed By:',
+                            data.closedByName ?? '-',
+                          ),
+                          const SizedBox(height: 8),
+                          // Closed At
+                          _buildClosedInfoRow(
+                            'Closed At:',
+                            data.closedAt != null
+                                ? DateFormat('dd MMM yyyy, hh:mm a').format(
+                                    DateTime.parse(data.closedAt!),
+                                  )
+                                : '-',
+                          ),
+                          if (data.closedRemarks != null && data.closedRemarks!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            // Closed Remarks
+
+                            _buildClosedInfoRow(
+                              "Remarks:",
+                              data.closedRemarks ?? '-',
+                            ),
+                            // Column(
+                            //   crossAxisAlignment: CrossAxisAlignment.start,
+                            //   children: [
+                            //     const Text(
+                            //       'Remarks:',
+                            //       style: TextStyle(
+                            //         fontSize: 12,
+                            //         fontWeight: FontWeight.w600,
+                            //         color: AppColors.textSecondary,
+                            //       ),
+                            //     ),
+                            //     const SizedBox(height: 4),
+                            //     Text(
+                            //       data.closedRemarks!,
+                            //       style: const TextStyle(
+                            //         fontSize: 13,
+                            //         color: AppColors.textPrimary,
+                            //       ),
+                            //     ),
+                            //   ],
+                            // ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                  ],
                   // Products
+                  const SizedBox(height: 10),
                   _buildSectionHeader('Products (${data.items?.length ?? 0})'),
+
                   const SizedBox(height: 8),
                   if (data.items != null && data.items!.isNotEmpty)
                     ...data.items!.map((item) => _buildProductCard(item)),
@@ -780,6 +972,36 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
     }
 
     return const SizedBox();
+  }
+
+  /// Helper method to build closed info rows
+  Widget _buildClosedInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 100,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSectionHeader(String title) {
@@ -956,4 +1178,110 @@ class _LeadsListScreenState extends State<LeadsListScreen> {
       ),
     );
   }
+
+  /// Show dialog to close lead with optional notes
+  void _showCloseLeadDialog(Items lead) {
+    final TextEditingController notesController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider<CloseLeadBloc>(
+        create: (context) => CloseLeadBloc(),
+        child: BlocListener<CloseLeadBloc, CloseLeadState>(
+          listener: (context, state) {
+            if (state is CloseLeadLoading && state.showLoader) {
+              showCustomProgressDialog(context);
+            } else if (state is CloseLeadSuccess) {
+              dismissCustomProgressDialog(context);
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+              _refreshLeads();
+            } else if (state is CloseLeadError) {
+              dismissCustomProgressDialog(context);
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Close Lead'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Are you sure you want to close this lead? (${lead.leadNo})',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Additional Notes:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: notesController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Enter reason for closing...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.all(12),
+                        ),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            // Update dialog state on notes change
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      print("vmkr kembk,");
+                      context.read<CloseLeadBloc>().add(
+                        FetchCloseLead(
+                          leadId: lead.id!,
+                          notes: notesController.text.isEmpty ? null : notesController.text,
+                          showLoader: true,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                    ),
+                    child: const Text('Close Lead'),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
 }

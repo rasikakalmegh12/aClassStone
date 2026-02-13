@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
-
+import 'package:apclassstone/api/models/response/GetClientIdDetailsResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart' as clientList;
+import 'package:go_router/go_router.dart';
 import '../../../../api/models/request/PostClientAddRequestBody.dart';
 import '../../../../bloc/client/post_client/post_client_bloc.dart';
 import '../../../../bloc/client/post_client/post_client_event.dart';
 import '../../../../bloc/client/post_client/post_client_state.dart';
+import '../../../../bloc/client/put_edit_client/put_edit_client_bloc.dart';
+import '../../../../bloc/client/put_edit_client/put_edit_client_event.dart';
+import '../../../../bloc/client/put_edit_client/put_edit_client_state.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/session/session_manager.dart';
 import '../../../widgets/app_bar.dart';
@@ -13,9 +18,10 @@ import '../../../widgets/custom_loader.dart';
 
 
 class AddClientScreen extends StatefulWidget {
-  final Map<String, dynamic>? existingClient;
+  final Data? existingClient;
+  final clientList.Data? allClientList;
 
-  const AddClientScreen({super.key, this.existingClient});
+  const AddClientScreen({super.key, this.existingClient, this.allClientList});
 
   @override
   State<AddClientScreen> createState() => _AddClientScreenState();
@@ -83,9 +89,70 @@ class _AddClientScreenState extends State<AddClientScreen> {
     'Madhya Pradesh',
   ];
 
+  /// Extract existing client names from allClientList
+  List<String> _getExistingClientNames() {
+    // if (widget.allClientList == null ||
+    //     widget.allClientList!.locations == null) {
+    //   return [];
+    // }
+
+    final names = <String>{};
+    // for (var location in widget.allClientList!.locations!) {
+    //   if (location.contacts != null) {
+    //     for (var contact in location.contacts!) {
+    //       if (contact.name != null && contact.name!.isNotEmpty) {
+    //         names.add(contact.name!);
+    //       }
+    //     }
+    //   }
+    // }
+    return names.toList();
+  }
+
+  /// Extract existing phone numbers from allClientList
+  List<String> _getExistingPhones() {
+    // if (widget.allClientList == null ||
+    //     widget.allClientList!.locations == null) {
+    //   return [];
+    // }
+
+    final phones = <String>{};
+    // for (var location in widget.allClientList!.locations!) {
+    //   if (location.contacts != null) {
+    //     for (var contact in location.contacts!) {
+    //       if (contact.phone != null && contact.phone!.isNotEmpty) {
+    //         phones.add(contact.phone!);
+    //       }
+    //     }
+    //   }
+    // }
+    return phones.toList();
+  }
+
+  /// Extract existing emails from allClientList
+  List<String> _getExistingEmails() {
+    // if (widget.allClientList == null ||
+    //     widget.allClientList!.locations == null) {
+    //   return [];
+    // }
+    //
+    final emails = <String>{};
+    // for (var location in widget.allClientList!.locations!) {
+    //   if (location.contacts != null) {
+    //     for (var contact in location.contacts!) {
+    //       if (contact.email != null && contact.email!.isNotEmpty) {
+    //         emails.add(contact.email!);
+    //       }
+    //     }
+    //   }
+    // }
+    return emails.toList();
+  }
+
   @override
   void initState() {
     super.initState();
+    print(" existing client info: ${widget.existingClient}");
     _initializeForm();
     _getCurrentLocation();
   }
@@ -137,21 +204,74 @@ class _AddClientScreenState extends State<AddClientScreen> {
   void _initializeForm() {
     if (widget.existingClient != null) {
       final client = widget.existingClient!;
-      _clientNameController.text = client['name'] ?? '';
-      _firmNameController.text = client['firmName'] ?? '';
-      _traderNameController.text = client['traderName'] ?? '';
-      _ownerNameController.text = client['ownerName'] ?? '';
-      _phoneController.text = client['ownerPhone']?.replaceAll('+91-', '') ?? '';
-      _emailController.text = client['email'] ?? '';
-      _gstController.text = client['gstNumber'] ?? '';
-      selectedClientType = client['type'];
 
-      // Parse location
-      if (client['location'] != null) {
-        final locationParts = client['location'].split(', ');
-        if (locationParts.length == 2) {
-          selectedCity = locationParts[0];
-          selectedState = locationParts[1];
+      // Map basic client info using dot notation
+      _firmNameController.text = client.firmName ?? '';
+      _traderNameController.text = client.traderName ?? '';
+      _gstController.text = client.gstn ?? '';
+      _instagramController.text = client.instagramUrl ?? '';
+      _facebookController.text = client.facebookUrl ?? '';
+      _websiteController.text = client.twitterUrl ?? ''; // Using twitterUrl as website placeholder
+
+      // Map client type code to display name
+      final typeCodeMap = {
+        'BUILDER': 'Builder',
+        'ARCHITECT': 'Architect',
+        'INTERIOR_DESIGNER': 'Interior Designer',
+        'CONTRACTOR': 'Contractor',
+        'DEALER': 'Dealer',
+        'OTHER': 'Other',
+      };
+      selectedClientType = typeCodeMap[client.clientTypeCode] ?? 'Other';
+
+      // Extract primary location and contact info
+      if (client.locations != null && client.locations!.isNotEmpty) {
+        // Find primary location or use first one
+        Locations? primaryLocation;
+        try {
+          // Try to find primary location
+          for (var loc in client.locations!) {
+            if (loc.isPrimary == true) {
+              primaryLocation = loc;
+              break;
+            }
+          }
+          // If no primary found, use first location
+          primaryLocation ??= client.locations!.isNotEmpty ? client.locations![0] : null;
+        } catch (e) {
+          primaryLocation = client.locations!.isNotEmpty ? client.locations![0] : null;
+        }
+
+        if (primaryLocation != null) {
+          _locationNameController.text = primaryLocation.locationName ?? '';
+          _stateController.text = primaryLocation.state ?? '';
+          _cityController.text = primaryLocation.city ?? '';
+          selectedState = primaryLocation.state;
+          selectedCity = primaryLocation.city;
+
+          // Extract primary contact info
+          if (primaryLocation.contacts != null && primaryLocation.contacts!.isNotEmpty) {
+            Contacts? primaryContact;
+            try {
+              // Try to find primary contact
+              for (var contact in primaryLocation.contacts!) {
+                if (contact.isPrimary == true) {
+                  primaryContact = contact;
+                  break;
+                }
+              }
+              // If no primary found, use first contact
+              primaryContact ??= primaryLocation.contacts!.isNotEmpty ? primaryLocation.contacts![0] : null;
+            } catch (e) {
+              primaryContact = primaryLocation.contacts!.isNotEmpty ? primaryLocation.contacts![0] : null;
+            }
+
+            if (primaryContact != null) {
+              _ownerNameController.text = primaryContact.name ?? '';
+              _phoneController.text = (primaryContact.phone ?? '').replaceAll('+91-', '');
+              _emailController.text = primaryContact.email ?? '';
+            }
+          }
         }
       }
     }
@@ -159,32 +279,30 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<PostClientAddBloc, PostClientAddState>(
+    return BlocListener<PutEditClientBloc, PutEditClientState>(
       listener: (context, state) {
-        if (state is PostClientAddLoading && state.showLoader) {
+        if (state is PutEditClientLoading && state.showLoader) {
           showCustomProgressDialog(context);
-        } else if (state is PostClientAddLoaded) {
+        } else if (state is PutEditClientSuccess) {
           dismissCustomProgressDialog(context);
 
           if (state.response.status == true) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(widget.existingClient != null
-                    ? 'Client updated successfully'
-                    : 'Client added successfully'),
+              const SnackBar(
+                content: Text('Client updated successfully'),
                 backgroundColor: AppColors.success,
               ),
             );
-            Navigator.pop(context, true); // Return true to refresh the list
+            context.pop(true);// Return true to refresh the list
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.response.message ?? 'Failed to save client'),
+                content: Text(state.response.message ?? 'Failed to update client'),
                 backgroundColor: AppColors.error,
               ),
             );
           }
-        } else if (state is PostClientAddError) {
+        } else if (state is PutEditClientError) {
           dismissCustomProgressDialog(context);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -194,15 +312,48 @@ class _AddClientScreenState extends State<AddClientScreen> {
           );
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundLight,
-        appBar:
-        // _buildAppBar(),
-        PreferredSize(
-            preferredSize: const Size.fromHeight(56),
-            child: CoolAppCard(title: widget.existingClient != null ? 'Edit Client' : 'Add Client',backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
-            AppColors.adminPrimaryDark :AppColors.primaryTealDark,)
-        ),
+      child: BlocListener<PostClientAddBloc, PostClientAddState>(
+        listener: (context, state) {
+          if (state is PostClientAddLoading && state.showLoader) {
+            showCustomProgressDialog(context);
+          } else if (state is PostClientAddLoaded) {
+            dismissCustomProgressDialog(context);
+
+            if (state.response.status == true) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Client added successfully'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+              context.pop(true); // Return true to refresh the list
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.response.message ?? 'Failed to save client'),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          } else if (state is PostClientAddError) {
+            dismissCustomProgressDialog(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundLight,
+          appBar:
+          // _buildAppBar(),
+          PreferredSize(
+              preferredSize: const Size.fromHeight(56),
+              child: CoolAppCard(title: widget.existingClient != null ? 'Edit Client' : 'Add Client',backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+              AppColors.adminPrimaryDark :AppColors.primaryTealDark,)
+          ),
         body: Form(
           key: _formKey,
           child: Column(
@@ -265,6 +416,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
               _buildBottomButton(),
             ],
           ),
+        ),
         ),
       ),
     );
@@ -781,20 +933,21 @@ class _AddClientScreenState extends State<AddClientScreen> {
   }
 
   void _checkForDuplicates() {
-    // Simulate duplicate checking logic
+    // Get real data from allClientList
+    final existingClientNames = _getExistingClientNames();
+    final existingPhones = _getExistingPhones();
+    final existingEmails = _getExistingEmails();
+
+    // Get current form values
     final firmName = _firmNameController.text.toLowerCase();
     final phone = _phoneController.text;
     final email = _emailController.text.toLowerCase();
 
-    // Check against some mock existing clients
-    final existingClients = ['a class stone', 'patwari marble', 'sangam granites'];
-    final existingPhones = ['9876543210', '9987654321'];
-    final existingEmails = ['contact@aclassstone.com', 'info@patwarimarble.com'];
-
+    // Check against real existing clients
     setState(() {
-      showDuplicateWarning = existingClients.contains(firmName) ||
+      showDuplicateWarning = existingClientNames.any((name) => name.toLowerCase() == firmName) ||
                            existingPhones.contains(phone) ||
-                           existingEmails.contains(email);
+                           existingEmails.any((e) => e.toLowerCase() == email);
     });
 
     if (showDuplicateWarning) {
@@ -935,13 +1088,25 @@ class _AddClientScreenState extends State<AddClientScreen> {
         ),
       );
 
-      // Dispatch the event
-      context.read<PostClientAddBloc>().add(
-        FetchPostClientAdd(
-          showLoader: true,
-          requestBody: requestBody,
-        ),
-      );
+      // Dispatch the event - Check if editing or creating new
+      if (widget.existingClient != null) {
+        // Edit existing client
+        context.read<PutEditClientBloc>().add(
+          FetchPutEditClient(
+            clientId: widget.existingClient!.id!,
+            requestBody: requestBody,
+            showLoader: true,
+          ),
+        );
+      } else {
+        // Create new client
+        context.read<PostClientAddBloc>().add(
+          FetchPostClientAdd(
+            showLoader: true,
+            requestBody: requestBody,
+          ),
+        );
+      }
     }
   }
 

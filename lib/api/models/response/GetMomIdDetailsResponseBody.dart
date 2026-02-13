@@ -44,6 +44,13 @@ class Data {
   double? gpsLng;
   int? gpsAccuracyM;
   String? detailedNotes;
+  bool? followUpRequired;
+  bool? isConvertedToLead;
+  String? status;
+  String? closedAt;
+  String? closedByUserId;
+  String? closedByName;
+  String? closedRemarks;
   List<ChecklistItems>? checklistItems;
   List<Photos>? photos;
 
@@ -65,6 +72,13 @@ class Data {
         this.gpsLng,
         this.gpsAccuracyM,
         this.detailedNotes,
+        this.followUpRequired,
+        this.isConvertedToLead,
+        this.status,
+        this.closedAt,
+        this.closedByUserId,
+        this.closedByName,
+        this.closedRemarks,
         this.checklistItems,
         this.photos});
 
@@ -86,6 +100,13 @@ class Data {
     gpsLng = json['gpsLng'];
     gpsAccuracyM = json['gpsAccuracyM'];
     detailedNotes = json['detailedNotes'];
+    followUpRequired = json['followUpRequired'];
+    isConvertedToLead = json['isConvertedToLead'];
+    status = json['status'];
+    closedAt = json['closedAt'];
+    closedByUserId = json['closedByUserId'];
+    closedByName = json['closedByName'];
+    closedRemarks = json['closedRemarks'];
     if (json['checklistItems'] != null) {
       checklistItems = <ChecklistItems>[];
       json['checklistItems'].forEach((v) {
@@ -119,6 +140,13 @@ class Data {
     data['gpsLng'] = this.gpsLng;
     data['gpsAccuracyM'] = this.gpsAccuracyM;
     data['detailedNotes'] = this.detailedNotes;
+    data['followUpRequired'] = this.followUpRequired;
+    data['isConvertedToLead'] = this.isConvertedToLead;
+    data['status'] = this.status;
+    data['closedAt'] = this.closedAt;
+    data['closedByUserId'] = this.closedByUserId;
+    data['closedByName'] = this.closedByName;
+    data['closedRemarks'] = this.closedRemarks;
     if (this.checklistItems != null) {
       data['checklistItems'] =
           this.checklistItems!.map((v) => v.toJson()).toList();
@@ -199,3 +227,5 @@ class Photos {
     return data;
   }
 }
+
+

@@ -1137,7 +1137,7 @@ class _CatalogueEntryPageState extends State<CatalogueEntryPage> {
 // Marketing One-liner
               TextField(
                 controller: _marketingOneLinerController,
-                maxLength: 80,
+
                 decoration: InputDecoration(
                   labelText: 'Marketing One-liner',
                   hintText: 'Eg. Premium marble for luxury spaces',

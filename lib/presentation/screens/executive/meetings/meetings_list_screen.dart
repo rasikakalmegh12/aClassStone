@@ -1,14 +1,19 @@
 import 'package:apclassstone/bloc/mom/mom_bloc.dart';
+import 'package:apclassstone/presentation/widgets/custom_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
 
 
 import '../../../../api/models/response/GetMomResponseBody.dart';
 import '../../../../bloc/mom/mom_event.dart';
 import '../../../../bloc/mom/mom_state.dart';
+import '../../../../bloc/mom/close_mom_bloc.dart';
+import '../../../../bloc/mom/close_mom_event.dart';
+import '../../../../bloc/mom/close_mom_state.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/session/session_manager.dart';
 import '../../../widgets/app_bar.dart';
@@ -416,6 +421,8 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
   String selectedFilter = 'All';
   final List<String> filters = [
     'All',
+    "Open",
+    "Closed",
     'Lead Created',
     'No Lead',
   ];
@@ -439,12 +446,20 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
 
   void _loadMomList({bool showLoader = false}) {
     // Determine isConvertedToLead based on filter
+    print("selectedFilter : ${selectedFilter}");
     bool? isConvertedToLead;
+    String? status;
     if (selectedFilter == 'Lead Created') {
       isConvertedToLead = true;
     } else if (selectedFilter == 'No Lead') {
       isConvertedToLead = false;
     }
+    else if (selectedFilter == 'Open') {
+      status = "OPEN";
+    } else if (selectedFilter == 'Closed') {
+      status = "CLOSED";
+    }
+
     // If 'All' is selected, isConvertedToLead remains null
 
     context.read<GetMomListBloc>().add(
@@ -452,6 +467,7 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
         showLoader: showLoader,
         search: _searchController.text.trim().isEmpty ? null : _searchController.text.trim(),
         isConvertedToLead: isConvertedToLead,
+        status: status
       ),
     );
   }
@@ -628,6 +644,28 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
   }
 
   Widget _buildMeetingCard(Items meeting, int index) {
+    String status = meeting.status ?? '';
+    Color statusColor = AppColors.success;
+
+
+    if (meeting.status != null) {
+      final now = DateTime.now();
+
+
+      if (status == 'CLOSED') {
+        status = 'CLOSED';
+        statusColor = AppColors.error;
+      } else if (status == 'LEAD CREATED') {
+        status = 'LEAD CREATED';
+        statusColor = AppColors.accentAmber;
+      } else if (status == 'NO LEAD') {
+        status = 'NO LEAD';
+        statusColor = AppColors.accentPurple;
+      } else {
+        status = 'OPEN';
+        statusColor = AppColors.success;
+      }
+    }
     return InkWell(
       onTap: (){
         _openMomDetailsBottomSheet(meeting.id!);
@@ -649,13 +687,34 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              meeting.clientName ?? "NA",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  meeting.clientName ?? "NA",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color: statusColor.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: statusColor,
+                      letterSpacing: 0.5
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Row(
@@ -674,28 +733,71 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                const Text(
-                  'Status: ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
+            // const SizedBox(height: 12),
+            // Row(
+            //   children: [
+            //     const Text(
+            //       'Status: ',
+            //       style: TextStyle(
+            //         fontSize: 13,
+            //         color: AppColors.textSecondary,
+            //       ),
+            //     ),
+            //     Text(
+            //       status,
+            //       style: TextStyle(
+            //         fontSize: 13,
+            //         fontWeight: FontWeight.w500,
+            //         color: statusColor,
+            //       ),
+            //     ),
+            //   ],
+            // ),
+
+            // Show Close MOM button only for admin and superadmin roles
+            if ((SessionManager.getUserRole() == "admin" || SessionManager.getUserRole() == "superadmin") && meeting.status != "CLOSED") ...[
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => _showCloseMomDialog(meeting.id!, meeting.momId!),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.white.withValues(alpha: 0.7),
+                    // padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(color: AppColors.error.withValues(alpha: 0.7),),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  child: const Text(
+                    'Close MOM',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.error,
+                    ),
                   ),
                 ),
-                Text(
-                  meeting.isConvertedToLead == true ? 'Lead Created' : 'No Lead',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: meeting.isConvertedToLead! ? AppColors.success : AppColors.warning,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+
+    if(meeting.closedAt!=null)...[
+    const SizedBox(height: 8),
+      Container(
+        child:   Text(
+            "Closed At : ${ DateFormat('dd MMM yyyy hh:mm a').format(DateTime.parse(meeting.closedAt!))}",
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.grey600,
+          ),
+        ),
+      )
+    ],
+
 
           ],
+
         ),
       ).animate().fadeIn(delay: (index * 100).ms).slideX(begin: 0.3, end: 0),
     );
@@ -721,6 +823,110 @@ class _MeetingsListScreenState extends State<MeetingsListScreen> {
           child: const _MomDetailsBottomSheet(),
         );
       },
+    );
+  }
+
+  /// Show dialog to close MOM (for admin and superadmin only)
+  void _showCloseMomDialog(String momId, String momNo) {
+    final TextEditingController remarksController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => BlocProvider<CloseMomBloc>(
+        create: (context) => CloseMomBloc(),
+        child: BlocListener<CloseMomBloc, CloseMomState>(
+          listener: (context, state) {
+            if (state is CloseMomLoading && state.showLoader) {
+              showCustomProgressDialog(context);
+              // Show loading if needed
+            } else if (state is CloseMomSuccess) {
+              dismissCustomProgressDialog(context);
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+              _loadMomList();
+            } else if (state is CloseMomError) {
+              dismissCustomProgressDialog(context);
+              Navigator.pop(dialogContext);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          },
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Close MOM'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Are you sure you want to close this MOM? ($momNo)',
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Remarks (Optional):',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: remarksController,
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: 'Enter remarks for closing...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.all(12),
+                        ),
+                        onChanged: (value) {
+                          setDialogState(() {});
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      print("fdnklb fggn");
+                      context.read<CloseMomBloc>().add(
+                        FetchCloseMom(
+                          momId: momId,
+                          remarks: remarksController.text.isEmpty ? null : remarksController.text,
+                          showLoader: true,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                    ),
+                    child: const Text('Close MOM'),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
     );
   }
 
@@ -882,6 +1088,17 @@ class _MomDetailsBottomSheetState extends State<_MomDetailsBottomSheet> {
                             // Checklist Section
                             if (data.checklistItems?.isNotEmpty == true)
                               _buildChecklistSection(data.checklistItems!),
+
+                            const SizedBox(height: 16),
+                            _buildInfoCard2(
+                              icon: Icons.close,
+                              title: 'MOM Closed',
+                              items: [
+                                _InfoItem(label: 'Closed By', value: data.closedByName),
+                                _InfoItem(label: 'Closed At', value:  DateFormat('dd MMM yyyy hh:mm a').format(DateTime.parse(data.closedAt!))),
+                                _InfoItem(label: 'Remark', value: data.closedRemarks),
+                              ],
+                            ),
                           ],
                         ),
                       ),
@@ -1105,6 +1322,7 @@ class _MomDetailsBottomSheetState extends State<_MomDetailsBottomSheet> {
           colors: [
             AppColors.primaryTeal.withValues(alpha: 0.05),
             AppColors.primaryTeal.withValues(alpha: 0.02),
+
           ],
         ),
         borderRadius: BorderRadius.circular(16),
@@ -1138,10 +1356,94 @@ class _MomDetailsBottomSheetState extends State<_MomDetailsBottomSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           ...items.map(
             (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      item.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      item.value ?? '-',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoCard2({
+    required IconData icon,
+    required String title,
+    required List<_InfoItem> items,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.error.withValues(alpha: 0.05),
+            AppColors.error.withValues(alpha: 0.02),
+
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.error.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: AppColors.error, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 5),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

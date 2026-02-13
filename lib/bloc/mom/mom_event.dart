@@ -42,11 +42,13 @@ abstract class GetMomListEvent {}
 class FetchMomList extends GetMomListEvent {
   final bool showLoader;
   final String? search;
+  final String? status;
   final bool? isConvertedToLead;
 
   FetchMomList({
     this.showLoader = false,
     this.search,
+    this.status,
     this.isConvertedToLead,
   });
 }

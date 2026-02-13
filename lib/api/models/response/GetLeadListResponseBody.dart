@@ -29,7 +29,7 @@ class GetLeadListResponseBody {
 class Data {
   int? page;
   int? pageSize;
-  double? total;
+  int? total;
   List<Items>? items;
   int? totalPages;
   bool? hasNext;
@@ -47,7 +47,7 @@ class Data {
   Data.fromJson(Map<String, dynamic> json) {
     page = json['page'];
     pageSize = json['pageSize'];
-    total = json['total']?.toDouble();
+    total = json['total'];
     if (json['items'] != null) {
       items = <Items>[];
       json['items'].forEach((v) {
@@ -77,6 +77,7 @@ class Data {
 class Items {
   String? id;
   String? leadNo;
+  String? status;
   String? clientId;
   String? clientName;
   String? executiveUserId;
@@ -86,11 +87,13 @@ class Items {
   String? deadlineDate;
   String? assignedToUserId;
   String? assignedToName;
+  String? closedAt;
   String? createdAt;
 
   Items(
       {this.id,
         this.leadNo,
+        this.status,
         this.clientId,
         this.clientName,
         this.executiveUserId,
@@ -100,20 +103,23 @@ class Items {
         this.deadlineDate,
         this.assignedToUserId,
         this.assignedToName,
+        this.closedAt,
         this.createdAt});
 
   Items.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     leadNo = json['leadNo'];
+    status = json['status'];
     clientId = json['clientId'];
     clientName = json['clientName'];
     executiveUserId = json['executiveUserId'];
     executiveName = json['executiveName'];
     isFromMom = json['isFromMom'];
-    grandTotal = json['grandTotal']?.toDouble();
+    grandTotal = json['grandTotal'];
     deadlineDate = json['deadlineDate'];
     assignedToUserId = json['assignedToUserId'];
     assignedToName = json['assignedToName'];
+    closedAt = json['closedAt'];
     createdAt = json['createdAt'];
   }
 
@@ -121,6 +127,7 @@ class Items {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
     data['leadNo'] = this.leadNo;
+    data['status'] = this.status;
     data['clientId'] = this.clientId;
     data['clientName'] = this.clientName;
     data['executiveUserId'] = this.executiveUserId;
@@ -130,6 +137,7 @@ class Items {
     data['deadlineDate'] = this.deadlineDate;
     data['assignedToUserId'] = this.assignedToUserId;
     data['assignedToName'] = this.assignedToName;
+    data['closedAt'] = this.closedAt;
     data['createdAt'] = this.createdAt;
     return data;
   }

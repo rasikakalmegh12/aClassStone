@@ -511,7 +511,8 @@ class _AddContactScreenState extends State<AddContactScreen> {
         backgroundColor: AppColors.backgroundLight,
         appBar: PreferredSize(
           preferredSize: const Size.fromHeight(56),
-          child: CoolAppCard(title: 'Add Contact'),
+          child: CoolAppCard(title: 'Add Contact',backgroundColor: SessionManager.getUserRole() =="superadmin"?AppColors.superAdminPrimary:SessionManager.getUserRole() =="admin"?
+          AppColors.adminPrimaryDark :AppColors.primaryTealDark),
         ),
         body: Form(
           key: _formKey,

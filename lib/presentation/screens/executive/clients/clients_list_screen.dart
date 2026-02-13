@@ -7,10 +7,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart';
+import 'package:apclassstone/api/models/response/GetClientIdDetailsResponseBody.dart' as GetClientIdDetailsResponseBody;
 import '../../../../core/constants/app_colors.dart';
 import '../../../widgets/app_bar.dart';
-import 'add_client_screen.dart';
 import 'add_location_screen.dart';
 
 class ClientsListScreen extends StatefulWidget {
@@ -951,10 +952,7 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
                                           child: OutlinedButton.icon(
                                             onPressed: () {
                                               Navigator.pop(context);
-                                              _editClient({
-                                                'id': details.id,
-                                                'name': details.firmName,
-                                              });
+                                              _editClient(details);
                                             },
                                             icon: const Icon(Icons.edit_outlined, size: 18),
                                             label: const Text('Edit Client'),
@@ -1316,22 +1314,43 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
     );
   }
 
-  void _editClient(Map<String, dynamic> client) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddClientScreen(existingClient: client),
-      ),
+  Future<void> _editClient(GetClientIdDetailsResponseBody.Data client) async {
+
+   final result = await context.pushNamed(
+      'addClientScreen',
+      extra: {'existingClient': client},
     );
+   if (result == true){
+     _loadClientList(showLoader: true);
+   }
   }
 
-  void _callClient(String phoneNumber) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Calling $phoneNumber'),
-        backgroundColor: AppColors.primaryTeal,
-      ),
-    );
+  void _callClient(String phoneNumber) async {
+    try {
+      final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+
+      if (await canLaunchUrl(phoneUri)) {
+        await launchUrl(phoneUri);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Could not call $phoneNumber'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // Original _buildClientCard method to render local sample items (fallback UI)

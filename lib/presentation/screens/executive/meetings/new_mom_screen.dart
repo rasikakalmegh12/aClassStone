@@ -62,7 +62,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
   String? selectedMeetingType;
   String contactType = 'existing';
   bool discussedProduct = false;
-  bool priceInquiry = false;
+  bool priceEnquiry = false;
   bool sampleRequested = false;
   bool followUpRequired = false;
   bool needsFollowUp = false;
@@ -878,7 +878,7 @@ class _NewMomScreenState extends State<NewMomScreen> {
         ),
 
         _buildCheckboxItemWithNote(
-          'Price Inquiry',
+          'Price Enquiry',
           'PRICE',
           price,
               (value) {

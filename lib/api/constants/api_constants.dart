@@ -91,6 +91,7 @@ class ApiConstants {
   static const String putCatalogueOptionsEntry= "${baseUrl}marketing/admin/catalogue/products";
   static const String postMinesEntry= "${baseUrl}marketing/admin/catalogue/mines";
   static const String postSearch= "${baseUrl}marketing/catalogue/products/search";
+  static const String editProduct= "${baseUrl}marketing/admin/catalogue/products";
 
  // Clients Apis
 
@@ -99,6 +100,7 @@ class ApiConstants {
   static const String getClientsList = "${baseUrl}marketing/clients";
   static const String clientAddContact = "${baseUrl}marketing/clients";
   static const String clientAddLocation = "${baseUrl}marketing/clients";
+  static const String editClient = "${baseUrl}marketing/clients";
 
 
 
@@ -108,6 +110,7 @@ class ApiConstants {
   static const String getMomDetails = "${baseUrl}marketing/moms";
   static const String getMomList = "${baseUrl}marketing/moms";
   static const String postMomImage = "${baseUrl}marketing/moms";
+  static const String closeMOM = "${baseUrl}marketing/moms";
 
   static const String getWorkPlanDetails = "${baseUrl}marketing/work-plans";
   static const String getWorkPlanList = "${baseUrl}marketing/work-plans";
@@ -118,6 +121,7 @@ class ApiConstants {
   static const String getLeadList = "${baseUrl}marketing/leads/list";
   static const String postLeadEntry = "${baseUrl}marketing/leads";
   static const String leadsAssign = "${baseUrl}marketing/leads/assignees";
+  static const String closeLead = "${baseUrl}marketing/leads";
 
 
 

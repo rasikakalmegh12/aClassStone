@@ -45,6 +45,7 @@ class GetLeadListBloc extends Bloc<LeadEvent, LeadState> {
       page: event.page,
       pageSize: event.pageSize,
       search: event.search,
+      view: event.view,
     );
 
     if (response.status == true) {

@@ -242,17 +242,130 @@ class _CataloguePageState extends State<CataloguePage>
     }
   }
 
-
-
   bool _isSelected(Items p) => _selectedProductIds.contains(p.id);
 
   void _enterSelectionModeWith(Items p) {
+    // For superadmin, show edit option
+    if (SessionManager.getUserRole() == 'superadmin') {
+      _showEditOptionMenu(p);
+      return;
+    }
+
+    // For executives, enter selection mode
     if (!isExecutive) return; // only executives can select
 
     setState(() {
       _isSelectionMode = true;
       _selectedProductIds.add(p.id ?? '');
     });
+  }
+
+  void _showEditOptionMenu(Items product) {
+    // ✅ Capture bloc reference from OUTER context (valid at this point)
+    final catalogueBloc = context.read<GetCatalogueProductListBloc>();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Product info
+              Text(
+                product.name ?? 'Product',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Code: ${product.productCode ?? 'N/A'}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Edit button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+
+                    Navigator.pop(context);
+
+                    // Navigate to edit product page and wait for result
+                    final result = await context.pushNamed(
+                      'editProduct',
+                      extra: product.id,
+                    );
+
+                    // If edit was successful (returns true), refresh product list
+                    if (result == true) {
+                      // Use WidgetsBinding to safely update after navigation
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        catalogueBloc.add(
+                          FetchGetCatalogueProductList(
+                            page: 1,
+                            pageSize: 20,
+                            showLoader: true,
+                          ),
+                        );
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.edit, size: 20),
+                  label: const Text('Edit Product'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Cancel button
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: Colors.grey[300]!),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Cancel'),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _toggleSelection(Items p) {
@@ -269,8 +382,6 @@ class _CataloguePageState extends State<CataloguePage>
       }
     });
   }
-
-
 
   void _clearSelection() {
     setState(() {
@@ -524,7 +635,7 @@ class _CataloguePageState extends State<CataloguePage>
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
+                        color: Colors.black.withValues(alpha: 0.06),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -586,7 +697,7 @@ class _CataloguePageState extends State<CataloguePage>
                                 style: TextStyle(color: primary, fontWeight: FontWeight.w600),
                               ),
                               style: TextButton.styleFrom(
-                                backgroundColor: primary.withOpacity(0.08),
+                                backgroundColor: primary.withValues(alpha: 0.08),
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 foregroundColor: primary,
@@ -2270,9 +2381,14 @@ class _CataloguePageState extends State<CataloguePage>
             _buildInfoRow('Description', data.description!),
 
           // Synonyms
-          if (data.synonyms!.isNotEmpty)
+          if (data.marketingOneLiner!.isNotEmpty)
             _buildInfoRow('One Liner', data.marketingOneLiner ?? "NA"),
-
+          // Synonyms
+        if ((data.synonyms ?? []).isNotEmpty)
+          _buildInfoRow(
+            'Synonyms',
+            (data.synonyms ?? []).join(', '),
+          ),
           // Product Type
           if (data.productTypeName != null)
             _buildInfoRow('Product Type', data.productTypeName!),
@@ -3000,6 +3116,7 @@ class _CataloguePageState extends State<CataloguePage>
       ) {
     final Matrix4 matrix = controller.value.clone();
     matrix.scale(scaleFactor);
+    matrix.scale(scaleFactor, scaleFactor, 1.0);
     controller.value = matrix;
   }
 
@@ -3683,7 +3800,9 @@ class _CataloguePageState extends State<CataloguePage>
       if (response.statusCode == 200) {
         // Get temporary directory
         final tempDir = await getTemporaryDirectory();
-        final fileName = productName ??'product_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final fileName = productName != null && productName.isNotEmpty
+            ? '${productName.replaceAll(' ', '_')}_${DateTime.now().millisecondsSinceEpoch}.pdf'
+            : 'product_${DateTime.now().millisecondsSinceEpoch}.pdf';
         final filePath = '${tempDir.path}/$fileName';
 
         // Save PDF to file

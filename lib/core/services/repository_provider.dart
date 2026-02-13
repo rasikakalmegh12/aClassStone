@@ -3,8 +3,10 @@ import 'package:apclassstone/api/network/network_service.dart';
 import 'package:apclassstone/api/network/offline_api_wrapper.dart';
 import 'package:apclassstone/bloc/client/get_client/get_client_bloc.dart';
 import 'package:apclassstone/bloc/client/post_client/post_client_bloc.dart';
+import 'package:apclassstone/bloc/client/put_edit_client/put_edit_client_bloc.dart';
 import 'package:apclassstone/bloc/generate_pdf/generate_pdf_bloc.dart';
 import 'package:apclassstone/bloc/lead/lead_bloc.dart';
+import 'package:apclassstone/bloc/lead/close_lead_bloc.dart';
 import 'package:apclassstone/bloc/user_management/user_management_bloc.dart';
 import 'package:apclassstone/bloc/work_plan/work_plan_decision_bloc.dart';
 import 'package:apclassstone/data/local/cache_repository.dart';
@@ -16,6 +18,8 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import '../../bloc/catalogue/put_catalogues_methods/put_edit_product_bloc.dart';
+import '../../bloc/mom/close_mom_bloc.dart';
 import '../../bloc/mom/mom_bloc.dart';
 import '../../bloc/work_plan/work_plan_bloc.dart';
 import 'connectivity_service.dart';
@@ -38,6 +42,8 @@ class AppBlocProvider {
   static late ExecutiveTrackingBloc _executiveTrackingBloc;
 
   // Catalogue BLoCs
+  static late GetCatalogueProductDetailsBloc _getCatalogueProductDetailsBloc;
+  static late GetCatalogueProductListBloc _getCatalogueProductListBloc;
   static late GetProductTypeBloc _getProductTypeBloc;
   static late GetUtilitiesBloc _getUtilitiesBloc;
   static late GetColorsBloc _getColorsBloc;
@@ -59,21 +65,27 @@ class AppBlocProvider {
   static late PostClientAddBloc _postClientAddBloc;
   static late PostClientAddLocationBloc _postClientAddLocationBloc;
   static late PostClientAddContactBloc _postClientAddContactBloc;
+  static late PutEditClientBloc _putEditClientBloc;
   static late PostMomEntryBloc _postMomEntryBloc;
   static late GetMomListBloc _getMomListBloc;
   static late GetMomDetailsBloc _getMomDetailsBloc;
   static late GetWorkPlanListBloc _getWorkPlanListBloc;
   static late GetWorkPlanDetailsBloc _getWorkPlanDetailsBloc;
   static late PostWorkPlanBloc _postWorkPlanBloc;
+  static late CloseMomBloc _closeMomBloc;
 
   // Lead BLoCs
   static late PostNewLeadBloc _postNewLeadBloc;
   static late GetLeadListBloc _getLeadListBloc;
   static late GetLeadDetailsBloc _getLeadDetailsBloc;
   static late GetAssignableUsersBloc _getAssignableUsersBloc;
+  static late CloseLeadBloc _closeLeadBloc;
 
   // PDF Generation BLoC
   static late GeneratePdfBloc _generatePdfBloc;
+
+  // Edit Product BLoC
+  static late PutEditProductBloc _putEditProductBloc;
 
   // User Management BLoC
   static late UserManagementBloc _userManagementBloc;
@@ -135,6 +147,8 @@ class AppBlocProvider {
     _executiveTrackingBloc = ExecutiveTrackingBloc();
     _postClientAddBloc=PostClientAddBloc();
     // Initialize catalogue BLoCs
+    _getCatalogueProductDetailsBloc = GetCatalogueProductDetailsBloc();
+    _getCatalogueProductListBloc = GetCatalogueProductListBloc();
     _getProductTypeBloc = GetProductTypeBloc();
     _getUtilitiesBloc = GetUtilitiesBloc();
     _getColorsBloc = GetColorsBloc();
@@ -152,6 +166,7 @@ class AppBlocProvider {
     _attendanceTrackingMonthlyBloc = AttendanceTrackingMonthlyBloc();
     _postClientAddLocationBloc=PostClientAddLocationBloc();
     _postClientAddContactBloc=PostClientAddContactBloc();
+    _putEditClientBloc=PutEditClientBloc();
     _postMomEntryBloc=PostMomEntryBloc();
     _getClientDetailsBloc = GetClientDetailsBloc();
     _getClientListBloc=GetClientListBloc();
@@ -160,15 +175,20 @@ class AppBlocProvider {
     _getWorkPlanListBloc = GetWorkPlanListBloc();
     _getWorkPlanDetailsBloc = GetWorkPlanDetailsBloc();
     _postWorkPlanBloc = PostWorkPlanBloc();
+    _closeMomBloc = CloseMomBloc();
 
     // Initialize Lead BLoCs
     _postNewLeadBloc = PostNewLeadBloc();
     _getLeadListBloc = GetLeadListBloc();
     _getLeadDetailsBloc = GetLeadDetailsBloc();
     _getAssignableUsersBloc = GetAssignableUsersBloc();
+    _closeLeadBloc = CloseLeadBloc();
 
     // Initialize PDF Generation BLoC
     _generatePdfBloc = GeneratePdfBloc();
+
+    // Initialize Edit Product BLoC
+    _putEditProductBloc = PutEditProductBloc();
 
     // Initialize User Management BLoC
     _userManagementBloc = UserManagementBloc();
@@ -205,6 +225,9 @@ class AppBlocProvider {
   static ExecutiveTrackingBloc get executiveTrackingBloc => _executiveTrackingBloc;
 
   // Catalogue BLoC getters
+
+  static GetCatalogueProductDetailsBloc get getCatalogueProductDetailsBloc => _getCatalogueProductDetailsBloc;
+  static GetCatalogueProductListBloc get getCatalogueProductListBloc => _getCatalogueProductListBloc;
   static GetProductTypeBloc get getProductTypeBloc => _getProductTypeBloc;
   static GetUtilitiesBloc get getUtilitiesBloc => _getUtilitiesBloc;
   static GetColorsBloc get getColorsBloc => _getColorsBloc;
@@ -225,21 +248,27 @@ class AppBlocProvider {
   static PostClientAddBloc get postClientAddBloc => _postClientAddBloc;
   static PostClientAddLocationBloc get postClientAddLocationBloc => _postClientAddLocationBloc;
   static PostClientAddContactBloc get postClientAddContactBloc => _postClientAddContactBloc;
+  static PutEditClientBloc get putEditClientBloc => _putEditClientBloc;
   static PostMomEntryBloc get postMomEntryBloc => _postMomEntryBloc;
   static GetMomListBloc get getMomListBloc => _getMomListBloc;
   static GetMomDetailsBloc get getMomDetailsBloc => _getMomDetailsBloc;
   static GetWorkPlanListBloc get getWorkPlanListBloc => _getWorkPlanListBloc;
   static GetWorkPlanDetailsBloc get getWorkPlanDetailsBloc => _getWorkPlanDetailsBloc;
   static PostWorkPlanBloc get postWorkPlanBloc => _postWorkPlanBloc;
+  static CloseMomBloc get closeMomBloc => _closeMomBloc;
 
   // Lead BLoC getters
   static PostNewLeadBloc get postNewLeadBloc => _postNewLeadBloc;
   static GetLeadListBloc get getLeadListBloc => _getLeadListBloc;
   static GetLeadDetailsBloc get getLeadDetailsBloc => _getLeadDetailsBloc;
   static GetAssignableUsersBloc get getAssignableUsersBloc => _getAssignableUsersBloc;
+  static CloseLeadBloc get closeLeadBloc => _closeLeadBloc;
 
   // PDF Generation BLoC getter
   static GeneratePdfBloc get generatePdfBloc => _generatePdfBloc;
+
+  // Edit Product BLoC getter
+  static PutEditProductBloc get putEditProductBloc => _putEditProductBloc;
 
   // User Management BLoC getter
   static UserManagementBloc get userManagementBloc => _userManagementBloc;
@@ -272,13 +301,17 @@ class AppBlocProvider {
     _postClientAddBloc.close();
     _postClientAddLocationBloc.close();
     _postClientAddContactBloc.close();
+    _putEditClientBloc.close();
     _postMomEntryBloc.close();
     _getMomListBloc.close();
     _getMomDetailsBloc.close();
     _getClientDetailsBloc.close();
+    _closeMomBloc.close();
 
 
     // Dispose catalogue BLoCs
+    _getCatalogueProductListBloc.close();
+    _getCatalogueProductDetailsBloc.close();
     _getProductTypeBloc.close();
     _getUtilitiesBloc.close();
     _getColorsBloc.close();
@@ -302,9 +335,13 @@ class AppBlocProvider {
     _getLeadListBloc.close();
     _getLeadDetailsBloc.close();
     _getAssignableUsersBloc.close();
+    _closeLeadBloc.close();
 
     // Dispose PDF Generation BLoC
     _generatePdfBloc.close();
+
+    // Dispose Edit Product BLoC
+    _putEditProductBloc.close();
 
     // Dispose User Management BLoC
     _userManagementBloc.close();
