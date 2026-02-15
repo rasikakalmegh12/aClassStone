@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:apclassstone/api/models/response/GetClientListResponseBody.dart';
 import 'package:apclassstone/api/models/response/GetClientIdDetailsResponseBody.dart' as GetClientIdDetailsResponseBody;
 import '../../../../core/constants/app_colors.dart';
@@ -1327,18 +1328,61 @@ class _ClientsListScreenState extends State<ClientsListScreen> {
 
   void _callClient(String phoneNumber) async {
     try {
-      final Uri phoneUri = Uri(scheme: 'tel', path: phoneNumber);
+      // Clean phone number - remove spaces, dashes, etc.
+      final cleanedNumber = phoneNumber.replaceAll(RegExp(r'[^\d+]'), '');
 
-      if (await canLaunchUrl(phoneUri)) {
-        await launchUrl(phoneUri);
-      } else {
+      if (cleanedNumber.isEmpty) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Could not call $phoneNumber'),
+            const SnackBar(
+              content: Text('Invalid phone number'),
               backgroundColor: Colors.red,
             ),
           );
+        }
+        return;
+      }
+
+      // Try DIAL action first (user-initiated, doesn't require CALL_PHONE permission)
+      final Uri dialUri = Uri(scheme: 'tel', path: cleanedNumber);
+
+      if (await canLaunchUrl(dialUri)) {
+        await launchUrl(
+          dialUri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        // Fallback: Try CALL action (requires CALL_PHONE permission)
+        final PermissionStatus status = await Permission.phone.request();
+
+        if (!status.isGranted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Phone call permission is required'),
+                backgroundColor: Colors.orange,
+                action: SnackBarAction(
+                  label: 'Settings',
+                  onPressed: () {
+                    openAppSettings();
+                  },
+                ),
+              ),
+            );
+          }
+          return;
+        }
+
+        // Try launching with CALL intent
+        if (!await launchUrl(dialUri, mode: LaunchMode.externalApplication)) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not call $cleanedNumber'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         }
       }
     } catch (e) {

@@ -28,8 +28,11 @@
     <!-- 📲 Post notifications (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- ☎️ Phone Call Permission -->
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <application
-        android:label="A Class Stones"
+        android:label="OOTU"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:networkSecurityConfig="@xml/network_security_config">
@@ -100,6 +103,18 @@
         <intent>
             <action android:name="android.intent.action.SEND" />
             <data android:mimeType="*/*" />
+        </intent>
+
+        <!-- ☎️ url_launcher: Allow making phone calls -->
+        <intent>
+            <action android:name="android.intent.action.CALL" />
+            <data android:scheme="tel" />
+        </intent>
+
+        <!-- ☎️ Fallback: DIAL (user presses call button themselves) -->
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
         </intent>
     </queries>
 </manifest>

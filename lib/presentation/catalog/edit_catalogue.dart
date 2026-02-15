@@ -15,7 +15,11 @@ import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_state.dart';
 import '../../bloc/catalogue/put_catalogues_methods/put_edit_product_bloc.dart';
 import '../../bloc/catalogue/put_catalogues_methods/put_edit_product_event.dart';
 import '../../bloc/catalogue/put_catalogues_methods/put_edit_product_state.dart';
+import '../../bloc/catalogue/put_catalogues_methods/put_catalogue_image_operations_bloc.dart';
+import '../../bloc/catalogue/put_catalogues_methods/put_catalogue_image_operations_event.dart';
+import '../../bloc/catalogue/put_catalogues_methods/put_catalogue_image_operations_state.dart';
 import '../../api/models/request/PutEditCatalogueRequestBody.dart';
+import '../../api/models/response/GetCatalogueProductDetailsResponseBody.dart' show ImageMetas;
 import '../../presentation/widgets/custom_loader.dart';
 
 class EditCatalogue extends StatefulWidget {
@@ -44,7 +48,9 @@ class _EditCatalogueState extends State<EditCatalogue> {
   String? selectedPriceRangeId;
   String? selectedMineId;
   List<String> uploadedImageUrls = [];
+  List<ImageMetas> imageMetas = []; // Contains image data with id, url, isPrimary, sortOrder
   String? primaryImageUrl;
+  String? primaryImageId;
   List<File> newLocalImages = [];
   final ImagePicker _imagePicker = ImagePicker();
 
@@ -87,8 +93,22 @@ class _EditCatalogueState extends State<EditCatalogue> {
     selectedProductTypeId = data.productTypeId;
     selectedPriceRangeId = data.priceRangeId;
     selectedMineId = data.mineId;
-    uploadedImageUrls = data.imageUrls ?? [];
-    primaryImageUrl = data.primaryImageUrl;
+
+    // Use imageMetas from API response
+    imageMetas = data.imageMetas ?? [];
+
+    // Extract URLs from imageMetas for display in carousel
+    uploadedImageUrls = imageMetas.map((meta) => meta.imageUrl ?? '').where((url) => url.isNotEmpty).toList();
+
+    // Find primary image from imageMetas
+    final primaryMeta = imageMetas.firstWhere(
+      (meta) => meta.isPrimary == true,
+      orElse: () => ImageMetas(),
+    );
+    if (primaryMeta.id != null) {
+      primaryImageUrl = primaryMeta.imageUrl;
+      primaryImageId = primaryMeta.id;
+    }
   }
 
   Future<void> _pickImage({bool fromCamera = false}) async {
@@ -273,20 +293,86 @@ class _EditCatalogueState extends State<EditCatalogue> {
             );
           }
         },
-        child: BlocListener<PutEditProductBloc, PutEditProductState>(
+        child: BlocListener<PutCatalogueImageOperationsBloc, PutCatalogueImageOperationsState>(
           listener: (context, state) {
-            if (state is PutEditProductLoading && state.showLoader) {
-              showCustomProgressDialog(context);
-            } else if (state is PutEditProductSuccess) {
+            if (state is PutCatalogueImageOperationsLoading && state.showLoader) {
+              if (state.operationType == 'delete') {
+                showCustomProgressDialog(context, title: 'Deleting image...');
+              } else if (state.operationType == 'setPrimary') {
+                showCustomProgressDialog(context, title: 'Setting as primary...');
+              }
+            } else if (state is DeleteImageSuccess) {
               dismissCustomProgressDialog(context);
+
+              // Remove the deleted image from imageMetas
+              setState(() {
+                imageMetas.removeWhere((meta) => meta.id == state.imageId);
+                uploadedImageUrls = imageMetas.map((meta) => meta.imageUrl ?? '').where((url) => url.isNotEmpty).toList();
+
+                // Reset primary if deleted image was primary
+                if (primaryImageId == state.imageId) {
+                  primaryImageUrl = null;
+                  primaryImageId = null;
+                }
+              });
+
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Product updated successfully'),
+                SnackBar(
+                  content: Text(state.response.message ?? 'Image deleted successfully'),
                   backgroundColor: AppColors.success,
                 ),
               );
-              context.pop(true);
-            } else if (state is PutEditProductError) {
+
+              // Refresh product details
+              if (widget.productId != null) {
+                context.read<GetCatalogueProductDetailsBloc>().add(
+                  FetchGetCatalogueProductDetails(
+                    productId: widget.productId!,
+                    showLoader: false,
+                  ),
+                );
+              }
+            } else if (state is SetImagePrimarySuccess) {
+              dismissCustomProgressDialog(context);
+
+              // Update imageMetas to set new primary
+              setState(() {
+                // Clear old primary flag
+                for (var meta in imageMetas) {
+                  if (meta.isPrimary == true) {
+                    meta.isPrimary = false;
+                  }
+                }
+
+                // Set new primary
+                final primaryMeta = imageMetas.firstWhere(
+                  (meta) => meta.id == state.imageId,
+                  orElse: () => ImageMetas(),
+                );
+                if (primaryMeta.id != null) {
+                  primaryMeta.isPrimary = true;
+                  primaryImageUrl = primaryMeta.imageUrl;
+                  primaryImageId = primaryMeta.id;
+                }
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.response.message ?? 'Image set as primary'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+
+              // Refresh product details
+              if (widget.productId != null) {
+                context.read<GetCatalogueProductDetailsBloc>().add(
+                  FetchGetCatalogueProductDetails(
+                    productId: widget.productId!,
+                    showLoader: false,
+                  ),
+                );
+              }
+            } else if (state is PutCatalogueImageOperationsError) {
               dismissCustomProgressDialog(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -296,162 +382,186 @@ class _EditCatalogueState extends State<EditCatalogue> {
               );
             }
           },
-          child: RefreshIndicator(
-            onRefresh: () async {
-              if (widget.productId != null) {
-                context.read<GetCatalogueProductDetailsBloc>().add(
-                  FetchGetCatalogueProductDetails(
-                    productId: widget.productId!,
-                    showLoader: false,
+          child: BlocListener<PutEditProductBloc, PutEditProductState>(
+            listener: (context, state) {
+              if (state is PutEditProductLoading && state.showLoader) {
+                showCustomProgressDialog(context);
+              } else if (state is PutEditProductSuccess) {
+                dismissCustomProgressDialog(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Product updated successfully'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+                context.pop(true);
+              } else if (state is PutEditProductError) {
+                dismissCustomProgressDialog(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.message),
+                    backgroundColor: AppColors.error,
                   ),
                 );
               }
             },
-            child: BlocBuilder<GetCatalogueProductDetailsBloc, GetCatalogueProductDetailsState>(
-              builder: (context, state) {
-                if (state is GetCatalogueProductDetailsLoading && state.showLoader) {
-                  return const Center(child: CircularProgressIndicator());
+            child: RefreshIndicator(
+              onRefresh: () async {
+                if (widget.productId != null) {
+                  context.read<GetCatalogueProductDetailsBloc>().add(
+                    FetchGetCatalogueProductDetails(
+                      productId: widget.productId!,
+                      showLoader: false,
+                    ),
+                  );
                 }
-
-                if (state is GetCatalogueProductDetailsLoaded) {
-                  final data = state.response.data;
-                  if (data != null && _nameController.text.isEmpty) {
-                    _populateFormWithData(data);
+              },
+              child: BlocBuilder<GetCatalogueProductDetailsBloc, GetCatalogueProductDetailsState>(
+                builder: (context, state) {
+                  if (state is GetCatalogueProductDetailsLoading && state.showLoader) {
+                    return const Center(child: CircularProgressIndicator());
                   }
 
-                  return SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildImagesSection(),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle('Basic Information'),
-                          _buildTextField(
-                            controller: _nameController,
-                            label: 'Product Name',
-                            hint: 'Enter product name',
-                            required: true,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildTextField(
-                            controller: _descriptionController,
-                            label: 'Description',
-                            hint: 'Enter product description',
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 12),
-                          _buildTextField(
-                            controller: _marketingOneLinedController,
-                            label: 'Marketing One Liner',
-                            hint: 'Enter marketing one liner',
-                          ),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle('Pricing - Architect Grade'),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _archGradeAController,
-                                  label: 'Grade A',
-                                  hint: 'Price',
-                                  keyboardType: TextInputType.number,
+                  if (state is GetCatalogueProductDetailsLoaded) {
+                    final data = state.response.data;
+                    if (data != null && _nameController.text.isEmpty) {
+                      _populateFormWithData(data);
+                    }
+
+                    return SingleChildScrollView(
+                      padding: const EdgeInsets.all(16),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildImagesSection(),
+                            const SizedBox(height: 24),
+                            _buildSectionTitle('Basic Information'),
+                            _buildTextField(
+                              controller: _nameController,
+                              label: 'Product Name',
+                              hint: 'Enter product name',
+                              required: true,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _descriptionController,
+                              label: 'Description',
+                              hint: 'Enter product description',
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: 12),
+                            _buildTextField(
+                              controller: _marketingOneLinedController,
+                              label: 'Marketing One Liner',
+                              hint: 'Enter marketing one liner',
+                            ),
+                            const SizedBox(height: 24),
+                            _buildSectionTitle('Pricing - Architect Grade'),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _archGradeAController,
+                                    label: 'Grade A',
+                                    hint: 'Price',
+                                    keyboardType: TextInputType.number,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _archGradeBController,
-                                  label: 'Grade B',
-                                  hint: 'Price',
-                                  keyboardType: TextInputType.number,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _archGradeBController,
+                                    label: 'Grade B',
+                                    hint: 'Price',
+                                    keyboardType: TextInputType.number,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _archGradeCController,
-                                  label: 'Grade C',
-                                  hint: 'Price',
-                                  keyboardType: TextInputType.number,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _archGradeCController,
+                                    label: 'Grade C',
+                                    hint: 'Price',
+                                    keyboardType: TextInputType.number,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          _buildSectionTitle('Pricing - Trader Grade'),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _traderGradeAController,
-                                  label: 'Grade A',
-                                  hint: 'Price',
-                                  keyboardType: TextInputType.number,
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            _buildSectionTitle('Pricing - Trader Grade'),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _traderGradeAController,
+                                    label: 'Grade A',
+                                    hint: 'Price',
+                                    keyboardType: TextInputType.number,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _traderGradeBController,
-                                  label: 'Grade B',
-                                  hint: 'Price',
-                                  keyboardType: TextInputType.number,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _traderGradeBController,
+                                    label: 'Grade B',
+                                    hint: 'Price',
+                                    keyboardType: TextInputType.number,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildTextField(
-                                  controller: _traderGradeCController,
-                                  label: 'Grade C',
-                                  hint: 'Price',
-                                  keyboardType: TextInputType.number,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildTextField(
+                                    controller: _traderGradeCController,
+                                    label: 'Grade C',
+                                    hint: 'Price',
+                                    keyboardType: TextInputType.number,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: _submitForm,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.superAdminPrimary,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 50,
+                              child: ElevatedButton(
+                                onPressed: _submitForm,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.superAdminPrimary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
-                              ),
-                              child: const Text(
-                                'Update Product',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
+                                child: const Text(
+                                  'Update Product',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                            const SizedBox(height: 16),
+                          ],
+                        ),
                       ),
-                    ),
-                  );
-                }
+                    );
+                  }
 
-                if (state is GetCatalogueProductDetailsError) {
-                  return Center(
-                    child: Text(
-                      'Error: ${state.message}',
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
+                  if (state is GetCatalogueProductDetailsError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${state.message}',
+                        textAlign: TextAlign.center,
+                      ),
+                    );
+                  }
 
-                return const SizedBox();
-              },
+                  return const SizedBox();
+                },
+              ),
             ),
           ),
         ),
@@ -986,72 +1096,79 @@ class _EditCatalogueState extends State<EditCatalogue> {
 
   Future<void> _deleteImageAndRefresh(String imageUrl) async {
     try {
-      showCustomProgressDialog(context, title: 'Deleting image...');
-      setState(() {
-        uploadedImageUrls.removeWhere((url) => url == imageUrl);
-        if (primaryImageUrl == imageUrl) {
-          primaryImageUrl = null;
-        }
-      });
-
-      dismissCustomProgressDialog(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Image deleted successfully'),
-          backgroundColor: AppColors.success,
-        ),
+      // Find the ImageMeta for this URL
+      final imageMeta = imageMetas.firstWhere(
+        (meta) => meta.imageUrl == imageUrl,
+        orElse: () => ImageMetas(),
       );
+      if (imageMeta.id == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Image not found'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
 
-      if (widget.productId != null) {
-        context.read<GetCatalogueProductDetailsBloc>().add(
-          FetchGetCatalogueProductDetails(
+      // Dispatch the delete event to BLoC
+      if (mounted && widget.productId != null) {
+        context.read<PutCatalogueImageOperationsBloc>().add(
+          DeleteProductImage(
             productId: widget.productId!,
-            showLoader: false,
+            imageId: imageMeta.id!,
+            showLoader: true,
           ),
         );
       }
     } catch (e) {
-      dismissCustomProgressDialog(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting image: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _setPrimaryImageAndRefresh(String imageUrl) async {
     try {
-      showCustomProgressDialog(context, title: 'Setting as primary...');
-      setState(() {
-        primaryImageUrl = imageUrl;
-      });
-
-      dismissCustomProgressDialog(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Image set as primary'),
-          backgroundColor: AppColors.success,
-        ),
+      // Find the ImageMeta for this URL
+      final imageMeta = imageMetas.firstWhere(
+        (meta) => meta.imageUrl == imageUrl,
+        orElse: () => ImageMetas(),
       );
+      if (imageMeta.id == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: Image not found'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
 
-      if (widget.productId != null) {
-        context.read<GetCatalogueProductDetailsBloc>().add(
-          FetchGetCatalogueProductDetails(
+      // Dispatch the set primary event to BLoC
+      if (mounted && widget.productId != null) {
+        context.read<PutCatalogueImageOperationsBloc>().add(
+          SetImagePrimary(
             productId: widget.productId!,
-            showLoader: false,
+            imageId: imageMeta.id!,
+            showLoader: true,
           ),
         );
       }
     } catch (e) {
-      dismissCustomProgressDialog(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error setting primary image: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 

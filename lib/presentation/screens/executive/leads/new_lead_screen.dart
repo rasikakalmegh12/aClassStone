@@ -52,6 +52,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
   final _transportAmountController = TextEditingController();
   final _otherChargesController = TextEditingController();
   final _taxAmountController = TextEditingController();
+  final _addOnChargesController = TextEditingController();
 
   // Form State
   String leadNumber = 'L-2025-021';
@@ -69,6 +70,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
   double taxAmount = 0;
   double materialsTotal = 0;
   double grandTotal = 0;
+  double addOnCharges = 0;
 
   // Deadline date
   DateTime? deadlineDate;
@@ -1571,8 +1573,8 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           /// Header
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.inventory_2_outlined,
                   size: 18, color: AppColors.primaryTeal),
               SizedBox(width: 8),
@@ -1975,6 +1977,69 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           ),
 
           const Divider(height: 18, thickness: 1.5),
+
+          /// Add-On Charges Input Field
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 120,
+                child: const Text(
+                  'Add-On Charges',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextFormField(
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    hintText: 'Enter amount',
+                    prefixText: '₹ ',
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: AppColors.grey300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: AppColors.grey300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: const BorderSide(color: AppColors.primaryTeal),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      double parsedValue = double.tryParse(value) ?? 0;
+                      // Prevent negative values
+                      item.addOnCharges = parsedValue < 0 ? 0 : parsedValue;
+                      // Recalculate line total with new add-on charges
+                      item.calculatePricing();
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+
+          const Divider(height: 18, thickness: 1.5),
+
+          /// Add-On Charges Display Row
+          // _buildCalculationRow(
+          //   'Add-On Charges (Summary)',
+          //   'Additional charges (non-negative)',
+          //   item.addOnCharges > 0
+          //       ? '+₹${item.addOnCharges.toStringAsFixed(2)}'
+          //       : '₹0.00',
+          //   isPositive: item.addOnCharges > 0,
+          // ),
+
+          // const Divider(height: 18, thickness: 1.5),
 
           _buildCalculationRow(
             'Line Total',
@@ -2728,6 +2793,7 @@ class _NewLeadScreenState extends State<NewLeadScreen> {
           extraMm: item.extraMm.toInt(),
           slab2Amount: item.slab2Amount.toInt(),
           lineTotal: item.lineTotal.toInt(),
+          extraChargeAmount: item.addOnCharges.toInt(),
           productCode: item.productCode,
           productName: item.productName,
           productProcess: item.process,
@@ -2803,7 +2869,9 @@ class LeadItemDraft {
   double slab2PerMmPercent; // To be calculated based on thickness
   double extraMm; // thicknessMm - 15 (if > 15)
   double slab2Amount; // To be calculated
+  double addOnCharges; // Additional charges (cannot be negative)
   double lineTotal; // Final total after all calculations
+   // Final total after all calculations
 
   // Legacy field
   double ratePerSqft;
@@ -2830,7 +2898,9 @@ class LeadItemDraft {
     this.slab2PerMmPercent = 0,
     this.extraMm = 0,
     this.slab2Amount = 0,
+    this.addOnCharges = 0,
     this.lineTotal = 0,
+
   });
 
   // Dispose method to clean up controllers
@@ -2873,8 +2943,10 @@ class LeadItemDraft {
       slab2Amount = 0;
     }
 
-    // Step 4: Line Total = Base + Slab1 + Slab2
-    lineTotal = baseAmount + slab1Amount + slab2Amount;
+    // Step 4: Line Total = Base + Slab1 + Slab2 + Add-On Charges
+    // Ensure addOnCharges is never negative
+    final validAddOnCharges = addOnCharges < 0 ? 0 : addOnCharges;
+    lineTotal = baseAmount + slab1Amount + slab2Amount + validAddOnCharges;
   }
 }
 

@@ -3057,6 +3057,111 @@ class ApiIntegration {
   }
 
 
+  static Future<ApiCommonResponseBody> deleteProductImage(String productId, String imageId) async {
+    try {
+      final url = Uri.parse("${ApiConstants.deleteImage}/$productId/images/$imageId");
+
+      print('📤 Sending deleteImage request to: $url');
+
+
+      final response = await ApiClient.send(() {
+        return http.delete(
+          url,
+          headers: ApiConstants.headerWithToken(),
+
+        ).timeout(_timeout);
+      });
+
+      print('📥 Response status: ${response.statusCode}');
+      if (kDebugMode) {
+        print('Response body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApiCommonResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('✅ deleteImage successful: ${result.message}');
+        }
+        return result;
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        final result = ApiCommonResponseBody.fromJson(jsonResponse);
+        if (kDebugMode) {
+          print('❌ Image Deletion failed with status ${response.statusCode}');
+        }
+        return ApiCommonResponseBody(
+          status: false,
+          message: 'Image Deletion failed. Status: ${result.message}',
+          statusCode: response.statusCode,
+        );
+      }
+    } on http.ClientException catch (e) {
+      final errorMsg = 'Network error while deleting image: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    } catch (e) {
+      final errorMsg = 'Error: ${e.toString()}';
+      print('❌ $errorMsg');
+      return ApiCommonResponseBody(
+        status: false,
+        message: errorMsg,
+      );
+    }
+  }
+
+  static Future<ApiCommonResponseBody> setImagePrimary({
+    required String productId,
+    required String imageId,
+  }) async
+  {
+    try {
+      final url = Uri.parse(
+          '${ApiConstants.setPrimaryImage}/$productId/images/$imageId:set-primary');
+      if (kDebugMode) {
+
+        print(
+            '📤 Sending setPrimaryImage request to: $url');
+      }
+
+      final response = await ApiClient.send(() {
+        return http.put(
+          url,
+          headers: ApiConstants.headerWithToken(),
+          // body: jsonEncode(requestBody.toJson()),
+        ).timeout(_timeout);
+      });
+
+      if (kDebugMode) {
+        print('📥 setPrimaryImage status: ${response.statusCode}');
+        // print('📥 putCatalogueOptionsEntry request: ${jsonEncode(requestBody.toJson())}');
+        print('📥 setPrimaryImage body: ${response.body}');
+      }
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody.fromJson(jsonResponse);
+      } else {
+        final jsonResponse = jsonDecode(response.body);
+        return ApiCommonResponseBody(
+          status: false,
+          message: jsonResponse['message'] ??
+              'Failed to update image',
+          statusCode: response.statusCode,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) print('❌ setPrimaryImage error: $e');
+      return ApiCommonResponseBody(
+        status: false,
+        message: e.toString(),
+      );
+    }
+  }
+
   /// Check if device has internet connectivity
   static Future<bool> hasConnectivity() async {
     try {

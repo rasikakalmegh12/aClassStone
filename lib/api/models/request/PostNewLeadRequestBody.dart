@@ -79,6 +79,7 @@ class Items {
   int? extraMm;
   int? slab2Amount;
   int? lineTotal;
+  int? extraChargeAmount;
   String? productCode;
   String? productName;
   String? productProcess;
@@ -97,6 +98,7 @@ class Items {
         this.extraMm,
         this.slab2Amount,
         this.lineTotal,
+        this.extraChargeAmount,
         this.productCode,
         this.productName,
         this.productProcess,
@@ -115,6 +117,7 @@ class Items {
     extraMm = json['extraMm'];
     slab2Amount = json['slab2Amount'];
     lineTotal = json['lineTotal'];
+    extraChargeAmount = json['extraChargeAmount'];
     productCode = json['productCode'];
     productName = json['productName'];
     productProcess = json['productProcess'];
@@ -135,6 +138,7 @@ class Items {
     data['extraMm'] = this.extraMm;
     data['slab2Amount'] = this.slab2Amount;
     data['lineTotal'] = this.lineTotal;
+    data['extraChargeAmount'] = this.extraChargeAmount;
     data['productCode'] = this.productCode;
     data['productName'] = this.productName;
     data['productProcess'] = this.productProcess;

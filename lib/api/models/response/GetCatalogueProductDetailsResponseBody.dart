@@ -228,6 +228,7 @@ class Data {
   List<String>? synonyms;
   List<String>? imageUrls;
   String? primaryImageUrl;
+  List<ImageMetas>? imageMetas;
 
   Data({
     this.id, this.productCode, this.name, this.description, this.pricePerSqft,
@@ -240,7 +241,7 @@ class Data {
     this.colours, this.finishes, this.textures, this.naturalColours,
     this.utilities, this.origins, this.stateCountries, this.processingNatures,
     this.materialNaturalities, this.handicraftTypes, this.synonyms,
-    this.imageUrls, this.primaryImageUrl,
+    this.imageUrls, this.primaryImageUrl, this.imageMetas
   });
 
   Data.fromJson(Map<String, dynamic> json) {
@@ -288,6 +289,12 @@ class Data {
         ? List<String>.from(json['imageUrls'] ?? [])
         : <String>[];
     primaryImageUrl = json['primaryImageUrl']?.toString();
+    if (json['imageMetas'] != null) {
+      imageMetas = <ImageMetas>[];
+      json['imageMetas'].forEach((v) {
+        imageMetas!.add(new ImageMetas.fromJson(v));
+      });
+    }
   }
 
   List<T> _parseList<T>(dynamic jsonList) {
@@ -352,6 +359,9 @@ class Data {
     data['synonyms'] = synonyms;
     data['imageUrls'] = imageUrls;
     data['primaryImageUrl'] = primaryImageUrl;
+    if (this.imageMetas != null) {
+      data['imageMetas'] = this.imageMetas!.map((v) => v.toJson()).toList();
+    }
     return data;
   }
 }
@@ -555,4 +565,29 @@ class HandicraftTypes {
     'code': code,
     'name': name,
   };
+}
+
+class ImageMetas {
+  String? id;
+  int? sortOrder;
+  String? imageUrl;
+  bool? isPrimary;
+
+  ImageMetas({this.id, this.sortOrder, this.imageUrl, this.isPrimary});
+
+  ImageMetas.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    sortOrder = json['sortOrder'];
+    imageUrl = json['imageUrl'];
+    isPrimary = json['isPrimary'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
+    data['sortOrder'] = this.sortOrder;
+    data['imageUrl'] = this.imageUrl;
+    data['isPrimary'] = this.isPrimary;
+    return data;
+  }
 }

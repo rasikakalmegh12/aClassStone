@@ -92,6 +92,8 @@ class ApiConstants {
   static const String postMinesEntry= "${baseUrl}marketing/admin/catalogue/mines";
   static const String postSearch= "${baseUrl}marketing/catalogue/products/search";
   static const String editProduct= "${baseUrl}marketing/admin/catalogue/products";
+  static const String deleteImage= "${baseUrl}marketing/admin/catalogue/products";
+  static const String setPrimaryImage= "${baseUrl}marketing/admin/catalogue/products";
 
  // Clients Apis
 

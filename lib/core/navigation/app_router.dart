@@ -16,6 +16,7 @@ import '../../bloc/attendance/attendance_bloc.dart';
 import '../../bloc/bloc.dart';
 import '../../bloc/catalogue/get_catalogue_methods/get_catalogue_bloc.dart';
 import '../../bloc/catalogue/post_catalogue_methods/post_catalogue_bloc.dart';
+import '../../bloc/catalogue/put_catalogues_methods/put_catalogue_image_operations_bloc.dart';
 import '../../bloc/catalogue/put_catalogues_methods/put_edit_product_bloc.dart';
 import '../../bloc/generate_pdf/generate_pdf_bloc.dart';
 import '../../bloc/lead/close_lead_bloc.dart';
@@ -326,6 +327,8 @@ class AppRouter {
               BlocProvider<PutCatalogueOptionsEntryBloc>(create: (context) => PutCatalogueOptionsEntryBloc(),),
               BlocProvider<PostMinesEntryBloc>(create: (context) => PostMinesEntryBloc(),),
               BlocProvider<PostSearchBloc>(create: (context) => PostSearchBloc(),),
+              BlocProvider<PutEditProductBloc>(create: (context) => PutEditProductBloc(),),
+              BlocProvider<PutCatalogueImageOperationsBloc>(create: (context) => PutCatalogueImageOperationsBloc(),),
               BlocProvider<PutEditProductBloc>(create: (context) => PutEditProductBloc(),),
             ],
             child: EditCatalogue(productId: productId),
